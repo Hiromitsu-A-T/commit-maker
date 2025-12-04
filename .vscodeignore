@@ -7,7 +7,6 @@ AGENTS.md
 .env
 vsix/
 *.vsix
-package.nls.*.json
 .DS_Store
 coverage/
 .vscode-test/
