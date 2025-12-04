@@ -1,0 +1,10 @@
+{
+  "command.commitMaker.showPanel.title": "Commit Maker: ပැනယ်ဖွင့်ရန်",
+  "command.commitMaker.generateCommitFromSCM.title": "Commit Maker: commit စာသား ဖန်တီးရန်",
+  "command.commitMaker.cancelCommitFromSCM.title": "Commit Maker: ဖန်တီးမှု ရပ်ရန်",
+  "command.commitMaker.saveApiKey.title": "Commit Maker: API key ကို သိမ်းရန်",
+  "command.commitMaker.category": "Commit Maker",
+  "configuration.commitMaker.title": "Commit Maker",
+  "views.activitybar.commitMaker.title": "Commit Maker",
+  "views.commitMakerContainer.commitMakerView.name": "Commit Maker"
+}

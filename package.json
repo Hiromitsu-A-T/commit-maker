@@ -1,0 +1,226 @@
+{
+  "name": "commit-maker",
+  "displayName": "Commit Maker – コミットメーカー",
+  "description": "Git の差分を読み込んでコミットメッセージを自動生成し、SCM 入力欄へ反映します。Commit message generator for Git diff that fills the SCM input automatically.",
+  "version": "0.1.4",
+  "publisher": "Hiromitsu",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Hiromitsu-A-T/commit-maker.git"
+  },
+  "homepage": "https://github.com/Hiromitsu-A-T/commit-maker#readme",
+  "bugs": {
+    "url": "https://github.com/Hiromitsu-A-T/commit-maker/issues"
+  },
+  "engines": {
+    "vscode": "^1.94.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "keywords": [
+    "git",
+    "commit",
+    "commit message",
+    "commit generator",
+    "commit ai",
+    "commit auto",
+    "diff to commit",
+    "scm",
+    "scm input",
+    "ai",
+    "llm",
+    "byok",
+    "openai",
+    "gemini",
+    "claude",
+    "vscode",
+    "コミット",
+    "コミットメッセージ",
+    "コミット生成",
+    "コミット自動生成",
+    "コミットメーカー",
+    "AIコミット",
+    "Git コミット",
+    "差分から生成",
+    "Git 拡張",
+    "SecretStorage"
+  ],
+  "galleryBanner": {
+    "color": "#0b1726",
+    "theme": "dark"
+  },
+  "icon": "media/commit-maker.png",
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "commitMaker.showPanel",
+        "title": "%command.commitMaker.showPanel.title%",
+        "icon": "$(panel-right)"
+      },
+      {
+        "command": "commitMaker.generateCommitFromSCM",
+        "title": "%command.commitMaker.generateCommitFromSCM.title%",
+        "category": "%command.commitMaker.category%",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "commitMaker.cancelCommitFromSCM",
+        "title": "%command.commitMaker.cancelCommitFromSCM.title%",
+        "category": "%command.commitMaker.category%",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "commitMaker.saveApiKey",
+        "title": "%command.commitMaker.saveApiKey.title%",
+        "category": "%command.commitMaker.category%",
+        "icon": "$(key)"
+      }
+    ],
+    "menus": {
+      "scm/title": [
+        {
+          "command": "commitMaker.generateCommitFromSCM",
+          "group": "navigation@9",
+          "when": "scmProvider == git && !commitMaker.commitGenerating"
+        },
+        {
+          "command": "commitMaker.cancelCommitFromSCM",
+          "group": "navigation@8",
+          "when": "scmProvider == git && commitMaker.commitGenerating"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "%configuration.commitMaker.title%",
+      "properties": {
+        "commitMaker.provider": {
+          "type": "string",
+          "enum": [
+            "openai",
+            "gemini",
+            "claude"
+          ],
+          "default": "gemini",
+          "description": "選択する LLM プロバイダー"
+        },
+        "commitMaker.endpoint": {
+          "type": "string",
+          "default": "https://api.openai.com/v1/responses",
+          "description": "OpenAI (Responses/Chat Completions) 用エンドポイント"
+        },
+        "commitMaker.endpointGemini": {
+          "type": "string",
+          "default": "https://generativelanguage.googleapis.com/v1beta/models",
+          "description": "Google Gemini generateContent ベース URL"
+        },
+        "commitMaker.endpointClaude": {
+          "type": "string",
+          "default": "https://api.anthropic.com/v1/messages",
+          "description": "Anthropic Claude messages API エンドポイント"
+        },
+        "commitMaker.model": {
+          "type": "string",
+          "default": "gemini-2.5-flash-lite",
+          "description": "コミット生成に使用するモデル ID"
+        },
+        "commitMaker.reasoningEffort": {
+          "type": "string",
+          "enum": [
+            "none",
+            "low",
+            "medium",
+            "high"
+          ],
+          "default": "medium",
+          "description": "OpenAI Responses API 用 reasoning.effort"
+        },
+        "commitMaker.verbosity": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "default": "medium",
+          "description": "OpenAI Responses API の text.verbosity"
+        },
+        "commitMaker.apiKeySecret": {
+          "type": "string",
+          "default": "commit-maker/api-key",
+          "description": "OpenAI 用 API キーを保存する SecretStorage のキー名"
+        },
+        "commitMaker.apiKeySecretGemini": {
+          "type": "string",
+          "default": "commit-maker/api-key/gemini",
+          "description": "Gemini 用 API キーを保存する SecretStorage のキー名"
+        },
+        "commitMaker.apiKeySecretClaude": {
+          "type": "string",
+          "default": "commit-maker/api-key/claude",
+          "description": "Claude 用 API キーを保存する SecretStorage のキー名"
+        },
+        "commitMaker.requestTimeoutMs": {
+          "type": "number",
+          "default": 300000,
+          "description": "LLM 呼び出しタイムアウト (ミリ秒)。0 で無制限"
+        },
+        "commitMaker.logLlm": {
+          "type": "boolean",
+          "default": false,
+          "description": "LLM へのリクエスト/リトライを Output チャネルに記録する"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "commitMakerContainer",
+          "title": "%views.activitybar.commitMaker.title%",
+          "icon": "media/commit-maker-activitybar.svg"
+        }
+      ]
+    },
+    "views": {
+      "commitMakerContainer": [
+        {
+          "id": "commitMakerView",
+          "name": "%views.commitMakerContainer.commitMakerView.name%",
+          "type": "webview",
+          "icon": "media/commit-maker-activitybar.svg"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "watch": "tsc -w -p .",
+    "test": "ts-node --project tsconfig.json src/testRunner.ts",
+    "dev:prep": "npm run build:nls && npm run compile",
+    "build:nls": "node scripts/copy-package-nls.js",
+    "clean:nls": "node scripts/clean-package-nls.js",
+    "package": "npm run compile && npm run build:media && npm run build:nls && npx vsce package --no-rewrite-relative-links && npm run clean:nls",
+    "publish:marketplace": "npx vsce publish",
+    "publish:openvsx": "npx ovsx publish --packagePath vsix/commit-maker-*.vsix --namespace Hiromitsu",
+    "clean:vsix": "node scripts/clean-vsix.js",
+    "build:media": "tsc -p media/tsconfig.json",
+    "smoke:openai": "ts-node --transpile-only scripts/smoke-openai.ts",
+    "smoke:openai:response": "ts-node --transpile-only scripts/smoke-openai-response.ts",
+    "smoke:openai:matrix": "ts-node --transpile-only scripts/smoke-openai-matrix.ts",
+    "smoke:gemini": "ts-node --transpile-only scripts/smoke-gemini.ts",
+    "smoke:gemini:matrix": "ts-node --transpile-only scripts/smoke-gemini-matrix.ts",
+    "smoke:claude": "ts-node --transpile-only scripts/smoke-claude.ts",
+    "smoke:claude:matrix": "ts-node --transpile-only scripts/smoke-claude-matrix.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.0",
+    "@types/vscode": "^1.94.0",
+    "@vscode/vsce": "^3.7.1",
+    "ovsx": "^0.10.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  }
+}

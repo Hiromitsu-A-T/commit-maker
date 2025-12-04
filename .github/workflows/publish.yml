@@ -1,0 +1,56 @@
+name: Publish Extension
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build webview helpers
+        run: npm run build:media
+
+      - name: Build
+        run: npm run compile
+
+      - name: Package VSIX
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          npm run build:nls
+          npx vsce package --no-rewrite-relative-links
+          mkdir -p vsix
+          mv commit-maker-${VERSION}.vsix vsix/
+          npm run clean:nls
+
+      - name: Publish to VS Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          npx vsce publish --packagePath vsix/commit-maker-${VERSION}.vsix
+
+      - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          npx ovsx publish vsix/commit-maker-${VERSION}.vsix --skip-duplicate
+
+      - name: Clean stray VSIX and enforce limit (keep latest 5)
+        run: npm run clean:vsix

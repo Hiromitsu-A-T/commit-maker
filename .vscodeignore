@@ -1,0 +1,16 @@
+# Exclude dev-only artifacts from the VSIX
+node_modules/
+.git/
+.vscode/
+.github/
+AGENTS.md
+.env
+vsix/
+*.vsix
+.DS_Store
+coverage/
+.vscode-test/
+npm-debug.log*
+**/*.map
+src/**/*.test.ts
+out/**/*.test.js*

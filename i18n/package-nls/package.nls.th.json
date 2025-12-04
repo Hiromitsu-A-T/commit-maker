@@ -1,0 +1,10 @@
+{
+  "command.commitMaker.showPanel.title": "Commit Maker: เปิดแผง",
+  "command.commitMaker.generateCommitFromSCM.title": "Commit Maker: สร้างข้อความคอมมิต",
+  "command.commitMaker.cancelCommitFromSCM.title": "Commit Maker: ยกเลิกการสร้าง",
+  "command.commitMaker.saveApiKey.title": "Commit Maker: บันทึกคีย์ API",
+  "command.commitMaker.category": "Commit Maker",
+  "configuration.commitMaker.title": "Commit Maker",
+  "views.activitybar.commitMaker.title": "Commit Maker",
+  "views.commitMakerContainer.commitMakerView.name": "Commit Maker"
+}

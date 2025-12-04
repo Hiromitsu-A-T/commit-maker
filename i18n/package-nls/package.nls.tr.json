@@ -1,0 +1,10 @@
+{
+  "command.commitMaker.showPanel.title": "Commit Maker: Paneli aç",
+  "command.commitMaker.generateCommitFromSCM.title": "Commit Maker: Commit mesajı oluştur",
+  "command.commitMaker.cancelCommitFromSCM.title": "Commit Maker: Oluşturmayı iptal et",
+  "command.commitMaker.saveApiKey.title": "Commit Maker: API anahtarını kaydet",
+  "command.commitMaker.category": "Commit Maker",
+  "configuration.commitMaker.title": "Commit Maker",
+  "views.activitybar.commitMaker.title": "Commit Maker",
+  "views.commitMakerContainer.commitMakerView.name": "Commit Maker"
+}

@@ -1,0 +1,132 @@
+import { UiStrings } from '../types';
+
+const id: UiStrings = {
+  langCode: 'id',
+  appTitle: 'Commit Maker',
+
+  languageSectionTitle: 'Bahasa tampilan',
+  languageName: 'Bahasa Indonesia',
+
+  apiKeySectionTitle: 'API Key',
+  apiKeyProviderLabel: 'Penyedia untuk menyimpan',
+  apiKeyIssueButton: 'Dapatkan API key',
+  apiKeyLabel: 'API Key',
+  apiKeyPlaceholder: 'sk-... / AIza... / sk-ant-...',
+  apiKeySaveButton: 'Simpan',
+  apiKeyClearButton: 'Bersihkan',
+
+  llmSectionTitle: 'Pengaturan LLM',
+  providerLabel: 'Penyedia',
+  modelLabel: 'Model',
+  customModelLabel: 'Nama model kustom',
+  customModelPlaceholder: 'example-model',
+  reasoningLabel: 'Reasoning Effort (hanya OpenAI)',
+  verbosityLabel: 'Tingkat detail (hanya OpenAI)',
+  providerLabelGemini: 'Google Gemini',
+  providerLabelOpenAi: 'OpenAI (keluarga GPT-5)',
+  providerLabelClaude: 'Anthropic Claude',
+
+  promptSectionTitle: 'Prompt & opsi',
+  presetNamePlaceholder: 'Nama preset',
+  presetAddButton: 'Tambah baru',
+  presetDeleteButton: 'Hapus',
+  promptTextareaPlaceholder: 'Contoh: tulis judul 50 karakter dan isi poin dalam Bahasa Indonesia.',
+  includeUnstagedLabel: 'Sertakan perubahan belum staged',
+  includeUntrackedLabel: 'Sertakan file belum terlacak',
+  includeBinaryLabel: 'Sertakan file yang mungkin biner',
+  maxPromptLabel: 'Batas panjang prompt',
+  maxPromptUnlimited: 'Tak terbatas (default)',
+  maxPromptLimited: 'Setel batas',
+  maxPromptUnitLabel: 'karakter',
+  maxPromptHint:
+    'Gunakan untuk membatasi token/biaya. 0 atau kosong = tak terbatas. Jika melebihi, simpan 20% awal dan 80% akhir.',
+
+  generationSectionTitle: 'Generate & hasil',
+  generateButton: 'Generate',
+  generateButtonTitle: 'Baca diff dan buat pesan commit',
+  applyButton: 'Terapkan ke SCM',
+  applyButtonTitle: 'Salin hasil ke kotak commit Source Control',
+  resultPlaceholder: 'Belum digenerate.',
+  resultHint: 'Periksa hasil, lalu klik “Terapkan ke SCM” untuk menyalin ke kotak commit.',
+  errorPlaceholder: '-',
+
+  statusIdle: 'Siap',
+  statusLoading: 'Generate dengan LLM…',
+  statusReady: 'Selesai',
+  statusError: 'Error',
+  badgeUnstagedOn: 'Staged + Unstaged',
+  badgeUnstagedOff: 'Hanya Staged',
+
+  apiKeySaved: 'Tersimpan',
+  apiKeyNotSaved: 'Belum tersimpan',
+  apiKeySavedPreviewPrefix: 'Tersimpan: ',
+  providerNeedKey: 'Simpan API key dulu',
+  modelNeedKey: 'Model bisa dipilih setelah API key disimpan.',
+  customModelOption: 'Kustom…',
+
+  presetButtonNew: 'Simpan sebagai baru',
+  presetButtonSaved: 'Tersimpan',
+  presetButtonOverwrite: 'Timpa',
+  presetTitleNew: 'Simpan sebagai preset baru',
+  presetTitleNoChange: 'Tidak ada perubahan',
+  presetTitleOverwrite: 'Timpa preset yang dipilih',
+
+  defaultCommitPrompt: [
+    'Tulis judul maksimal 50 karakter dan, bila perlu, isi poin dengan lebar 72 karakter.',
+    '- Hindari kalimat imperatif; jelaskan perubahan secara singkat (tanpa opini/dugaan)',
+    '- Isi mulai dengan "- "; hanya tambahkan bila perlu, tiap baris ≤72 karakter',
+    '- Tambahkan breaking changes dan nomor ISSUE/PR ke isi jika ada',
+    '- Dilarang opini AI, permintaan maaf, atau pernyataan keyakinan. Fakta saja',
+    '- Tambahkan tipe Conventional Commits sebagai prefiks judul',
+    '- Output dalam Bahasa Indonesia'
+  ].join('\n'),
+  defaultPresetLabel: 'Default (tidak bisa dihapus, bisa diedit)',
+  providerDescriptionGemini: 'Memanggil Generative Language API (generateContent) secara langsung.',
+  providerDescriptionOpenAi: 'Menggunakan endpoint kompatibel Responses / Chat Completions.',
+  providerDescriptionClaude: 'Menggunakan Claude 3 messages API.',
+
+  msgApiKeySaved: 'API key disimpan.',
+  msgApiKeySavePick: 'Pilih penyedia untuk menyimpan API key',
+  msgApiKeyInputPrompt: 'Masukkan API key untuk {provider}',
+
+  msgCommitGenerateTitle: 'Generate pesan commit (Commit Maker)',
+  msgCommitGenerateFetchingDiff: 'Mengambil diff…',
+  msgCommitGenerateCallingLlm: 'Memanggil LLM…',
+  msgCommitGenerateFailedPrefix: 'Gagal generate pesan commit: ',
+  msgCommitApplyProgress: 'Menerapkan ke SCM…',
+  msgCommitApplySuccess: 'Pesan commit disalin ke kotak SCM.',
+  msgCommitNotGenerated: 'Generate pesan commit terlebih dahulu.',
+  msgRepoNotFound: 'Repositori Git tidak ditemukan.',
+  msgCancelled: 'Dibatalkan pengguna',
+  msgDiffEmpty: 'Tidak ada diff. Periksa staged/perubahan.',
+  msgUnsupportedProvider: 'Penyedia tidak didukung: {provider}',
+  msgApiKeyMissing: 'API key untuk {provider} belum disetel. Simpan di pengaturan.',
+  msgLlmEmptyOpenAi: 'Respons OpenAI kosong.',
+  msgLlmEmptyGemini: 'Respons Gemini kosong.',
+  msgLlmEmptyClaude: 'Respons Claude kosong.',
+  msgHttpsInvalid: '{label} tidak valid.',
+  msgHttpsRequired: '{label} harus mulai dengan https://. Periksa pengaturan.',
+  msgGitDiffFailed: 'git diff gagal: {detail}',
+  msgGitStatusFailed: 'git status --porcelain gagal: {detail}',
+  msgUntrackedReadFailed: 'Gagal membaca file untracked: {path} ({detail})',
+  msgUntrackedSkipBinary: 'Lewati file untracked (mungkin biner): {path}',
+  msgHttpError: '{label} HTTP {status}: {text}',
+  logLlmAttempt: '{label}: percobaan {attempt}/{max}',
+  logLlmRetry: '{label}: coba lagi dalam {delay}ms ({error})',
+
+  toastSaved: '{action} pada {timestamp}',
+  toastDeleted: 'Dihapus pada {timestamp}',
+
+  actionCreatedLabel: 'Dibuat',
+  actionUpdatedLabel: 'Diperbarui',
+  actionDeletedLabel: 'Dihapus',
+
+  outputFormatSection:
+    '# Format output\n- Baris 1: judul ≤50 karakter (hindari imperatif)\n- Baris 2+ (jika perlu): poin yang diawali "- "',
+  diffSectionStaged: '### Staged',
+  diffSectionUnstaged: '### Unstaged',
+  diffSectionUntracked: '### Untracked {path}',
+  diffHeading: '# Diff'
+};
+
+export default id;

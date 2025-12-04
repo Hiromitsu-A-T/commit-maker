@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+out/
+*.vsix
+vsix/
+coverage/
+.vscode-test/
+npm-debug.log*
+
+# Generated NLS copies at repo root (localization for package.json)
+/package.nls.*.json
+!/package.nls.json
+
+# OS/Editor junk
+.DS_Store
+Thumbs.db
+
+# Local env/secrets
+.env
+.env.*
+
+# VS Code local settings (keep launch.json for debugging)
+.vscode/*
+!.vscode/launch.json
