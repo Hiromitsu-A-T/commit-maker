@@ -99,10 +99,12 @@ SecretStorage は VS Code が提供するローカル暗号化ストレージで
 ## スクリーンショット
 メインパネル（プロバイダー選択・差分読み込み・生成結果までを表示）
 ![Commit Maker パネル / Commit message generator panel](https://raw.githubusercontent.com/Hiromitsu-A-T/commit-maker/main/media/panel.png)
+
 上部でプロバイダー別 API キーを保存・マスク表示。プロンプトは複数プリセットを保存/切替でき、生成結果をその場で確認できます。
 
 SCM ビューのタイトルバーにある Generate（杖アイコン）ショートカット
 ![SCM タイトルバーのショートカット / SCM toolbar button](https://raw.githubusercontent.com/Hiromitsu-A-T/commit-maker/main/media/scm-toolbar.png)
+
 パネルを開かなくても、常にこのアイコンから差分取得→生成→SCM 反映まで実行できます。
 
 ## 設定の場所

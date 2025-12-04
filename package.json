@@ -2,7 +2,7 @@
   "name": "commit-maker",
   "displayName": "Commit Maker – コミットメーカー",
   "description": "Git の差分を読み込んでコミットメッセージを自動生成し、SCM 入力欄へ反映します。Commit message generator for Git diff that fills the SCM input automatically.",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "publisher": "Hiromitsu",
   "license": "Apache-2.0",
   "repository": {
