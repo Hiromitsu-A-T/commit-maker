@@ -1,4 +1,4 @@
-# Commit Maker – コミットメッセージ自動生成 / Commit Message Generator  
+# Commit Maker（コミットメーカー） – コミットメッセージ自動生成 / Commit Message Generator  
 ![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/Hiromitsu.commit-maker?label=Marketplace&logo=visualstudiocode) ![VS Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Hiromitsu.commit-maker?logo=visualstudiocode&color=0aa6ff) ![Open VSX Downloads](https://img.shields.io/open-vsx/dt/Hiromitsu/commit-maker?logo=visualstudiocode&color=00c7b7)
 
 Git の差分を読み取り、最適なコミットメッセージを自動生成して SCM 入力欄へ反映する VS Code 拡張（コミットメーカー / commit message generator）です。日本語・英語どちらでも生成できます。キーはすべてローカルの SecretStorage に保存され、サーバー側に記録を残しません。
