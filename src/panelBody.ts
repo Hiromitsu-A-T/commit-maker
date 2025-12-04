@@ -86,12 +86,18 @@ export function renderPanelBody(strings: UiStrings): string {
       </div>
       <textarea id="prompt" placeholder="${strings.promptTextareaPlaceholder}"></textarea>
       <div class="checkbox-row">
-        <input type="checkbox" id="includeUnstaged" />
-        <label for="includeUnstaged" class="no-margin fw-normal">${strings.includeUnstagedLabel}</label>
-        <input type="checkbox" id="includeUntracked" />
-        <label for="includeUntracked" class="no-margin fw-normal">${strings.includeUntrackedLabel}</label>
-        <input type="checkbox" id="includeBinary" />
-        <label for="includeBinary" class="no-margin fw-normal">${strings.includeBinaryLabel}</label>
+        <label class="checkbox-item" for="includeUnstaged">
+          <input type="checkbox" id="includeUnstaged" />
+          <span class="no-margin fw-normal">${strings.includeUnstagedLabel}</span>
+        </label>
+        <label class="checkbox-item" for="includeUntracked">
+          <input type="checkbox" id="includeUntracked" />
+          <span class="no-margin fw-normal">${strings.includeUntrackedLabel}</span>
+        </label>
+        <label class="checkbox-item" for="includeBinary">
+          <input type="checkbox" id="includeBinary" />
+          <span class="no-margin fw-normal">${strings.includeBinaryLabel}</span>
+        </label>
       </div>
       <div class="row mt8">
         <label for="maxPromptMode" class="no-margin">${strings.maxPromptLabel}</label>
