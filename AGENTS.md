@@ -47,6 +47,10 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 - 公開（CLI）  
   - Marketplace: `VSCE_PAT=<token> npx vsce publish --packagePath vsix/commit-maker-<version>.vsix`  
   - Open VSX: 初回 `npx ovsx create-namespace Hiromitsu`、以降 `OVSX_PAT=<token> npx ovsx publish vsix/commit-maker-<version>.vsix --skip-duplicate`
+- ローカライズ NLS 生成/掃除  
+  - 生成: `npm run build:nls`（`i18n/package-nls/` から `package.nls.*.json` をルートへコピー）  
+  - 掃除: `npm run clean:nls`（ルートに生成した `package.nls.*.json` を削除、`package.nls.json` は保持）  
+  - publish ワークフローでは自動生成されるので、ローカル作業後は忘れず `clean:nls` で元に戻す。
 
 ## ローカル VSIX インストール
 - 生成: `npm run compile` → `npx vsce package` → `vsix/commit-maker-<version>.vsix`
