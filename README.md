@@ -59,6 +59,8 @@ SecretStorage は VS Code が提供するローカル暗号化ストレージで
    (English) Open **Commit Maker** from the Activity Bar.
 2. 上部の API キー欄で使いたいプロバイダーを選び、キーを保存（SecretStorage に暗号化保存）。
    (English) Choose a provider, save its API key (stored encrypted in SecretStorage).
+   ※ すべて自分の API キーを持ち込む BYOK 方式です。利用料は各プロバイダーの課金体系に従います。  
+   (English) BYOK only: you bring your own keys, and usage is billed by each provider.
 3. パネル内の設定でプロバイダー/モデルを選択（推奨: Gemini → `gemini-2.5-flash-lite`）。必要なら追加指示を入力。
    (English) Pick provider/model (recommended: Gemini `gemini-2.5-flash-lite`) and add extra instructions if needed.
 4. 「変更を読み込んで提案」で候補を生成。
