@@ -12,7 +12,7 @@ SecretStorage は VS Code が提供するローカル暗号化ストレージで
 - **差分を丸ごと扱う**: Staged / Unstaged / 未追跡 / バイナリを選択して連結取得（見出し付き）。デフォルトで未ステージ・未追跡も含めるため、コミット漏れを防止。（English: Collect staged/unstaged/untracked/binary diffs with headings; unstaged & untracked included by default to avoid missing files.)
 - **コミットメッセージ自動生成**: Git の差分からワンクリックでコミット文を生成し、SCM 入力欄へ即反映。（English: One click generates the commit message from the diff and fills the SCM box.)
 - **操作は二通り**: メインパネルで一連の操作を完結。SCM タイトルバーの杖アイコンからはパネルを開かず生成→反映。（English: Use the main panel flow or the SCM toolbar wand for one-click generate/apply.)
-- **モデル切替の速さ優先**: 既定は高速・低コストな Gemini `gemini-2.5-flash-lite`。OpenAI/Claude へも同じ UI で即切替。（English: Default to fast, low-cost Gemini flash-lite; switch to OpenAI/Claude instantly with the same UI.)
+- **モデル切替の速さ優先**: 既定は高速・低コストな Gemini `gemini-2.5-flash-lite`。OpenAI/Claude へも同じ UI で即切替。※すべて BYOK なので API 利用料は各プロバイダーの従量課金が別途発生します（無料クレジットは付属しません）。（English: Default to fast, low-cost Gemini flash-lite; switch to OpenAI/Claude instantly with the same UI. BYOK only—usage is billed separately by each provider; no free credits included.)
 - **UI 多言語対応 (19 言語)**: ja / en / zh / ko / es / fr / de / vi / th / my / hi / pt-BR / ru / ar / tr / id / it / pl / tl をワンクリック切替。選択は自動保存。（English: One-click switch among 19 languages; selection is remembered.)
 
 ## できること / What it does
