@@ -1,0 +1,132 @@
+import { UiStrings } from '../types';
+
+const it: UiStrings = {
+  langCode: 'it',
+  appTitle: 'Commit Maker',
+
+  languageSectionTitle: 'Lingua di visualizzazione',
+  languageName: 'Italiano',
+
+  apiKeySectionTitle: 'Chiave API',
+  apiKeyProviderLabel: 'Provider da salvare',
+  apiKeyIssueButton: 'Ottieni chiave API',
+  apiKeyLabel: 'Chiave API',
+  apiKeyPlaceholder: 'sk-... / AIza... / sk-ant-...',
+  apiKeySaveButton: 'Salva',
+  apiKeyClearButton: 'Cancella',
+
+  llmSectionTitle: 'Impostazioni LLM',
+  providerLabel: 'Provider',
+  modelLabel: 'Modello',
+  customModelLabel: 'Nome modello personalizzato',
+  customModelPlaceholder: 'modello-esempio',
+  reasoningLabel: 'Reasoning Effort (solo OpenAI)',
+  verbosityLabel: 'Verbosity (solo OpenAI)',
+  providerLabelGemini: 'Google Gemini',
+  providerLabelOpenAi: 'OpenAI (famiglia GPT-5)',
+  providerLabelClaude: 'Anthropic Claude',
+
+  promptSectionTitle: 'Prompt e opzioni',
+  presetNamePlaceholder: 'Nome del preset',
+  presetAddButton: 'Aggiungi',
+  presetDeleteButton: 'Elimina',
+  promptTextareaPlaceholder: 'es. Scrivi un titolo entro 50 caratteri e un corpo puntato in inglese.',
+  includeUnstagedLabel: 'Includi modifiche non indicizzate',
+  includeUntrackedLabel: 'Includi file non tracciati',
+  includeBinaryLabel: 'Includi file sospetti binari',
+  maxPromptLabel: 'Limite lunghezza prompt',
+  maxPromptUnlimited: 'Illimitato (predefinito)',
+  maxPromptLimited: 'Imposta un limite',
+  maxPromptUnitLabel: 'car.',
+  maxPromptHint:
+    'Usa un limite se vuoi controllare token/costo. 0 o vuoto significa nessun limite. Se si supera, conserva primo 20% e ultimo 80%.',
+
+  generationSectionTitle: 'Genera e risultato',
+  generateButton: 'Genera',
+  generateButtonTitle: 'Carica il diff e genera il messaggio di commit',
+  applyButton: 'Applica a SCM',
+  applyButtonTitle: 'Copia nel campo commit di Controllo sorgente',
+  resultPlaceholder: 'Non ancora generato.',
+  resultHint: 'Rivedi il risultato e premi "Applica a SCM" per copiarlo nel campo di commit.',
+  errorPlaceholder: '-',
+
+  statusIdle: 'In attesa',
+  statusLoading: 'Generazione con LLM…',
+  statusReady: 'Fatto',
+  statusError: 'Errore',
+  badgeUnstagedOn: 'Indicizzate + Non indicizzate',
+  badgeUnstagedOff: 'Solo indicizzate',
+
+  apiKeySaved: 'Salvata',
+  apiKeyNotSaved: 'Non salvata',
+  apiKeySavedPreviewPrefix: 'Salvata: ',
+  providerNeedKey: 'Salva prima una chiave API',
+  modelNeedKey: 'Puoi scegliere il modello dopo aver salvato la chiave API.',
+  customModelOption: 'Personalizzato…',
+
+  presetButtonNew: 'Salva come nuovo',
+  presetButtonSaved: 'Salvato',
+  presetButtonOverwrite: 'Sovrascrivi',
+  presetTitleNew: 'Salva come nuovo preset',
+  presetTitleNoChange: 'Nessuna modifica',
+  presetTitleOverwrite: 'Sovrascrivi il preset selezionato',
+
+  defaultCommitPrompt: [
+    'Scrivi un titolo entro 50 caratteri e, se serve, un corpo puntato avvolto a 72 caratteri.',
+    '- Evita la forma imperativa; descrivi brevemente la modifica (niente opinioni o congetture)',
+    '- Le righe del corpo iniziano con "- "; aggiungile solo se necessario, entro 72 caratteri',
+    '- Aggiungi breaking changes e numeri di issue/PR nel corpo se applicabile',
+    '- Vietate opinioni AI, scuse o note di fiducia. Solo fatti',
+    '- Metti il tipo Conventional Commit come prefisso del titolo',
+    '- Output in italiano'
+  ].join('\n'),
+  defaultPresetLabel: 'Predefinito (bloccato, modificabile)',
+  providerDescriptionGemini: 'Chiama direttamente l’API Generative Language (generateContent).',
+  providerDescriptionOpenAi: 'Usa l’endpoint compatibile Responses / Chat Completions.',
+  providerDescriptionClaude: 'Usa l’API Claude 3 messages.',
+
+  msgApiKeySaved: 'Chiave API salvata.',
+  msgApiKeySavePick: 'Seleziona il provider per salvare la chiave API',
+  msgApiKeyInputPrompt: 'Inserisci la chiave API per {provider}',
+
+  msgCommitGenerateTitle: 'Generazione commit (Commit Maker)',
+  msgCommitGenerateFetchingDiff: 'Recupero diff…',
+  msgCommitGenerateCallingLlm: 'Richiesta al LLM…',
+  msgCommitGenerateFailedPrefix: 'Generazione fallita: ',
+  msgCommitApplyProgress: 'Applicazione a SCM…',
+  msgCommitApplySuccess: 'Messaggio applicato al campo commit.',
+  msgCommitNotGenerated: 'Genera prima un messaggio di commit.',
+  msgRepoNotFound: 'Repository Git non trovato.',
+  msgCancelled: 'Annullato dall’utente',
+  msgDiffEmpty: 'Nessun diff trovato. Controlla gli stati.',
+  msgUnsupportedProvider: 'Provider non supportato: {provider}',
+  msgApiKeyMissing: 'Chiave API per {provider} non impostata. Salvala nelle impostazioni.',
+  msgLlmEmptyOpenAi: 'Risposta OpenAI vuota.',
+  msgLlmEmptyGemini: 'Risposta Gemini vuota.',
+  msgLlmEmptyClaude: 'Risposta Claude vuota.',
+  msgHttpsInvalid: '{label} non è valido.',
+  msgHttpsRequired: '{label} deve iniziare con https://. Controlla le impostazioni.',
+  msgGitDiffFailed: 'git diff non riuscito: {detail}',
+  msgGitStatusFailed: 'git status --porcelain non riuscito: {detail}',
+  msgUntrackedReadFailed: 'Lettura file non tracciato fallita: {path} ({detail})',
+  msgUntrackedSkipBinary: 'File non tracciato saltato (possibile binario): {path}',
+  msgHttpError: '{label} HTTP {status}: {text}',
+  logLlmAttempt: '{label}: tentativo {attempt}/{max}',
+  logLlmRetry: '{label}: nuovo tentativo tra {delay}ms ({error})',
+
+  toastSaved: '{action} alle {timestamp}',
+  toastDeleted: 'Eliminato alle {timestamp}',
+
+  actionCreatedLabel: 'Creato',
+  actionUpdatedLabel: 'Aggiornato',
+  actionDeletedLabel: 'Eliminato',
+
+  outputFormatSection:
+    '# Formato di output\n- Riga 1: titolo entro 50 caratteri (evita l’imperativo)\n- Riga 2+: corpo puntato con "- " solo se necessario',
+  diffSectionStaged: '### Indicizzate',
+  diffSectionUnstaged: '### Non indicizzate',
+  diffSectionUntracked: '### Non tracciati {path}',
+  diffHeading: '# Diff'
+};
+
+export default it;

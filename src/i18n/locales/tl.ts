@@ -1,0 +1,132 @@
+import { UiStrings } from '../types';
+
+const tl: UiStrings = {
+  langCode: 'tl',
+  appTitle: 'Commit Maker',
+
+  languageSectionTitle: 'Wikang ipapakita',
+  languageName: 'Filipino',
+
+  apiKeySectionTitle: 'API Key',
+  apiKeyProviderLabel: 'Provider na ise-save',
+  apiKeyIssueButton: 'Kunin ang API key',
+  apiKeyLabel: 'API Key',
+  apiKeyPlaceholder: 'sk-... / AIza... / sk-ant-...',
+  apiKeySaveButton: 'I-save',
+  apiKeyClearButton: 'Burahin',
+
+  llmSectionTitle: 'Mga setting ng LLM',
+  providerLabel: 'Provider',
+  modelLabel: 'Modelo',
+  customModelLabel: 'Pangalan ng custom na modelo',
+  customModelPlaceholder: 'halimbawa-modelo',
+  reasoningLabel: 'Reasoning Effort (OpenAI lang)',
+  verbosityLabel: 'Verbosity (OpenAI lang)',
+  providerLabelGemini: 'Google Gemini',
+  providerLabelOpenAi: 'OpenAI (pamilyang GPT-5)',
+  providerLabelClaude: 'Anthropic Claude',
+
+  promptSectionTitle: 'Prompt at mga opsyon',
+  presetNamePlaceholder: 'Pangalan ng preset',
+  presetAddButton: 'Dagdag bago',
+  presetDeleteButton: 'Tanggalin',
+  promptTextareaPlaceholder: 'hal. Sumulat ng pamagat na 50 chars at bullet body sa English.',
+  includeUnstagedLabel: 'Isama ang mga di-na-stage na pagbabago',
+  includeUntrackedLabel: 'Isama ang mga untracked na file',
+  includeBinaryLabel: 'Isama ang pinaghihinalaang binary',
+  maxPromptLabel: 'Limitasyon ng haba ng prompt',
+  maxPromptUnlimited: 'Walang limit (default)',
+  maxPromptLimited: 'Magtakda ng limit',
+  maxPromptUnitLabel: 'char.',
+  maxPromptHint:
+    'Gamitin kung kailangang kontrolin ang token/gastos. 0 o blanko = walang limit. Kapag lumampas, itira ang unang 20% at huling 80%.',
+
+  generationSectionTitle: 'Gumawa at resulta',
+  generateButton: 'Gumawa',
+  generateButtonTitle: 'I-load ang diff at gumawa ng commit message',
+  applyButton: 'Ilapat sa SCM',
+  applyButtonTitle: 'Kopyahin sa commit box ng Source Control',
+  resultPlaceholder: 'Hindi pa nagagawa.',
+  resultHint: 'Suriin ang resulta, tapos pindutin "Ilapat sa SCM" para kopyahin sa commit input.',
+  errorPlaceholder: '-',
+
+  statusIdle: 'Wala sa ginagawa',
+  statusLoading: 'Gumagawa gamit ang LLM…',
+  statusReady: 'Tapos',
+  statusError: 'Error',
+  badgeUnstagedOn: 'Staged + Hindi naka-stage',
+  badgeUnstagedOff: 'Staged lang',
+
+  apiKeySaved: 'Nai-save',
+  apiKeyNotSaved: 'Hindi nai-save',
+  apiKeySavedPreviewPrefix: 'Nai-save: ',
+  providerNeedKey: 'I-save muna ang API key',
+  modelNeedKey: 'Puwedeng pumili ng modelo pagkatapos mag-save ng API key.',
+  customModelOption: 'Custom…',
+
+  presetButtonNew: 'I-save bilang bago',
+  presetButtonSaved: 'Nai-save',
+  presetButtonOverwrite: 'I-overwrite',
+  presetTitleNew: 'I-save bilang bagong preset',
+  presetTitleNoChange: 'Walang pagbabago',
+  presetTitleOverwrite: 'I-overwrite ang napiling preset',
+
+  defaultCommitPrompt: [
+    'Isulat ang pamagat sa loob ng 50 karakter at, kung kailangan, bullet body na nakabalot sa 72 karakter.',
+    '- Iwasan ang pang-utos; ilarawan nang maikli ang pagbabago (walang opinyon o hula)',
+    '- Simulan ang mga linya ng body sa "- "; idagdag lang kung kailangan, hanggang 72 karakter',
+    '- Ilagay ang breaking changes at mga numero ng issue/PR sa body kung naaangkop',
+    '- Walang opinyon ng AI, paghingi ng paumanhin, o confidence notes. Mga katotohanan lang',
+    '- Ilagay ang Conventional Commit type sa unahan ng pamagat',
+    '- Output sa Filipino kung maaari'
+  ].join('\n'),
+  defaultPresetLabel: 'Default (nakalock, editable)',
+  providerDescriptionGemini: 'Direktang tumatawag sa Generative Language API (generateContent).',
+  providerDescriptionOpenAi: 'Gumagamit ng Responses / Chat Completions na endpoint.',
+  providerDescriptionClaude: 'Gumagamit ng Claude 3 messages API.',
+
+  msgApiKeySaved: 'Nai-save ang API key.',
+  msgApiKeySavePick: 'Pumili ng provider para i-save ang API key',
+  msgApiKeyInputPrompt: 'Ilagay ang API key para sa {provider}',
+
+  msgCommitGenerateTitle: 'Pagbuo ng commit (Commit Maker)',
+  msgCommitGenerateFetchingDiff: 'Kinukuha ang diff…',
+  msgCommitGenerateCallingLlm: 'Kumokonekta sa LLM…',
+  msgCommitGenerateFailedPrefix: 'Hindi nabuo: ',
+  msgCommitApplyProgress: 'Ina-apply sa SCM…',
+  msgCommitApplySuccess: 'Na-apply sa commit field.',
+  msgCommitNotGenerated: 'Bumuo muna ng commit message.',
+  msgRepoNotFound: 'Hindi natagpuan ang repo ng Git.',
+  msgCancelled: 'Kinansela ng user',
+  msgDiffEmpty: 'Walang diff. Suriin ang staged/changes.',
+  msgUnsupportedProvider: 'Hindi suportadong provider: {provider}',
+  msgApiKeyMissing: 'Walang API key para sa {provider}. I-save sa settings.',
+  msgLlmEmptyOpenAi: 'Walang laman ang tugon ng OpenAI.',
+  msgLlmEmptyGemini: 'Walang laman ang tugon ng Gemini.',
+  msgLlmEmptyClaude: 'Walang laman ang tugon ng Claude.',
+  msgHttpsInvalid: 'Di-wasto ang {label}.',
+  msgHttpsRequired: '{label} ay dapat magsimula sa https://. Suriin ang settings.',
+  msgGitDiffFailed: 'Bigo ang git diff: {detail}',
+  msgGitStatusFailed: 'Bigo ang git status --porcelain: {detail}',
+  msgUntrackedReadFailed: 'Hindi mabasa ang untracked na file: {path} ({detail})',
+  msgUntrackedSkipBinary: 'Nilaktawan ang untracked (posibleng binary): {path}',
+  msgHttpError: '{label} HTTP {status}: {text}',
+  logLlmAttempt: '{label}: pagtatangka {attempt}/{max}',
+  logLlmRetry: '{label}: susubukang muli pagkalipas ng {delay}ms ({error})',
+
+  toastSaved: '{action} sa {timestamp}',
+  toastDeleted: 'Nabura sa {timestamp}',
+
+  actionCreatedLabel: 'Nagawa',
+  actionUpdatedLabel: 'Nai-update',
+  actionDeletedLabel: 'Nabura',
+
+  outputFormatSection:
+    '# Format ng output\n- Linya 1: pamagat hanggang 50 char (iwasan ang pang-utos)\n- Linya 2+: bullet body na may "- " kung kailangan lang',
+  diffSectionStaged: '### Nakastage',
+  diffSectionUnstaged: '### Hindi nakastage',
+  diffSectionUntracked: '### Untracked {path}',
+  diffHeading: '# Diff'
+};
+
+export default tl;

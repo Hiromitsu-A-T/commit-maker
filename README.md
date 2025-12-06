@@ -13,7 +13,7 @@ SecretStorage は VS Code が提供するローカル暗号化ストレージで
 - **コミットメッセージ自動生成**: Git の差分からワンクリックでコミット文を生成し、SCM 入力欄へ即反映。（English: One click generates the commit message from the diff and fills the SCM box.)
 - **操作は二通り**: メインパネルで一連の操作を完結。SCM タイトルバーの杖アイコンからはパネルを開かず生成→反映。（English: Use the main panel flow or the SCM toolbar wand for one-click generate/apply.)
 - **モデル切替の速さ優先**: 既定は高速・低コストな Gemini `gemini-2.5-flash-lite`。OpenAI/Claude へも同じ UI で即切替。（English: Default to fast, low-cost Gemini flash-lite; switch to OpenAI/Claude instantly with the same UI.)
-- **UI 多言語対応 (16 言語)**: ja / en / zh / ko / es / fr / de / vi / th / my / hi / pt-BR / ru / ar / tr / id をワンクリック切替。選択は自動保存。（English: One-click switch among 16 languages; selection is remembered.)
+- **UI 多言語対応 (19 言語)**: ja / en / zh / ko / es / fr / de / vi / th / my / hi / pt-BR / ru / ar / tr / id / it / pl / tl をワンクリック切替。選択は自動保存。（English: One-click switch among 19 languages; selection is remembered.)
 
 ## できること / What it does
 - ステージ済み/未ステージ/未追跡の変更をまとめて読み込み、ワンクリックでコミット文を提案。

@@ -16,6 +16,9 @@ import ru from './locales/ru';
 import ar from './locales/ar';
 import tr from './locales/tr';
 import id from './locales/id';
+import it from './locales/it';
+import pl from './locales/pl';
+import tl from './locales/tl';
 
 export const STRINGS: StringsMap = {
   ja,
@@ -33,7 +36,10 @@ export const STRINGS: StringsMap = {
   ru,
   ar,
   tr,
-  id
+  id,
+  it,
+  pl,
+  tl
 };
 
 export const DEFAULT_LANGUAGE: LanguageCode = 'ja';

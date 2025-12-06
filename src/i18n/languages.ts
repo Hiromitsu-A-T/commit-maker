@@ -1,4 +1,24 @@
-export const SUPPORTED_LANG_CODES = ['ja', 'en', 'zh', 'ko', 'es', 'fr', 'de', 'vi', 'th', 'my', 'hi', 'pt-BR', 'ru', 'ar', 'tr', 'id'] as const;
+export const SUPPORTED_LANG_CODES = [
+  'ja',
+  'en',
+  'zh',
+  'ko',
+  'es',
+  'fr',
+  'de',
+  'vi',
+  'th',
+  'my',
+  'hi',
+  'pt-BR',
+  'ru',
+  'ar',
+  'tr',
+  'id',
+  'it',
+  'pl',
+  'tl'
+] as const;
 
 export type LanguageCode = (typeof SUPPORTED_LANG_CODES)[number];
 

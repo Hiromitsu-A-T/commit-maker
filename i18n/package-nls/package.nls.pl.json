@@ -1,0 +1,10 @@
+{
+  "command.commitMaker.showPanel.title": "Commit Maker: Otwórz panel",
+  "command.commitMaker.generateCommitFromSCM.title": "Commit Maker: Generuj wiadomość commita",
+  "command.commitMaker.cancelCommitFromSCM.title": "Commit Maker: Anuluj generowanie",
+  "command.commitMaker.saveApiKey.title": "Commit Maker: Zapisz klucz API",
+  "command.commitMaker.category": "Commit Maker",
+  "configuration.commitMaker.title": "Commit Maker",
+  "views.activitybar.commitMaker.title": "Commit Maker",
+  "views.commitMakerContainer.commitMakerView.name": "Commit Maker"
+}

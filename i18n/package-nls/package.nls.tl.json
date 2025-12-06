@@ -1,0 +1,10 @@
+{
+  "command.commitMaker.showPanel.title": "Commit Maker: Buksan ang panel",
+  "command.commitMaker.generateCommitFromSCM.title": "Commit Maker: Bumuo ng mensahe ng commit",
+  "command.commitMaker.cancelCommitFromSCM.title": "Commit Maker: Kanselahin ang pagbuo",
+  "command.commitMaker.saveApiKey.title": "Commit Maker: I-save ang API key",
+  "command.commitMaker.category": "Commit Maker",
+  "configuration.commitMaker.title": "Commit Maker",
+  "views.activitybar.commitMaker.title": "Commit Maker",
+  "views.commitMakerContainer.commitMakerView.name": "Commit Maker"
+}
