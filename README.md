@@ -1,29 +1,29 @@
 # Commit Maker（コミットメーカー） – コミットメッセージ自動生成 / Commit Message Generator  
-![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/Hiromitsu.commit-maker?label=Marketplace&logo=visualstudiocode) ![VS Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Hiromitsu.commit-maker?logo=visualstudiocode&color=0aa6ff) ![Open VSX Downloads](https://img.shields.io/open-vsx/dt/Hiromitsu/commit-maker?logo=visualstudiocode&color=00c7b7)
+![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/Hiromitsu.commit-maker?label=Marketplace&logo=visualstudiocode) ![VS Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Hiromitsu.commit-maker?logo=visualstudiocode&color=0aa6ff) ![VS Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/Hiromitsu.commit-maker) ![Open VSX Downloads](https://img.shields.io/open-vsx/dt/Hiromitsu/commit-maker?logo=visualstudiocode&color=00c7b7) ![Last Updated](https://img.shields.io/visual-studio-marketplace/last-updated/Hiromitsu.commit-maker) ![GitHub pull requests](https://img.shields.io/github/issues-pr/Hiromitsu-A-T/commit-maker) ![License](https://img.shields.io/badge/license-Apache--2.0-blue) ![Languages](https://img.shields.io/badge/languages-31-brightgreen)
 
 **あなたの APIキー、あなたのプロンプト、あなたのルール。**  
-Cursor や Copilot では実現できない、完全カスタマイズ可能な AI コミットメッセージ生成ツール。
+Cursor や Copilot では実現できない、完全カスタマイズ可能な AI コミットメッセージ生成ツール。Git commit を効率化し、チーム全体のコミット品質を向上させます。
 
 (English) **Your API key. Your prompts. Your rules.**  
-Fully customizable AI commit message generator – beyond what Cursor or Copilot can offer.
+Fully customizable AI commit message generator – beyond what Cursor or Copilot can offer. Streamline your Git commits and elevate your team's commit quality with professional commit messages.
 
 ---
 
 ## なぜ Commit Maker が必要なのか？ / Why CommitAker?
 
-多くの開発者が日常的に使っている **Cursor**、**GitHub Copilot**、**Windsurf** などのツールには、コミットメッセージ生成機能が標準搭載されています。しかし、以下のような課題はありませんか？
+多くの開発者が日常的に使っている **Cursor**、**GitHub Copilot**、**Windsurf** などのツールには、Git commit メッセージ生成機能が標準搭載されています。しかし、以下のような課題はありませんか？
 
-(English) Popular tools like **Cursor**, **GitHub Copilot**, and **Windsurf** come with commit message generation. But do you face these issues?
+(English) Popular tools like **Cursor**, **GitHub Copilot**, and **Windsurf** come with Git commit message generation. But do you face these issues?
 
 ### 既存ツールの課題 / Common Issues
-- **プロンプトをカスタマイズできない** – チームのコミット規約に合わせて細かく調整できない  
-  (English) **No prompt customization** – Can't fine-tune for your team's commit conventions
+- **プロンプトをカスタマイズできない** – チームのコミット規約や Conventional Commits に合わせて細かく調整できない  
+  (English) **No prompt customization** – Can't fine-tune for your team's commit conventions or Conventional Commits standards
 - **自分の APIキーが使えない** – Copilot は個人向けに API キーを提供せず、Cursor も BYOK で一部機能が制限される  
   (English) **Can't use your own API keys** – Copilot doesn't offer personal keys; Cursor restricts features even with BYOK
 - **プロバイダー・モデル変更が面倒** – 高速モデルや安価なモデルへの切り替えが簡単にできない  
   (English) **Cumbersome provider/model switching** – Hard to quickly try faster or cheaper models
-- **プロンプトを複数保存できない** – 案件やシーンごとに使い分けたいのに、毎回手動で調整が必要  
-  (English) **No preset management** – Can't save multiple prompts for different projects or scenarios
+- **プロンプトを複数保存できない** – 案件やシーンごとにコミットスタイルを使い分けたいのに、毎回手動で調整が必要  
+  (English) **No preset management** – Can't save multiple commit message styles for different projects or scenarios
 
 ### Commit Maker の解決策 / Commit Maker's Solution
 ✅ **完全 BYOK（Bring Your Own Key）** – OpenAI / Gemini / Claude など、あなたの API キーで動作。ローカルの SecretStorage に暗号化保存され、外部サーバーには一切送信されません。  
@@ -35,24 +35,27 @@ Fully customizable AI commit message generator – beyond what Cursor or Copilot
 ✅ **プロバイダー・モデルを自由に選択** – 同じ UI で Gemini の高速モデル（`gemini-2.5-flash-lite`）から OpenAI の高精度モデルまで即座に切り替え。コストと速度を最適化できます。  
 (English) **Flexible provider/model selection** – Switch instantly between Gemini's fast models and OpenAI's precision models in the same UI to optimize cost and speed.
 
-✅ **差分を完全に把握** – Staged / Unstaged / 未追跡 / バイナリを見出し付きで取得。デフォルトで未ステージ・未追跡も含めるため、コミット漏れを防止。  
-(English) **Complete diff coverage** – Fetch staged/unstaged/untracked/binary with headings; defaults include unstaged & untracked to prevent omissions.
+✅ **差分を完全に把握** – Staged / Unstaged / 未追跡 / バイナリを見出し付きで取得。デフォルトで未ステージ・未追跡も含めるため、Git commit 漏れを防止。  
+(English) **Complete diff coverage** – Fetch staged/unstaged/untracked/binary with headings; defaults include unstaged & untracked to prevent commit omissions.
 
 ---
 
 ## 主な機能 / Key Features
-- **ワンクリックでコミットメッセージ生成**: Git の差分から AI が自動生成し、SCM 入力欄へ即反映  
-  (English) **One-click commit message generation** – AI reads your Git diff and fills the SCM box instantly
+- **ワンクリックで Git commit メッセージ生成**: Git の差分から AI が自動生成し、SCM 入力欄へ即反映。プロフェッショナルなコミットメッセージで開発効率を向上  
+  (English) **One-click Git commit message generation** – AI reads your Git diff and fills the SCM box instantly with professional commit messages
 - **プロンプトプリセットの保存・管理**: GUI で複数保存し、PC 内の全ワークスペースで共通利用（Settings Sync を除く）  
   (English) **Prompt preset management** – Save multiple in GUI, shared across local workspaces (except Settings Sync)
 - **推奨モデルは高速・低コスト**: デフォルトで Gemini `gemini-2.5-flash-lite` を採用。必要に応じて OpenAI / Claude へ切り替え可能  
   (English) **Fast & low-cost default** – Gemini `gemini-2.5-flash-lite` by default; switch to OpenAI/Claude as needed
-- **追加指示欄でさらにカスタマイズ**: 「英語で短く」「絵文字なし」など、チームルールに合わせて自由に指定  
-  (English) **Custom instructions field** – Add rules like "short in English" or "no emojis" to fit team conventions
+- **追加指示欄でさらにカスタマイズ**: 「英語で短く」「絵文字なし」「Conventional Commits 準拠」など、チームのコミットルールに合わせて自由に指定  
+  (English) **Custom instructions field** – Add rules like "short in English", "no emojis", or "follow Conventional Commits" to fit your team's commit standards
 - **SCM ツールバーからも実行可能**: パネルを開かず、杖アイコンから「差分取得→生成→適用」を一発で完了  
   (English) **SCM toolbar shortcut** – Run "fetch diff → generate → apply" with the wand icon, no panel needed
 - **UI 多言語対応 (31 言語)**: 日本語・英語・中国語・韓国語・スペイン語など、ワンクリックで切り替え可能  
   (English) **31 languages supported** – Switch between Japanese, English, Chinese, Korean, Spanish, and more with one click
+  
+  **対応言語一覧 / Supported Languages:**  
+  日本語 (ja) | English (en) | 中文简体 (zh) | 中文繁體 (zh-TW) | 한국어 (ko) | Español (es) | Français (fr) | Deutsch (de) | Nederlands (nl) | Svenska (sv) | Dansk (da) | Norsk (nb) | Tiếng Việt (vi) | ไทย (th) | မြန်မာ (my) | हिन्दी (hi) | বাংলা (bn) | தமிழ் (ta) | Português (pt-BR) | Русский (ru) | Українська (uk) | العربية (ar) | עברית (he) | فارسی (fa) | Türkçe (tr) | Bahasa Indonesia (id) | Italiano (it) | Polski (pl) | Română (ro) | Tagalog (tl) | Kiswahili (sw)
 
 ---
 
@@ -84,8 +87,8 @@ Fully customizable AI commit message generator – beyond what Cursor or Copilot
 (Recommended: **Gemini** `gemini-2.5-flash-lite` for speed & cost; add custom instructions if needed)
 
 **4. コミットメッセージを生成**  
-「変更を読み込んで提案」ボタンをクリック  
-(Click "Load changes & propose" to generate)
+「変更を読み込んで提案」ボタンをクリックして、プロフェッショナルな commit メッセージを生成  
+(Click "Load changes & propose" to generate professional commit messages)
 
 **5. SCMに反映**  
 生成されたメッセージを確認し、「SCM へ反映」で適用  
