@@ -102,11 +102,12 @@ async function refreshApiKeyState(context: vscode.ExtensionContext, panel: Commi
     const envValue = getEnvVarNames(provider).map(name => process.env[name]).find(Boolean);
     const secretKey = keys[provider];
     const secretValue = secretKey ? await context.secrets.get(secretKey) : undefined;
-    const value = envValue || secretValue;
+    const value = secretValue ?? envValue;
+    const fromEnv = !secretValue && Boolean(envValue);
     if (value) {
       apiKeys[provider] = {
         ready: true,
-        preview: envValue ? 'env' : maskKey(value),
+        preview: fromEnv ? 'env' : maskKey(value),
         length: value.length
       };
     }

@@ -581,8 +581,8 @@ export class CommitController implements vscode.Disposable {
     const apiKeyName = getApiKeySecretName(config, provider);
     const envKey = getEnvVarName(provider);
     const apiKey =
-      (envKey ? envKey.map(name => process.env[name]).find(Boolean) : undefined) ||
-      (apiKeyName ? await this.context.secrets.get(apiKeyName) : undefined);
+      (apiKeyName ? await this.context.secrets.get(apiKeyName) : undefined) ||
+      (envKey ? envKey.map(name => process.env[name]).find(Boolean) : undefined);
     if (!apiKey) {
       throw new Error(this.strings.msgApiKeyMissing.replace('{provider}', this.providerLabels[provider] || provider));
     }
