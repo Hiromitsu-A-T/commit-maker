@@ -9,7 +9,7 @@ Fully customizable AI commit message generator – beyond what Cursor or Copilot
 
 ---
 
-## なぜ Commit Maker が必要なのか？ / Why CommitAker?
+## なぜ Commit Maker が必要なのか？ / Why Commit Maker?
 
 多くの開発者が日常的に使っている **Cursor**、**GitHub Copilot**、**Windsurf** などのツールには、Git commit メッセージ生成機能が標準搭載されています。しかし、以下のような課題はありませんか？
 
