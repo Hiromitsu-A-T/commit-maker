@@ -1,123 +1,227 @@
 # Commit Maker（コミットメーカー） – コミットメッセージ自動生成 / Commit Message Generator  
 ![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/Hiromitsu.commit-maker?label=Marketplace&logo=visualstudiocode) ![VS Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Hiromitsu.commit-maker?logo=visualstudiocode&color=0aa6ff) ![Open VSX Downloads](https://img.shields.io/open-vsx/dt/Hiromitsu/commit-maker?logo=visualstudiocode&color=00c7b7)
 
-Git の差分を読み取り、AI でコミットメッセージを自動生成して SCM 入力欄へ反映する BYOK 拡張（コミットメーカー / AI コミットメッセージ）。日本語・英語どちらでも生成できます。キーはすべてローカルの SecretStorage に保存され、サーバー側に記録を残しません。
-(English) AI commit message generator that reads your Git diff and auto-fills the SCM commit box (BYOK). Works in Japanese/English. API keys stay in local SecretStorage; nothing is sent to the server side.
-SecretStorage は VS Code が提供するローカル暗号化ストレージで、APIキーはPCをまたいで同期されません（Settings Sync も無効）。API キーはこの領域からのみ読み書きします。
-(English) SecretStorage is VS Code’s local encrypted store; API keys are not synced across machines (Settings Sync disabled) and are read/written only from there.
+**あなたの APIキー、あなたのプロンプト、あなたのルール。**  
+Cursor や Copilot では実現できない、完全カスタマイズ可能な AI コミットメッセージ生成ツール。
 
-## レジュメ / Overview（コミット自動生成の要点）
-- **BYOK 完全ローカル**: API キーは SecretStorage に暗号化保存。PC 内のみで共有され、Settings Sync には乗りません。（English: Keys are encrypted in VS Code SecretStorage, stay on the machine, not synced.)
-- **プロンプトプリセットを GUI で複数保存/切替**: プロンプト本体・プリセット・アクティブ選択は全ワークスペース共通（globalState）。上限文字数も指定でき、超過時は先頭20%＋末尾80%を残して中央を省略。（English: Save and switch multiple prompt presets globally; you can set a max length and it keeps the first 20% + last 80% when truncating.)
-- **差分を丸ごと扱う**: Staged / Unstaged / 未追跡 / バイナリを選択して連結取得（見出し付き）。デフォルトで未ステージ・未追跡も含めるため、コミット漏れを防止。（English: Collect staged/unstaged/untracked/binary diffs with headings; unstaged & untracked included by default to avoid missing files.)
-- **コミットメッセージ自動生成**: Git の差分からワンクリックでコミット文を生成し、SCM 入力欄へ即反映。（English: One click generates the commit message from the diff and fills the SCM box.)
-- **操作は二通り**: メインパネルで一連の操作を完結。SCM タイトルバーの杖アイコンからはパネルを開かず生成→反映。（English: Use the main panel flow or the SCM toolbar wand for one-click generate/apply.)
-- **速くて安く試せるモデル構成**: 自分の API キーを持ち込む前提なので、既定はコスパ重視の Gemini `gemini-2.5-flash-lite` を推奨。必要に応じて OpenAI / Claude も同じ UI から即切替できます。※利用料は各プロバイダーの課金に従います。（English: BYOK only, so we default to the cost/latency-friendly Gemini `gemini-2.5-flash-lite`; you can switch to OpenAI or Claude instantly in the same UI. Usage is billed by each provider.)
-- **UI 多言語対応 (31 言語)**: ja / en / zh / zh-TW / ko / es / fr / de / nl / sv / da / nb / vi / th / my / hi / bn / ta / pt-BR / ru / uk / ar / he / fa / tr / id / it / pl / ro / tl / sw をワンクリック切替。選択は自動保存。（English: One-click switch among 31 languages; selection is remembered.)
+(English) **Your API key. Your prompts. Your rules.**  
+Fully customizable AI commit message generator – beyond what Cursor or Copilot can offer.
 
-## できること / What it does
-- ステージ済み/未ステージ/未追跡の変更をまとめて読み込み、ワンクリックでコミット文を提案。
-  (English) Load staged/unstaged/untracked changes together and propose a commit in one click.
-- プロバイダー選択（Gemini / OpenAI / Claude）とモデル指定に対応。コストと速度から **Gemini `gemini-2.5-flash-lite` 推奨**（デフォルト）。
-  (English) Supports Gemini/OpenAI/Claude with model selection; default is fast & low-cost `gemini-2.5-flash-lite`.
-- 追加指示欄に「英語で短く」「絵文字なし」などチームのルールに合わせて自由に書ける。
-  (English) Add custom instructions like "short in English" or "no emojis" to fit team rules.
-- SCM ビューのタイトルバーにある杖アイコン（Generate）からも実行可能。パネルを開かなくても生成→適用まで完了。
-  (English) Run from the SCM toolbar wand icon without opening the panel; generate and apply in one shot.
-- プロンプトの保存・上書き・削除が可能。PC 内の全ワークスペースで共通（Settings Sync を除く）で保持し、デフォルトプリセットは常に残ります。
-  (English) Save/overwrite/delete prompt presets shared across local workspaces (except Settings Sync); default presets always remain.
+---
 
-## よくある課題
-- Copilot は個人向けに API キーを出さず、BYOK もエンタープライズのプレビューのみで手軽に自前キーを持ち込めない。
-  (English) Copilot doesn’t provide personal API keys; BYOK is limited to enterprise preview.
-- Cursor は自前キー（BYOK）を入れても Agent/Composer など主要機能が Pro/Business 向けに制限されるケースがある。
-  (English) In Cursor, even with BYOK, Agent/Composer features can be restricted to paid plans.
-- 多くの IDE 拡張はプロンプトが固定されており、GUI で複数プリセットを保存・切替できない。
-  (English) Many IDE extensions have fixed prompts and no GUI to save/switch multiple presets.
-- モデル／プロバイダーの変更が手間で、コスト・速度の最適化をすぐ試せない（高速モデルを選べず生成が遅くなる）。
-  (English) Switching models/providers is cumbersome, so you can’t easily try faster/cheaper options.
+## なぜ Commit Maker が必要なのか？ / Why CommitAker?
 
-## なぜ Commit Maker なのか（課題に対する解決策）
-- **課題: 自前キーを使えない / 共有したくない**  
-  → Commit Maker はユーザーの OpenAI / Gemini / Claude キーのみで動作し、SecretStorage にローカル保存。
-  (English) Uses your own OpenAI/Gemini/Claude keys only; stored locally in SecretStorage.
-- **課題: プロンプトを GUI で切替できない**  
-  → プリセットの保存・上書き・削除をパネルで完結。PC 内全ワークスペース共通でワンクリック適用。
-  (English) Save/overwrite/delete prompts in the panel; one-click apply across local workspaces.
-- **課題: モデル／プロバイダー変更が面倒**  
-  → 同じ UI で高速モデル（`flash-lite` など）と高精度モデルを即切替し、速度とコストを調整。
-  (English) Switch fast/precise models in the same UI to balance speed and cost.
-- **課題: ステージ済みだけ／差分が限定される**  
-  → Staged / Unstaged / 未追跡 / バイナリを見出し付きで連結し、漏れを防止。長い差分は自動で中央省略。
-  (English) Combine staged/unstaged/untracked/binary diffs with headings; long diffs auto-center-ellipsized.
-- **課題: 作業フローが中断する**  
-  → SCM タイトルバーの杖アイコンで「差分取得→生成→SCM 反映」を一発実行。画面遷移なしで完結。
-  (English) Wand icon in SCM toolbar runs fetch diff → generate → apply without leaving SCM.
+多くの開発者が日常的に使っている **Cursor**、**GitHub Copilot**、**Windsurf** などのツールには、コミットメッセージ生成機能が標準搭載されています。しかし、以下のような課題はありませんか？
 
-## 使い方（インストール済み前提）
-1. アクティビティバーの **Commit Maker** を開く。
-   (English) Open **Commit Maker** from the Activity Bar.
-2. 上部の API キー欄で使いたいプロバイダーを選び、キーを保存（SecretStorage に暗号化保存）。
-   (English) Choose a provider, save its API key (stored encrypted in SecretStorage).
-   ※ すべて自分の API キーを持ち込む BYOK 方式です。利用料は各プロバイダーの課金体系に従います。  
-   (English) BYOK only: you bring your own keys, and usage is billed by each provider.
-3. パネル内の設定でプロバイダー/モデルを選択（推奨: Gemini → `gemini-2.5-flash-lite`）。必要なら追加指示を入力。
-   (English) Pick provider/model (recommended: Gemini `gemini-2.5-flash-lite`) and add extra instructions if needed.
-4. 「変更を読み込んで提案」で候補を生成。
-   (English) Click “Load changes & propose” to generate candidates.
-5. 気に入ったら「SCM へ反映」でコミットメッセージ欄へ自動入力。
-   (English) Press “Apply to SCM” to fill the commit box.
-   - SCM ビューのタイトルバーにある杖のボタンからも、同じ処理を一発で実行できます。
-     (English) The wand icon in the SCM title bar runs the same one-click flow.
+(English) Popular tools like **Cursor**, **GitHub Copilot**, and **Windsurf** come with commit message generation. But do you face these issues?
 
-## カスタマイズ（主なポイントだけ）
-- プロンプトプリセット: 保存/上書き/削除に対応。PC 内ワークスペース共通（Settings Sync は除外）。
-  (English) Prompt presets can be saved/overwritten/deleted; shared across local workspaces (no Settings Sync).
-- 差分の取り込み範囲: Staged / Unstaged / 未追跡 / バイナリを個別にオン・オフ。未追跡は未ステージとセットで取り込み。
-  (English) Toggle staged/unstaged/untracked/binary inclusion; untracked is paired with unstaged.
-- モデルと上限: 推奨モデルをプルダウンで選択、独自モデル名も入力可。プロンプト長は無制限/任意文字数で制御し、超過時は中央省略。
-  (English) Choose recommended models or type custom; set prompt length limit with center-ellipsis truncation.
-- OpenAI 追加設定: `reasoningEffort`, `verbosity` を UI から切替可能。
-  (English) Switch OpenAI `reasoningEffort` and `verbosity` from the UI.
-- 既定値と保存範囲: 初期プロバイダーは Gemini、モデルは `gemini-2.5-flash-lite`。未ステージ=オン / 未追跡=オン / バイナリ=オン がデフォルト。プロンプト本体・プリセット類は PC 内共通（globalState）に保存し、プロバイダーやモデル選択・差分範囲はワークスペース単位で保持。
-  (English) Defaults: provider Gemini, model `gemini-2.5-flash-lite`; unstaged/untracked/binary on. Prompts/presets saved globally; provider/model/diff scope saved per workspace.
-- プロンプト長の省略方法: 上限を超えると先頭20% + 末尾80%を残し、中央を `[..., <省略文字数> chars omitted...]` で省略します。
-  (English) If prompt exceeds the limit, keep first 20% + last 80% and center-ellipsis the rest.
+### 既存ツールの課題 / Common Issues
+- **プロンプトをカスタマイズできない** – チームのコミット規約に合わせて細かく調整できない  
+  (English) **No prompt customization** – Can't fine-tune for your team's commit conventions
+- **自分の APIキーが使えない** – Copilot は個人向けに API キーを提供せず、Cursor も BYOK で一部機能が制限される  
+  (English) **Can't use your own API keys** – Copilot doesn't offer personal keys; Cursor restricts features even with BYOK
+- **プロバイダー・モデル変更が面倒** – 高速モデルや安価なモデルへの切り替えが簡単にできない  
+  (English) **Cumbersome provider/model switching** – Hard to quickly try faster or cheaper models
+- **プロンプトを複数保存できない** – 案件やシーンごとに使い分けたいのに、毎回手動で調整が必要  
+  (English) **No preset management** – Can't save multiple prompts for different projects or scenarios
 
-## 設定キー（主要なもの）
-- `commitMaker.provider` / `model` / `endpoint*` … プロバイダーとモデル設定。
-  (English) Provider/model and endpoint settings.
-- `commitMaker.apiKeySecret*` … SecretStorage に保存するキー名。
-  (English) SecretStorage key names for API keys.
-- `commitMaker.reasoningEffort` / `verbosity` … OpenAI Responses の追加パラメータ。
-  (English) Extra parameters for OpenAI Responses.
-- `commitMaker.requestTimeoutMs` … LLM 呼び出しタイムアウト (ms)。
-  (English) LLM request timeout in ms.
-- `commitMaker.logLlm` … LLM リクエスト/リトライを Output チャネルへ記録（デフォルト off）。
-  (English) Log LLM requests/retries to Output (default off).
-※ プロンプト本体・プリセット類は PC 内で共通保存（globalState）、その他はワークスペース単位。
-  (English) Prompts/presets are saved globally (local machine); other settings are per workspace.
+### Commit Maker の解決策 / Commit Maker's Solution
+✅ **完全 BYOK（Bring Your Own Key）** – OpenAI / Gemini / Claude など、あなたの API キーで動作。ローカルの SecretStorage に暗号化保存され、外部サーバーには一切送信されません。  
+(English) **Full BYOK** – Works with your OpenAI/Gemini/Claude keys, stored encrypted in local SecretStorage, never sent to external servers.
 
-## スクリーンショット
-メインパネル（プロバイダー選択・差分読み込み・生成結果までを表示）
-![Commit Maker パネル / Commit message generator panel](https://raw.githubusercontent.com/Hiromitsu-A-T/commit-maker/main/media/panel.png)
+✅ **プロンプトを複数保存・切り替え** – GUI で複数のプロンプトプリセットを保存し、ワンクリックで切り替え可能。チーム規約、個人用、実験用など、用途に応じて使い分けられます。  
+(English) **Save & switch multiple prompts** – Store presets in the GUI and switch with one click for team rules, personal use, or experiments.
 
-上部でプロバイダー別 API キーを保存・マスク表示。プロンプトは複数プリセットを保存/切替でき、生成結果をその場で確認できます。
+✅ **プロバイダー・モデルを自由に選択** – 同じ UI で Gemini の高速モデル（`gemini-2.5-flash-lite`）から OpenAI の高精度モデルまで即座に切り替え。コストと速度を最適化できます。  
+(English) **Flexible provider/model selection** – Switch instantly between Gemini's fast models and OpenAI's precision models in the same UI to optimize cost and speed.
 
-SCM ビューのタイトルバーにある Generate（杖アイコン）ショートカット
-![SCM タイトルバーのショートカット / SCM toolbar button](https://raw.githubusercontent.com/Hiromitsu-A-T/commit-maker/main/media/scm-toolbar.png)
+✅ **差分を完全に把握** – Staged / Unstaged / 未追跡 / バイナリを見出し付きで取得。デフォルトで未ステージ・未追跡も含めるため、コミット漏れを防止。  
+(English) **Complete diff coverage** – Fetch staged/unstaged/untracked/binary with headings; defaults include unstaged & untracked to prevent omissions.
 
-パネルを開かなくても、常にこのアイコンから差分取得→生成→SCM 反映まで実行できます。
+---
 
-## 設定の場所
-- ほとんどの設定はパネル内で完結します。より細かな既定値は VS Code の設定 (`⌘,` →「Commit Maker」) から変更できます。
-  (English) Most settings live in the panel; advanced defaults are in VS Code settings (⌘, → "Commit Maker").
+## 主な機能 / Key Features
+- **ワンクリックでコミットメッセージ生成**: Git の差分から AI が自動生成し、SCM 入力欄へ即反映  
+  (English) **One-click commit message generation** – AI reads your Git diff and fills the SCM box instantly
+- **プロンプトプリセットの保存・管理**: GUI で複数保存し、PC 内の全ワークスペースで共通利用（Settings Sync を除く）  
+  (English) **Prompt preset management** – Save multiple in GUI, shared across local workspaces (except Settings Sync)
+- **推奨モデルは高速・低コスト**: デフォルトで Gemini `gemini-2.5-flash-lite` を採用。必要に応じて OpenAI / Claude へ切り替え可能  
+  (English) **Fast & low-cost default** – Gemini `gemini-2.5-flash-lite` by default; switch to OpenAI/Claude as needed
+- **追加指示欄でさらにカスタマイズ**: 「英語で短く」「絵文字なし」など、チームルールに合わせて自由に指定  
+  (English) **Custom instructions field** – Add rules like "short in English" or "no emojis" to fit team conventions
+- **SCM ツールバーからも実行可能**: パネルを開かず、杖アイコンから「差分取得→生成→適用」を一発で完了  
+  (English) **SCM toolbar shortcut** – Run "fetch diff → generate → apply" with the wand icon, no panel needed
+- **UI 多言語対応 (31 言語)**: 日本語・英語・中国語・韓国語・スペイン語など、ワンクリックで切り替え可能  
+  (English) **31 languages supported** – Switch between Japanese, English, Chinese, Korean, Spanish, and more with one click
 
-## 動作環境とプライバシー
-- VS Code 1.94 以降、Git リポジトリ上で動作。
-  (English) Requires VS Code 1.94+ on a Git repo.
-- API キーは SecretStorage にのみ保存。差分は選択した LLM プロバイダーへ送信されますが、拡張自体はログを外部送信しません。
-  (English) API keys stay in SecretStorage; diffs go to the chosen LLM provider; the extension sends no external logs.
+---
+
+## セキュリティとプライバシー / Security & Privacy
+- **API キーは完全ローカル保存**: VS Code の SecretStorage に暗号化保存。PC をまたいで同期されず、Settings Sync も無効。  
+  (English) **API keys stay local** – Encrypted in VS Code SecretStorage, not synced across machines, Settings Sync disabled.
+- **差分は選択したプロバイダーのみに送信**: 拡張機能自体は外部にログを送信しません。  
+  (English) **Diffs sent only to your chosen provider** – The extension itself sends no external logs.
+
+
+## 使い方 / Quick Start
+
+### 基本的な流れ / Basic Workflow
+
+**1. パネルを開く**  
+アクティビティバーの **Commit Maker** アイコンをクリック  
+(Open **Commit Maker** from the Activity Bar)
+
+**2. APIキーを設定**  
+上部でプロバイダーを選択し、APIキーを保存（SecretStorage に暗号化保存）  
+(Choose a provider and save your API key — encrypted in SecretStorage)
+
+> 💡 **BYOK方式**: すべて自分のAPIキーを使用。利用料は各プロバイダーの課金体系に従います。  
+> (BYOK only: bring your own keys; usage is billed by each provider)
+
+**3. プロバイダー・モデルを選択**  
+推奨: **Gemini** → `gemini-2.5-flash-lite`（高速・低コスト）  
+必要に応じて追加指示を入力  
+(Recommended: **Gemini** `gemini-2.5-flash-lite` for speed & cost; add custom instructions if needed)
+
+**4. コミットメッセージを生成**  
+「変更を読み込んで提案」ボタンをクリック  
+(Click "Load changes & propose" to generate)
+
+**5. SCMに反映**  
+生成されたメッセージを確認し、「SCM へ反映」で適用  
+(Review and click "Apply to SCM" to fill the commit box)
+
+### ショートカット / Quick Access
+SCM ビューのタイトルバーにある **杖アイコン** から、パネルを開かずに「差分取得→生成→適用」を一発実行できます。  
+(Use the **wand icon** in the SCM toolbar for one-click "fetch → generate → apply" without opening the panel)
+
+---
+
+## カスタマイズ / Customization
+
+### プロンプト管理 / Prompt Management
+- **プリセット機能**: 複数のプロンプトを保存・上書き・削除  
+  (Save, overwrite, and delete multiple prompt presets)
+- **共有範囲**: PC 内の全ワークスペースで共通利用（Settings Sync は除外）  
+  (Shared across local workspaces, excluding Settings Sync)
+
+### 差分の取り込み設定 / Diff Inclusion Settings
+個別にオン・オフ可能（Individually toggleable）:
+- **Staged** – ステージ済みの変更
+- **Unstaged** – 未ステージの変更（デフォルト: オン）
+- **Untracked** – 未追跡ファイル（デフォルト: オン、未ステージとセット）
+- **Binary** – バイナリファイル（デフォルト: オン）
+
+### モデルとプロンプト長 / Model & Prompt Length
+- **モデル選択**: 推奨モデルをプルダウンから選択、または独自モデル名を入力  
+  (Choose recommended models or enter custom model names)
+- **プロンプト長制限**: 無制限 / 任意の文字数で設定可能  
+  (Unlimited or custom character limit)
+- **省略方法**: 上限超過時は先頭20% + 末尾80%を残し、中央を省略  
+  (When exceeded: keeps first 20% + last 80%, center-ellipsized)
+
+### OpenAI専用設定 / OpenAI-Specific Settings
+UIから切り替え可能（Switchable from UI）:
+- `reasoningEffort` – 推論の深さ
+- `verbosity` – 出力の詳細度
+
+### デフォルト値と保存範囲 / Defaults & Storage Scope
+
+| 設定項目 | デフォルト値 | 保存範囲 |
+|---------|------------|---------|
+| プロバイダー | Gemini | ワークスペース単位 |
+| モデル | `gemini-2.5-flash-lite` | ワークスペース単位 |
+| プロンプト本体・プリセット | - | PC内共通（globalState） |
+| 差分範囲設定 | Unstaged/Untracked/Binary: オン | ワークスペース単位 |
+
+(Defaults & Storage)
+- **Provider**: Gemini, **Model**: `gemini-2.5-flash-lite` (workspace-scoped)
+- **Prompts/Presets**: Shared globally on local machine (globalState)
+- **Diff settings**: Unstaged/Untracked/Binary enabled by default (workspace-scoped)
+
+---
+
+## 設定キー / Configuration Keys
+
+<details>
+<summary>📋 詳細な設定項目を表示 / Show advanced settings</summary>
+
+### 主要な設定キー / Main Configuration Keys
+
+| 設定キー | 説明 |
+|---------|------|
+| `commitMaker.provider` | プロバイダー設定（Gemini / OpenAI / Claude） |
+| `commitMaker.model` | モデル設定（例: `gemini-2.5-flash-lite`） |
+| `commitMaker.endpoint*` | カスタムエンドポイント設定 |
+| `commitMaker.apiKeySecret*` | SecretStorage に保存するキー名 |
+| `commitMaker.reasoningEffort` | OpenAI Responses の推論設定 |
+| `commitMaker.verbosity` | OpenAI Responses の出力詳細度 |
+| `commitMaker.requestTimeoutMs` | LLM 呼び出しタイムアウト（ミリ秒） |
+| `commitMaker.logLlm` | LLM リクエスト/リトライのログ記録（デフォルト: off） |
+
+(Configuration keys for provider, model, endpoints, API key storage, OpenAI-specific parameters, timeout, and logging)
+
+**保存範囲 / Storage Scope:**
+- プロンプト本体・プリセット → PC内共通（globalState）
+- その他の設定 → ワークスペース単位
+
+(Prompts/presets: globally on local machine; other settings: per workspace)
+
+</details>
+
+---
+
+## スクリーンショット / Screenshots
+
+### メインパネル / Main Panel
+プロバイダー選択・差分読み込み・生成結果までを一画面で表示  
+(Provider selection, diff loading, and generation results in one view)
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Hiromitsu-A-T/commit-maker/main/media/panel.png" alt="Commit Maker パネル / Commit message generator panel" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-width: 100%;">
+</p>
+
+**機能 / Features**:
+- プロバイダー別APIキーの保存・マスク表示
+- 複数プロンプトプリセットの保存・切り替え
+- 生成結果のリアルタイム確認
+
+(Save & mask API keys by provider, manage multiple prompt presets, review results instantly)
+
+### SCMツールバーショートカット / SCM Toolbar Shortcut
+杖アイコンから差分取得→生成→反映を一発実行  
+(One-click "fetch → generate → apply" via wand icon)
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Hiromitsu-A-T/commit-maker/main/media/scm-toolbar.png" alt="SCM タイトルバーのショートカット / SCM toolbar button" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-width: 100%;">
+</p>
+
+パネルを開かずに、常にこのアイコンからワンクリック実行可能  
+(Always accessible without opening the panel)
+
+---
+
+## その他の情報 / Additional Information
+
+### 設定の場所 / Settings Location
+- **基本設定**: パネル内で完結  
+  (Most settings available in the panel)
+- **詳細設定**: VS Code設定（`⌘,` →「Commit Maker」）  
+  (Advanced settings in VS Code preferences: `⌘,` → "Commit Maker")
+
+### 動作環境 / Requirements
+- **VS Code**: 1.94 以降（1.94+）
+- **Git**: リポジトリ上で動作（Requires Git repository）
+
+### プライバシー / Privacy
+- **APIキー**: SecretStorageにのみ保存、外部送信なし  
+  (Stored only in SecretStorage, never sent externally)
+- **差分データ**: 選択したLLMプロバイダーのみに送信  
+  (Diffs sent only to your chosen LLM provider)
+- **拡張機能**: ログを外部送信しません  
+  (Extension itself sends no external logs)
+
+---
 
 ## ライセンス
 Apache-2.0
