@@ -38,14 +38,22 @@ jobs:
           mv commit-maker-${VERSION}.vsix vsix/
           npm run clean:nls
 
-      - name: Publish to VS Marketplace
+      - name: Publish to VS Marketplace (best effort)
+        continue-on-error: true
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
           npx vsce publish --packagePath vsix/commit-maker-${VERSION}.vsix
+      - name: Ensure Open VSX namespace
+        if: always()
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          npx ovsx create-namespace Hiromitsu || true
 
       - name: Publish to Open VSX
+        if: always()
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
@@ -53,4 +61,5 @@ jobs:
           npx ovsx publish vsix/commit-maker-${VERSION}.vsix --skip-duplicate
 
       - name: Clean stray VSIX and enforce limit (keep latest 5)
+        if: always()
         run: npm run clean:vsix
