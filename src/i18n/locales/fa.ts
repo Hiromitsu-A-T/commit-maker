@@ -1,0 +1,132 @@
+import { UiStrings } from '../types';
+
+const fa: UiStrings = {
+  langCode: 'fa',
+  appTitle: 'Commit Maker',
+
+  languageSectionTitle: 'زبان نمایش',
+  languageName: 'فارسی',
+
+  apiKeySectionTitle: 'کلید API',
+  apiKeyProviderLabel: 'ارائه‌دهنده برای ذخیره',
+  apiKeyIssueButton: 'دریافت کلید API',
+  apiKeyLabel: 'کلید API',
+  apiKeyPlaceholder: 'sk-... / AIza... / sk-ant-...',
+  apiKeySaveButton: 'ذخیره',
+  apiKeyClearButton: 'پاک کردن',
+
+  llmSectionTitle: 'تنظیمات LLM',
+  providerLabel: 'ارائه‌دهنده',
+  modelLabel: 'مدل',
+  customModelLabel: 'نام مدل سفارشی',
+  customModelPlaceholder: 'example-model',
+  reasoningLabel: 'Reasoning Effort (فقط OpenAI)',
+  verbosityLabel: 'سطح جزئیات (فقط OpenAI)',
+  providerLabelGemini: 'Google Gemini',
+  providerLabelOpenAi: 'OpenAI (خانواده GPT-5)',
+  providerLabelClaude: 'Anthropic Claude',
+
+  promptSectionTitle: 'پرومپت و گزینه‌ها',
+  presetNamePlaceholder: 'نام پیش‌تنظیم',
+  presetAddButton: 'افزودن جدید',
+  presetDeleteButton: 'حذف',
+  promptTextareaPlaceholder: 'مثلاً عنوانی حداکثر ۵۰ کاراکتر و بدنه بولت‌دار به فارسی بنویسید.',
+  includeUnstagedLabel: 'تغییرات unstaged را شامل کن',
+  includeUntrackedLabel: 'فایل‌های untracked را شامل کن',
+  includeBinaryLabel: 'فایل‌های احتمالاً باینری را شامل کن',
+  maxPromptLabel: 'حد طول پرومپت',
+  maxPromptUnlimited: 'نامحدود (پیش‌فرض)',
+  maxPromptLimited: 'تنظیم حد',
+  maxPromptUnitLabel: 'کاراکتر',
+  maxPromptHint:
+    'برای محدود کردن توکن/هزینه استفاده کنید. ۰ یا خالی یعنی نامحدود. در صورت تجاوز، ۲۰٪ اول و ۸۰٪ آخر نگه داشته می‌شود.',
+
+  generationSectionTitle: 'تولید و نتیجه',
+  generateButton: 'تولید',
+  generateButtonTitle: 'diff را بارگذاری و پیام commit را تولید کن',
+  applyButton: 'اعمال به SCM',
+  applyButtonTitle: 'نتیجه را به فیلد commit در کنترل نسخه کپی کن',
+  resultPlaceholder: 'هنوز تولید نشده است.',
+  resultHint: 'پس از بررسی نتیجه، روی "اعمال به SCM" بزنید تا در فیلد commit کپی شود.',
+  errorPlaceholder: '-',
+
+  statusIdle: 'در انتظار',
+  statusLoading: 'در حال تولید با LLM…',
+  statusReady: 'انجام شد',
+  statusError: 'خطا',
+  badgeUnstagedOn: 'Staged + Unstaged',
+  badgeUnstagedOff: 'فقط Staged',
+
+  apiKeySaved: 'ذخیره شد',
+  apiKeyNotSaved: 'ذخیره نشده',
+  apiKeySavedPreviewPrefix: 'ذخیره شد: ',
+  providerNeedKey: 'ابتدا کلید API را ذخیره کنید',
+  modelNeedKey: 'پس از ذخیره کلید می‌توانید مدل را انتخاب کنید.',
+  customModelOption: 'سفارشی…',
+
+  presetButtonNew: 'ذخیره به‌عنوان جدید',
+  presetButtonSaved: 'ذخیره شد',
+  presetButtonOverwrite: 'جایگزین کردن',
+  presetTitleNew: 'ذخیره به‌عنوان پیش‌تنظیم جدید',
+  presetTitleNoChange: 'بدون تغییر',
+  presetTitleOverwrite: 'پیش‌تنظیم انتخاب‌شده را جایگزین کن',
+
+  defaultCommitPrompt: [
+    'عنوانی حداکثر ۵۰ کاراکتر بنویسید و در صورت نیاز خطوط بدنه بولت‌دار ۷۲ کاراکتری.',
+    '- از لحن امری پرهیز کنید؛ تغییر را کوتاه توضیح دهید (بدون نظر یا حدس)',
+    '- خطوط بدنه با "- " شروع شوند؛ فقط در صورت نیاز اضافه کنید، هر خط تا ۷۲ کاراکتر',
+    '- تغییرات شکسته و شماره‌های issue/PR را در بدنه درج کنید در صورت لزوم',
+    '- بدون نظرات/عذرخواهی/اعلام اطمینانِ AI. فقط حقایق',
+    '- پیشوند نوع Conventional Commits را به ابتدای عنوان اضافه کنید',
+    '- خروجی به زبان فارسی باشد'
+  ].join('\n'),
+  defaultPresetLabel: 'پیش‌فرض (قفل، قابل ویرایش)',
+  providerDescriptionGemini: 'مستقیماً Generative Language API (generateContent) را فراخوانی می‌کند.',
+  providerDescriptionOpenAi: 'از endpoint سازگار با Responses API / Chat Completions استفاده می‌کند.',
+  providerDescriptionClaude: 'از Claude 3 messages API استفاده می‌کند.',
+
+  msgApiKeySaved: 'کلید API ذخیره شد.',
+  msgApiKeySavePick: 'سازنده برای ذخیره کلید API را انتخاب کنید',
+  msgApiKeyInputPrompt: 'کلید API برای {provider} را وارد کنید',
+
+  msgCommitGenerateTitle: 'تولید پیام کامیت (Commit Maker)',
+  msgCommitGenerateFetchingDiff: 'در حال دریافت diff…',
+  msgCommitGenerateCallingLlm: 'در حال پرسش از LLM…',
+  msgCommitGenerateFailedPrefix: 'تولید پیام کامیت ناموفق بود: ',
+  msgCommitApplyProgress: 'در حال اعمال به SCM…',
+  msgCommitApplySuccess: 'پیام کامیت در فیلد SCM کپی شد.',
+  msgCommitNotGenerated: 'ابتدا پیام کامیت را تولید کنید.',
+  msgRepoNotFound: 'مخزن Git یافت نشد.',
+  msgCancelled: 'توسط کاربر لغو شد',
+  msgDiffEmpty: 'هیچ diff ای یافت نشد. Stage/changes را بررسی کنید.',
+  msgUnsupportedProvider: 'سازنده پشتیبانی نمی‌شود: {provider}',
+  msgApiKeyMissing: 'کلید API برای {provider} تنظیم نشده است. در تنظیمات ذخیره کنید.',
+  msgLlmEmptyOpenAi: 'پاسخ OpenAI خالی بود.',
+  msgLlmEmptyGemini: 'پاسخ Gemini خالی بود.',
+  msgLlmEmptyClaude: 'پاسخ Claude خالی بود.',
+  msgHttpsInvalid: '{label} نامعتبر است.',
+  msgHttpsRequired: '{label} باید با https:// شروع شود. تنظیمات را بررسی کنید.',
+  msgGitDiffFailed: 'اجرای git diff ناموفق بود: {detail}',
+  msgGitStatusFailed: 'git status --porcelain ناموفق بود: {detail}',
+  msgUntrackedReadFailed: 'خواندن فایل untracked ناموفق بود: {path} ({detail})',
+  msgUntrackedSkipBinary: 'فایل untracked رد شد (احتمالاً باینری): {path}',
+  msgHttpError: '{label} HTTP {status}: {text}',
+  logLlmAttempt: '{label}: تلاش {attempt}/{max}',
+  logLlmRetry: '{label}: تلاش مجدد در {delay}ms ({error})',
+
+  toastSaved: '{action} در {timestamp}',
+  toastDeleted: 'حذف شد در {timestamp}',
+
+  actionCreatedLabel: 'ایجاد شد',
+  actionUpdatedLabel: 'به‌روزرسانی شد',
+  actionDeletedLabel: 'حذف شد',
+
+  outputFormatSection:
+    '# قالب خروجی\n- خط ۱: عنوان تا ۵۰ کاراکتر (از لحن امری پرهیز کنید)\n- خط ۲ به بعد (فقط در صورت نیاز): خطوط بدنه بولت‌دار "- "',
+  diffSectionStaged: '### Stage شده',
+  diffSectionUnstaged: '### Unstaged',
+  diffSectionUntracked: '### Untracked {path}',
+  diffHeading: '# Diff'
+};
+
+export default fa;

@@ -1,0 +1,10 @@
+{
+  "command.commitMaker.showPanel.title": "Commit Maker: Onyesha paneli",
+  "command.commitMaker.generateCommitFromSCM.title": "Commit Maker: Tengeneza ujumbe wa commit",
+  "command.commitMaker.cancelCommitFromSCM.title": "Commit Maker: Ghairi utengenezaji",
+  "command.commitMaker.saveApiKey.title": "Commit Maker: Hifadhi ufunguo wa API",
+  "command.commitMaker.category": "Commit Maker",
+  "configuration.commitMaker.title": "Commit Maker",
+  "views.activitybar.commitMaker.title": "Commit Maker",
+  "views.commitMakerContainer.commitMakerView.name": "Commit Maker"
+}

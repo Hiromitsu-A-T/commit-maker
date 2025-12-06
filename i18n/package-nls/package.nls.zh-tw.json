@@ -1,0 +1,10 @@
+{
+  "command.commitMaker.showPanel.title": "Commit Maker：顯示面板",
+  "command.commitMaker.generateCommitFromSCM.title": "Commit Maker：產生提交訊息",
+  "command.commitMaker.cancelCommitFromSCM.title": "Commit Maker：取消提交訊息生成",
+  "command.commitMaker.saveApiKey.title": "Commit Maker：儲存 API 金鑰",
+  "command.commitMaker.category": "Commit Maker",
+  "configuration.commitMaker.title": "Commit Maker",
+  "views.activitybar.commitMaker.title": "Commit Maker",
+  "views.commitMakerContainer.commitMakerView.name": "Commit Maker"
+}

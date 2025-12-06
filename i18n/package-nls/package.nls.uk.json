@@ -1,0 +1,10 @@
+{
+  "command.commitMaker.showPanel.title": "Commit Maker: Показати панель",
+  "command.commitMaker.generateCommitFromSCM.title": "Commit Maker: Згенерувати повідомлення коміту",
+  "command.commitMaker.cancelCommitFromSCM.title": "Commit Maker: Скасувати генерацію",
+  "command.commitMaker.saveApiKey.title": "Commit Maker: Зберегти API-ключ",
+  "command.commitMaker.category": "Commit Maker",
+  "configuration.commitMaker.title": "Commit Maker",
+  "views.activitybar.commitMaker.title": "Commit Maker",
+  "views.commitMakerContainer.commitMakerView.name": "Commit Maker"
+}

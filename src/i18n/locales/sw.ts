@@ -1,0 +1,132 @@
+import { UiStrings } from '../types';
+
+const sw: UiStrings = {
+  langCode: 'sw',
+  appTitle: 'Commit Maker',
+
+  languageSectionTitle: 'Lugha ya onyesho',
+  languageName: 'Kiswahili',
+
+  apiKeySectionTitle: 'Ufunguo wa API',
+  apiKeyProviderLabel: 'Mtoa huduma wa kuhifadhi',
+  apiKeyIssueButton: 'Pata ufunguo wa API',
+  apiKeyLabel: 'Ufunguo wa API',
+  apiKeyPlaceholder: 'sk-... / AIza... / sk-ant-...',
+  apiKeySaveButton: 'Hifadhi',
+  apiKeyClearButton: 'Futa',
+
+  llmSectionTitle: 'Mipangilio ya LLM',
+  providerLabel: 'Mtoa huduma',
+  modelLabel: 'Mfano',
+  customModelLabel: 'Jina la mfano maalum',
+  customModelPlaceholder: 'example-model',
+  reasoningLabel: 'Reasoning Effort (OpenAI pekee)',
+  verbosityLabel: 'Kiwango cha maelezo (OpenAI pekee)',
+  providerLabelGemini: 'Google Gemini',
+  providerLabelOpenAi: 'OpenAI (familia ya GPT-5)',
+  providerLabelClaude: 'Anthropic Claude',
+
+  promptSectionTitle: 'Prompt na chaguo',
+  presetNamePlaceholder: 'Jina la preset',
+  presetAddButton: 'Ongeza mpya',
+  presetDeleteButton: 'Futa',
+  promptTextareaPlaceholder: 'mfano: Andika kichwa cha hadi herufi 50 na mwili wa orodha kwa Kiswahili.',
+  includeUnstagedLabel: 'Jumuisha mabadiliko yasiyo staged',
+  includeUntrackedLabel: 'Jumuisha faili zisizofuatiliwa',
+  includeBinaryLabel: 'Jumuisha faili zinazoshukiwa kuwa binary',
+  maxPromptLabel: 'Kikomo cha urefu wa prompt',
+  maxPromptUnlimited: 'Hakuna kikomo (chaguo-msingi)',
+  maxPromptLimited: 'Weka kikomo',
+  maxPromptUnitLabel: 'herufi',
+  maxPromptHint:
+    'Tumia kupunguza tokeni/g harama. 0 au tupu = hakuna kikomo. Ikitoka, asilimia 20 za mwanzo na 80 za mwisho zitaachwa.',
+
+  generationSectionTitle: 'Uzalishaji na matokeo',
+  generateButton: 'Tengeneza',
+  generateButtonTitle: 'Pakia diff na tengeneza ujumbe wa commit',
+  applyButton: 'Tumia kwa SCM',
+  applyButtonTitle: 'Nakili matokeo kwenye kisanduku cha commit cha Source Control',
+  resultPlaceholder: 'Bado haijatengenezwa.',
+  resultHint: 'Kagua matokeo kisha bonyeza "Tumia kwa SCM" ili kunakili kwenye kisanduku cha commit.',
+  errorPlaceholder: '-',
+
+  statusIdle: 'Subiri',
+  statusLoading: 'Inatengeneza na LLM…',
+  statusReady: 'Imekamilika',
+  statusError: 'Hitilafu',
+  badgeUnstagedOn: 'Staged + zisizo staged',
+  badgeUnstagedOff: 'Staged pekee',
+
+  apiKeySaved: 'Imehifadhiwa',
+  apiKeyNotSaved: 'Haijahifadhiwa',
+  apiKeySavedPreviewPrefix: 'Imehifadhiwa: ',
+  providerNeedKey: 'Hifadhi ufunguo wa API kwanza',
+  modelNeedKey: 'Chagua mfano baada ya kuhifadhi ufunguo.',
+  customModelOption: 'Maalum…',
+
+  presetButtonNew: 'Hifadhi kama mpya',
+  presetButtonSaved: 'Imehifadhiwa',
+  presetButtonOverwrite: 'Andika juu',
+  presetTitleNew: 'Hifadhi kama preset mpya',
+  presetTitleNoChange: 'Hakuna mabadiliko',
+  presetTitleOverwrite: 'Andika juu ya preset iliyo chaguliwa',
+
+  defaultCommitPrompt: [
+    'Andika kichwa cha hadi herufi 50 na, ikiwezekana, mistari ya mwili yenye vidokezo hadi herufi 72.',
+    '- Epuka amri; eleza kwa kifupi mabadiliko (hakuna maoni au kubahatisha)',
+    '- Mistari ya mwili ianze na "- "; ongeza tu ikihitajika, kila mstari hadi herufi 72',
+    '- Ongeza breaking changes na nambari za issue/PR mwilini inapohitajika',
+    '- Hakuna maoni ya AI, kuomba radhi au taarifa za uhakika. Ukweli tu',
+    '- Ongeza aina ya Conventional Commits kama kiambishi kwenye kichwa',
+    '- Toka kwa Kiswahili'
+  ].join('\n'),
+  defaultPresetLabel: 'Chaguo-msingi (imefungwa, inaweza kuhaririwa)',
+  providerDescriptionGemini: 'Hupiga moja kwa moja Generative Language API (generateContent).',
+  providerDescriptionOpenAi: 'Hutumia endpoint inayooana na Responses API / Chat Completions.',
+  providerDescriptionClaude: 'Hutumia Claude 3 messages API.',
+
+  msgApiKeySaved: 'Ufunguo wa API umehifadhiwa.',
+  msgApiKeySavePick: 'Chagua mtoa huduma wa kuhifadhi ufunguo wa API',
+  msgApiKeyInputPrompt: 'Ingiza ufunguo wa API wa {provider}',
+
+  msgCommitGenerateTitle: 'Uundaji wa ujumbe wa commit (Commit Maker)',
+  msgCommitGenerateFetchingDiff: 'Inaleta diff…',
+  msgCommitGenerateCallingLlm: 'Inauliza LLM…',
+  msgCommitGenerateFailedPrefix: 'Imeshindwa kutengeneza ujumbe wa commit: ',
+  msgCommitApplyProgress: 'Inatumia kwa SCM…',
+  msgCommitApplySuccess: 'Ujumbe wa commit umenakiliwa kwenye ingizo la SCM.',
+  msgCommitNotGenerated: 'Tengeneza kwanza ujumbe wa commit.',
+  msgRepoNotFound: 'Hati ya Git haijapatikana.',
+  msgCancelled: 'Imefutwa na mtumiaji',
+  msgDiffEmpty: 'Hakuna diff. Angalia staged/changes.',
+  msgUnsupportedProvider: 'Mtoa huduma hatumiki: {provider}',
+  msgApiKeyMissing: 'Ufunguo wa API wa {provider} haujawekwa. Hifadhi kwenye mipangilio.',
+  msgLlmEmptyOpenAi: 'Jibu la OpenAI lilikuwa tupu.',
+  msgLlmEmptyGemini: 'Jibu la Gemini lilikuwa tupu.',
+  msgLlmEmptyClaude: 'Jibu la Claude lilikuwa tupu.',
+  msgHttpsInvalid: '{label} si sahihi.',
+  msgHttpsRequired: '{label} lazima ianze na https://. Angalia mipangilio.',
+  msgGitDiffFailed: 'Imeshindwa kuendesha git diff: {detail}',
+  msgGitStatusFailed: 'git status --porcelain imeshindwa: {detail}',
+  msgUntrackedReadFailed: 'Imeshindwa kusoma faili isiyofuatiliwa: {path} ({detail})',
+  msgUntrackedSkipBinary: 'Imepitisha faili isiyofuatiliwa (inahisiwa binary): {path}',
+  msgHttpError: '{label} HTTP {status}: {text}',
+  logLlmAttempt: '{label}: jaribio {attempt}/{max}',
+  logLlmRetry: '{label}: kujaribu tena baada ya {delay}ms ({error})',
+
+  toastSaved: '{action} saa {timestamp}',
+  toastDeleted: 'Imefutwa saa {timestamp}',
+
+  actionCreatedLabel: 'Imeundwa',
+  actionUpdatedLabel: 'Imesasishwa',
+  actionDeletedLabel: 'Imefutwa',
+
+  outputFormatSection:
+    '# Muundo wa matokeo\n- Mstari wa 1: kichwa hadi herufi 50 (epuka amri)\n- Mistari 2+ (ikihitajika tu): mwili wa orodha unaoanza na "- "',
+  diffSectionStaged: '### Staged',
+  diffSectionUnstaged: '### Zisizo staged',
+  diffSectionUntracked: '### Zisizofuatiliwa {path}',
+  diffHeading: '# Diff'
+};
+
+export default sw;

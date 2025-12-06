@@ -1,0 +1,132 @@
+import { UiStrings } from '../types';
+
+const da: UiStrings = {
+  langCode: 'da',
+  appTitle: 'Commit Maker',
+
+  languageSectionTitle: 'Visningssprog',
+  languageName: 'Dansk',
+
+  apiKeySectionTitle: 'API-nøgle',
+  apiKeyProviderLabel: 'Udbyder at gemme hos',
+  apiKeyIssueButton: 'Hent API-nøgle',
+  apiKeyLabel: 'API-nøgle',
+  apiKeyPlaceholder: 'sk-... / AIza... / sk-ant-...',
+  apiKeySaveButton: 'Gem',
+  apiKeyClearButton: 'Ryd',
+
+  llmSectionTitle: 'LLM-indstillinger',
+  providerLabel: 'Udbyder',
+  modelLabel: 'Model',
+  customModelLabel: 'Brugerdefineret modelnavn',
+  customModelPlaceholder: 'example-model',
+  reasoningLabel: 'Reasoning Effort (kun OpenAI)',
+  verbosityLabel: 'Detaljegrad (kun OpenAI)',
+  providerLabelGemini: 'Google Gemini',
+  providerLabelOpenAi: 'OpenAI (GPT-5-familien)',
+  providerLabelClaude: 'Anthropic Claude',
+
+  promptSectionTitle: 'Prompt og valgmuligheder',
+  presetNamePlaceholder: 'Preset-navn',
+  presetAddButton: 'Tilføj ny',
+  presetDeleteButton: 'Slet',
+  promptTextareaPlaceholder: 'fx Skriv en titel på højst 50 tegn og punktliste på dansk.',
+  includeUnstagedLabel: 'Medtag ikke-staged ændringer',
+  includeUntrackedLabel: 'Medtag u-sporede filer',
+  includeBinaryLabel: 'Medtag mulige binære filer',
+  maxPromptLabel: 'Grænse for promptlængde',
+  maxPromptUnlimited: 'Ubegrænset (standard)',
+  maxPromptLimited: 'Sæt grænse',
+  maxPromptUnitLabel: 'tegn',
+  maxPromptHint:
+    'Bruges når du vil begrænse tokens/omkostning. 0 eller tom betyder ubegrænset. Ved overskridelse bevares første 20% og sidste 80%.',
+
+  generationSectionTitle: 'Generér og resultat',
+  generateButton: 'Generér',
+  generateButtonTitle: 'Indlæs diff og generér commit-besked',
+  applyButton: 'Anvend til SCM',
+  applyButtonTitle: 'Kopiér resultat til commit-feltet i Kildekontrol',
+  resultPlaceholder: 'Endnu ikke genereret.',
+  resultHint: 'Gennemse resultatet og klik derefter "Anvend til SCM" for at kopiere til commit-feltet.',
+  errorPlaceholder: '-',
+
+  statusIdle: 'Standby',
+  statusLoading: 'Genererer med LLM…',
+  statusReady: 'Færdig',
+  statusError: 'Fejl',
+  badgeUnstagedOn: 'Staged + ikke-staged',
+  badgeUnstagedOff: 'Kun staged',
+
+  apiKeySaved: 'Gemt',
+  apiKeyNotSaved: 'Ikke gemt',
+  apiKeySavedPreviewPrefix: 'Gemt: ',
+  providerNeedKey: 'Gem en API-nøgle først',
+  modelNeedKey: 'Vælg en model efter at API-nøglen er gemt.',
+  customModelOption: 'Brugerdefineret…',
+
+  presetButtonNew: 'Gem som ny',
+  presetButtonSaved: 'Gemt',
+  presetButtonOverwrite: 'Overskriv',
+  presetTitleNew: 'Gem som ny preset',
+  presetTitleNoChange: 'Ingen ændringer',
+  presetTitleOverwrite: 'Overskriv valgt preset',
+
+  defaultCommitPrompt: [
+    'Skriv en titel på højst 50 tegn og, om nødvendigt, punktliste-linjer på 72 tegn.',
+    '- Undgå bydeform; beskriv kort ændringen (ingen mening eller gæt)',
+    '- Brødtekstlinjer starter med "- "; tilføj kun når nødvendigt, hver på maks 72 tegn',
+    '- Tilføj breaking changes og issue/PR-numre i brødteksten når relevant',
+    '- Ingen AI-meninger, undskyldninger eller sikkerhedsudtalelser. Kun fakta',
+    '- Sæt et Conventional Commits-typeprefix foran titlen',
+    '- Skriv på dansk'
+  ].join('\n'),
+  defaultPresetLabel: 'Standard (låst, redigerbar)',
+  providerDescriptionGemini: 'Kalder direkte Generative Language API (generateContent).',
+  providerDescriptionOpenAi: 'Bruger Responses API / Chat Completions kompatibelt endpoint.',
+  providerDescriptionClaude: 'Bruger Claude 3 messages API.',
+
+  msgApiKeySaved: 'API-nøgle gemt.',
+  msgApiKeySavePick: 'Vælg udbyder til at gemme API-nøglen',
+  msgApiKeyInputPrompt: 'Indtast API-nøgle for {provider}',
+
+  msgCommitGenerateTitle: 'Generering af commit-besked (Commit Maker)',
+  msgCommitGenerateFetchingDiff: 'Henter diff…',
+  msgCommitGenerateCallingLlm: 'Spørger LLM…',
+  msgCommitGenerateFailedPrefix: 'Kunne ikke generere commit-besked: ',
+  msgCommitApplyProgress: 'Anvender til SCM…',
+  msgCommitApplySuccess: 'Commit-beskeden blev kopieret til SCM-input.',
+  msgCommitNotGenerated: 'Generér commit-besked først.',
+  msgRepoNotFound: 'Ingen Git-repo fundet.',
+  msgCancelled: 'Annulleret af bruger',
+  msgDiffEmpty: 'Ingen diff fundet. Tjek staged/changes.',
+  msgUnsupportedProvider: 'Ikke understøttet udbyder: {provider}',
+  msgApiKeyMissing: '{provider}-nøglen er ikke sat. Gem den i indstillingerne.',
+  msgLlmEmptyOpenAi: 'OpenAI-svar var tomt.',
+  msgLlmEmptyGemini: 'Gemini-svar var tomt.',
+  msgLlmEmptyClaude: 'Claude-svar var tomt.',
+  msgHttpsInvalid: '{label} er ugyldig.',
+  msgHttpsRequired: '{label} skal starte med https://. Tjek indstillingerne.',
+  msgGitDiffFailed: 'git diff mislykkedes: {detail}',
+  msgGitStatusFailed: 'git status --porcelain mislykkedes: {detail}',
+  msgUntrackedReadFailed: 'Kunne ikke læse u-sporet fil: {path} ({detail})',
+  msgUntrackedSkipBinary: 'U-sporet fil sprunget over (mistænkt binær): {path}',
+  msgHttpError: '{label} HTTP {status}: {text}',
+  logLlmAttempt: '{label}: forsøg {attempt}/{max}',
+  logLlmRetry: '{label}: prøver igen om {delay}ms ({error})',
+
+  toastSaved: '{action} kl. {timestamp}',
+  toastDeleted: 'Slettet kl. {timestamp}',
+
+  actionCreatedLabel: 'Oprettet',
+  actionUpdatedLabel: 'Opdateret',
+  actionDeletedLabel: 'Slettet',
+
+  outputFormatSection:
+    '# Outputformat\n- Linje 1: titel på højst 50 tegn (undgå bydeform)\n- Linje 2+ (kun ved behov): brødtekstlinjer som punkter med "- "',
+  diffSectionStaged: '### Staged',
+  diffSectionUnstaged: '### Ikke-staged',
+  diffSectionUntracked: '### U-sporet {path}',
+  diffHeading: '# Diff'
+};
+
+export default da;

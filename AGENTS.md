@@ -86,6 +86,18 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 - Webview スクリプトはプレーン JS。`as` 型アサーションは禁止（ビルド後 JS でエラーを防ぐ）。
 - LLM 呼び出しは `services/llm/` に分割済み。新規プロバイダー追加時は `PROVIDER_CAPABILITIES` を更新し、各サービスを追加する。
 
+### UI 多言語追加の手順（抜け漏れ防止）
+1. Webview 用: `src/i18n/locales/<lang>.ts` を追加（`en.ts` を丸ごとコピーして翻訳）。`UiStrings` 全キーを必ず埋める。
+2. 言語リスト登録: `src/i18n/languages.ts` の `SUPPORTED_LANG_CODES` にコードを追加し、`src/i18n/strings.ts` で `import` ＋ `STRINGS` へ登録。
+3. VS Code コマンド文言: `i18n/package-nls/package.nls.<lang>.json` を追加し、`package.nls.json` と同じキー集合で翻訳する（英語はルートの `package.nls.json`）。
+4. README 更新: 言語数と列挙リストを実装と揃える（例: 31 言語）。
+5. ビルド確認: `npm run compile`。必要に応じ `npm run build:nls` → `npm run clean:nls` で NLS を出し入れ。
+6. 検証コマンド: 
+   - `ls src/i18n/locales | wc -l`（Webview）と `ls i18n/package-nls | wc -l`（英語除き +1 で総数）
+   - `node - <<'NODE' ...` で `SUPPORTED_LANG_CODES` と locales の欠け・余りを突き合わせ
+   - `node - <<'NODE' ...` で `package.nls.*.json` が基準キーと一致するか確認（例: `missing/extra` が空）
+7. コード追加・削除を伴うときは `npm run compile` が通るまで直す。README と `package.json` の説明がずれないか最終確認する。
+
 ## OpenAI GPT-5 系モデル仕様メモ（2025-12-03時点）
 UI/実装の整合性確認用。Chat/Responses 両APIの必須パラメータ・許可値を下表に整理。
 

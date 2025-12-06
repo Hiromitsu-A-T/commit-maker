@@ -1,0 +1,10 @@
+{
+  "command.commitMaker.showPanel.title": "Commit Maker: Afișează panoul",
+  "command.commitMaker.generateCommitFromSCM.title": "Commit Maker: Generează mesaj de commit",
+  "command.commitMaker.cancelCommitFromSCM.title": "Commit Maker: Anulează generarea",
+  "command.commitMaker.saveApiKey.title": "Commit Maker: Salvează cheia API",
+  "command.commitMaker.category": "Commit Maker",
+  "configuration.commitMaker.title": "Commit Maker",
+  "views.activitybar.commitMaker.title": "Commit Maker",
+  "views.commitMakerContainer.commitMakerView.name": "Commit Maker"
+}

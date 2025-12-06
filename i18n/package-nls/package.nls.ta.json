@@ -1,0 +1,10 @@
+{
+  "command.commitMaker.showPanel.title": "Commit Maker: பலகையை காட்டு",
+  "command.commitMaker.generateCommitFromSCM.title": "Commit Maker: Commit செய்தியை உருவாக்கு",
+  "command.commitMaker.cancelCommitFromSCM.title": "Commit Maker: உருவாக்கத்தை ரத்துசெய்",
+  "command.commitMaker.saveApiKey.title": "Commit Maker: API விசையை சேமி",
+  "command.commitMaker.category": "Commit Maker",
+  "configuration.commitMaker.title": "Commit Maker",
+  "views.activitybar.commitMaker.title": "Commit Maker",
+  "views.commitMakerContainer.commitMakerView.name": "Commit Maker"
+}

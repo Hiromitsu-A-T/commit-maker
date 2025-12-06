@@ -1,0 +1,132 @@
+import { UiStrings } from '../types';
+
+const ro: UiStrings = {
+  langCode: 'ro',
+  appTitle: 'Commit Maker',
+
+  languageSectionTitle: 'Limba de afișare',
+  languageName: 'Română',
+
+  apiKeySectionTitle: 'Cheie API',
+  apiKeyProviderLabel: 'Furnizor pentru salvare',
+  apiKeyIssueButton: 'Obține cheia API',
+  apiKeyLabel: 'Cheie API',
+  apiKeyPlaceholder: 'sk-... / AIza... / sk-ant-...',
+  apiKeySaveButton: 'Salvează',
+  apiKeyClearButton: 'Șterge',
+
+  llmSectionTitle: 'Setări LLM',
+  providerLabel: 'Furnizor',
+  modelLabel: 'Model',
+  customModelLabel: 'Nume model personalizat',
+  customModelPlaceholder: 'example-model',
+  reasoningLabel: 'Reasoning Effort (doar OpenAI)',
+  verbosityLabel: 'Nivel de detaliu (doar OpenAI)',
+  providerLabelGemini: 'Google Gemini',
+  providerLabelOpenAi: 'OpenAI (familia GPT-5)',
+  providerLabelClaude: 'Anthropic Claude',
+
+  promptSectionTitle: 'Prompt și opțiuni',
+  presetNamePlaceholder: 'Nume preset',
+  presetAddButton: 'Adaugă nou',
+  presetDeleteButton: 'Șterge',
+  promptTextareaPlaceholder: 'ex.: Scrie un titlu de max. 50 caractere și un corp cu bullet-uri în română.',
+  includeUnstagedLabel: 'Include modificările nestagiate',
+  includeUntrackedLabel: 'Include fișierele neversionate',
+  includeBinaryLabel: 'Include fișierele posibil binare',
+  maxPromptLabel: 'Limită lungime prompt',
+  maxPromptUnlimited: 'Nelimitat (implicit)',
+  maxPromptLimited: 'Setează o limită',
+  maxPromptUnitLabel: 'caractere',
+  maxPromptHint:
+    'Folosește pentru a limita tokenii/costul. 0 sau gol înseamnă nelimitat. Dacă se depășește, se păstrează primele 20% și ultimele 80%.',
+
+  generationSectionTitle: 'Generare și rezultat',
+  generateButton: 'Generează',
+  generateButtonTitle: 'Încarcă diff și generează mesajul de commit',
+  applyButton: 'Aplică în SCM',
+  applyButtonTitle: 'Copiază rezultatul în câmpul de commit din Source Control',
+  resultPlaceholder: 'Neînregistrat încă.',
+  resultHint: 'Revizuiește rezultatul și apoi apasă "Aplică în SCM" pentru a copia în câmpul de commit.',
+  errorPlaceholder: '-',
+
+  statusIdle: 'Așteptare',
+  statusLoading: 'Generare LLM…',
+  statusReady: 'Gata',
+  statusError: 'Eroare',
+  badgeUnstagedOn: 'Stagiate + nestagiate',
+  badgeUnstagedOff: 'Doar stagiate',
+
+  apiKeySaved: 'Salvat',
+  apiKeyNotSaved: 'Nesalvat',
+  apiKeySavedPreviewPrefix: 'Salvat: ',
+  providerNeedKey: 'Salvează mai întâi cheia API',
+  modelNeedKey: 'Poți alege un model după ce cheia este salvată.',
+  customModelOption: 'Personalizat…',
+
+  presetButtonNew: 'Salvează ca nou',
+  presetButtonSaved: 'Salvat',
+  presetButtonOverwrite: 'Suprascrie',
+  presetTitleNew: 'Salvează ca preset nou',
+  presetTitleNoChange: 'Nicio schimbare',
+  presetTitleOverwrite: 'Suprascrie presetul selectat',
+
+  defaultCommitPrompt: [
+    'Scrie un titlu de maximum 50 de caractere și, dacă e nevoie, linii cu bullet-uri de 72 de caractere.',
+    '- Evită imperativul; descrie pe scurt schimbarea (fără opinii sau presupuneri)',
+    '- Liniile corpului încep cu "- "; adaugă doar când e necesar, fiecare până la 72 de caractere',
+    '- Adaugă breaking changes și numere de issue/PR în corp când e cazul',
+    '- Fără opinii AI, scuze sau afirmații de încredere. Doar fapte',
+    '- Prefixează titlul cu un tip Conventional Commits',
+    '- Output în limba română'
+  ].join('\n'),
+  defaultPresetLabel: 'Implicit (blocat, editabil)',
+  providerDescriptionGemini: 'Apelează direct Generative Language API (generateContent).',
+  providerDescriptionOpenAi: 'Folosește endpoint compatibil Responses API / Chat Completions.',
+  providerDescriptionClaude: 'Folosește API-ul Claude 3 messages.',
+
+  msgApiKeySaved: 'Cheia API a fost salvată.',
+  msgApiKeySavePick: 'Selectează furnizorul pentru a salva cheia API',
+  msgApiKeyInputPrompt: 'Introdu cheia API pentru {provider}',
+
+  msgCommitGenerateTitle: 'Generare mesaj de commit (Commit Maker)',
+  msgCommitGenerateFetchingDiff: 'Se obține diff…',
+  msgCommitGenerateCallingLlm: 'Se interoghează LLM…',
+  msgCommitGenerateFailedPrefix: 'Nu s-a putut genera mesajul de commit: ',
+  msgCommitApplyProgress: 'Se aplică în SCM…',
+  msgCommitApplySuccess: 'Mesajul de commit a fost copiat în câmpul SCM.',
+  msgCommitNotGenerated: 'Generează mai întâi mesajul de commit.',
+  msgRepoNotFound: 'Repository Git nu a fost găsit.',
+  msgCancelled: 'Anulat de utilizator',
+  msgDiffEmpty: 'Nu există diff. Verifică stagiate/modificări.',
+  msgUnsupportedProvider: 'Furnizor neacceptat: {provider}',
+  msgApiKeyMissing: 'Cheia API pentru {provider} nu este setată. Salveaz-o în setări.',
+  msgLlmEmptyOpenAi: 'Răspunsul OpenAI a fost gol.',
+  msgLlmEmptyGemini: 'Răspunsul Gemini a fost gol.',
+  msgLlmEmptyClaude: 'Răspunsul Claude a fost gol.',
+  msgHttpsInvalid: '{label} este invalid.',
+  msgHttpsRequired: '{label} trebuie să înceapă cu https://. Verifică setările.',
+  msgGitDiffFailed: 'git diff a eșuat: {detail}',
+  msgGitStatusFailed: 'git status --porcelain a eșuat: {detail}',
+  msgUntrackedReadFailed: 'Nu s-a putut citi fișierul neversionat: {path} ({detail})',
+  msgUntrackedSkipBinary: 'Fișier neversionat omis (suspect binar): {path}',
+  msgHttpError: '{label} HTTP {status}: {text}',
+  logLlmAttempt: '{label}: încercarea {attempt}/{max}',
+  logLlmRetry: '{label}: reîncercare în {delay}ms ({error})',
+
+  toastSaved: '{action} la {timestamp}',
+  toastDeleted: 'Șters la {timestamp}',
+
+  actionCreatedLabel: 'Creat',
+  actionUpdatedLabel: 'Actualizat',
+  actionDeletedLabel: 'Șters',
+
+  outputFormatSection:
+    '# Format ieșire\n- Linia 1: titlu de max. 50 caractere (evită imperativul)\n- Liniile 2+ (doar la nevoie): corp cu bullet-uri "- "',
+  diffSectionStaged: '### Stagiate',
+  diffSectionUnstaged: '### Nestagiate',
+  diffSectionUntracked: '### Neversionat {path}',
+  diffHeading: '# Diff'
+};
+
+export default ro;
