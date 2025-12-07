@@ -1,5 +1,5 @@
 # Commit Maker（コミットメーカー） – コミットメッセージ自動生成 / Commit Message Generator  
-![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/Hiromitsu.commit-maker?label=Marketplace&logo=visualstudiocode) ![VS Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Hiromitsu.commit-maker?logo=visualstudiocode&color=0aa6ff) ![VS Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/Hiromitsu.commit-maker) ![Open VSX Downloads](https://img.shields.io/open-vsx/dt/Hiromitsu/commit-maker?logo=visualstudiocode&color=00c7b7) ![Last Updated](https://img.shields.io/visual-studio-marketplace/last-updated/Hiromitsu.commit-maker) ![License](https://img.shields.io/badge/license-Apache--2.0-blue) ![Languages](https://img.shields.io/badge/languages-31-brightgreen)
+![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/Hiromitsu.commit-maker?label=Marketplace&logo=visualstudiocode) ![VS Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Hiromitsu.commit-maker?logo=visualstudiocode&color=0aa6ff) ![VS Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/Hiromitsu.commit-maker) ![Open VSX Downloads](https://img.shields.io/open-vsx/dt/Hiromitsu/commit-maker?logo=visualstudiocode&color=00c7b7) ![Last Updated](https://img.shields.io/visual-studio-marketplace/last-updated/Hiromitsu.commit-maker) ![License](https://img.shields.io/badge/license-Apache--2.0-blue) ![Languages](https://img.shields.io/badge/languages-32-brightgreen)
 
 **Git の差分を読み取り、最適なコミットメッセージを自動生成して SCM 入力欄へ反映する VS Code 拡張（コミットメーカー / commit message generator）です。**  
 Cursor や Copilot では実現できない、完全カスタマイズ可能な AI コミットメッセージ生成ツール。Git commit を効率化し、チーム全体のコミット品質を向上させます。
@@ -55,11 +55,11 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
   (English) **Custom instructions field** – Add rules like "short in English", "no emojis", or "follow Conventional Commits" to fit your team's commit standards
 - **SCM ツールバーからも実行可能**: パネルを開かず、杖アイコンから「差分取得→生成→適用」を一発で完了  
   (English) **SCM toolbar shortcut** – Run "fetch diff → generate → apply" with the wand icon, no panel needed
-- **UI 多言語対応 (31 言語)**: 日本語・英語・中国語・韓国語・スペイン語など、ワンクリックで切り替え可能  
-  (English) **31 languages supported** – Switch between Japanese, English, Chinese, Korean, Spanish, and more with one click
+- **UI 多言語対応 (32 言語)**: 日本語・英語・中国語・韓国語・スペイン語など、ワンクリックで切り替え可能  
+  (English) **32 languages supported** – Switch between Japanese, English, Chinese, Korean, Spanish, and more with one click
   
   **対応言語一覧 / Supported Languages:**  
-  日本語 (ja) | English (en) | 中文简体 (zh) | 中文繁體 (zh-TW) | 한국어 (ko) | Español (es) | Français (fr) | Deutsch (de) | Nederlands (nl) | Svenska (sv) | Dansk (da) | Norsk (nb) | Tiếng Việt (vi) | ไทย (th) | မြန်မာ (my) | हिन्दी (hi) | বাংলা (bn) | தமிழ் (ta) | Português (pt-BR) | Русский (ru) | Українська (uk) | العربية (ar) | עברית (he) | فارسی (fa) | Türkçe (tr) | Bahasa Indonesia (id) | Italiano (it) | Polski (pl) | Română (ro) | Tagalog (tl) | Kiswahili (sw)
+  日本語 (ja) | English (en) | 中文简体 (zh) | 中文繁體 (zh-TW) | 한국어 (ko) | Español (es) | Français (fr) | Deutsch (de) | Nederlands (nl) | Svenska (sv) | Dansk (da) | Norsk (nb) | Tiếng Việt (vi) | ไทย (th) | မြန်မာ (my) | हिन्दी (hi) | বাংলা (bn) | தமிழ் (ta) | Português (pt-BR) | Русский (ru) | Українська (uk) | العربية (ar) | اردو (ur) | עברית (he) | فارسی (fa) | Türkçe (tr) | Bahasa Indonesia (id) | Italiano (it) | Polski (pl) | Română (ro) | Tagalog (tl) | Kiswahili (sw)
 
 ---
 

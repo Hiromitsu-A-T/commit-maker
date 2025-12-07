@@ -29,7 +29,8 @@ export const SUPPORTED_LANG_CODES = [
   'pl',
   'ro',
   'tl',
-  'sw'
+  'sw',
+  'ur'
 ] as const;
 
 export type LanguageCode = (typeof SUPPORTED_LANG_CODES)[number];
