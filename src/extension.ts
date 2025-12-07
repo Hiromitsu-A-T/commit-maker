@@ -39,8 +39,6 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // 初期状態で保存済みキーを反映
   void refreshApiKeyState(context, viewProvider);
-
-  void viewProvider.reveal();
 }
 
 export function deactivate(): void {

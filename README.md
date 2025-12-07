@@ -1,6 +1,11 @@
 # Commit Maker（コミットメーカー） – コミットメッセージ自動生成 / Commit Message Generator  
 ![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/Hiromitsu.commit-maker?label=Marketplace&logo=visualstudiocode) ![VS Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Hiromitsu.commit-maker?logo=visualstudiocode&color=0aa6ff) ![VS Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/Hiromitsu.commit-maker) ![Open VSX Downloads](https://img.shields.io/open-vsx/dt/Hiromitsu/commit-maker?logo=visualstudiocode&color=00c7b7) ![Last Updated](https://img.shields.io/visual-studio-marketplace/last-updated/Hiromitsu.commit-maker) ![License](https://img.shields.io/badge/license-Apache--2.0-blue) ![Languages](https://img.shields.io/badge/languages-32-brightgreen)
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Hiromitsu-A-T/commit-maker/main/media/commit_maker_SNS.png" alt="Commit Maker – コミットメッセージ自動生成 (commit message generator) のロゴ" style="max-width: 1080px; width: 100%; height: auto;" />
+</p>
+<p align="center"><em>Git の差分からコミットメッセージを AI 生成し、SCM へ即反映する commit / コミット特化ツール</em></p>
+
 **Git の差分を読み取り、最適なコミットメッセージを自動生成して SCM 入力欄へ反映する VS Code 拡張（コミットメーカー / commit message generator）です。**  
 Cursor や Copilot では実現できない、完全カスタマイズ可能な AI コミットメッセージ生成ツール。Git commit を効率化し、チーム全体のコミット品質を向上させます。
 キーはすべてローカルの SecretStorage に保存され、サーバー側に記録を残しません。
