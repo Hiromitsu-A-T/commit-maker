@@ -72,11 +72,13 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
   - Claude 4 系以降（haiku/sonnet/opus 4.x/4.5）: `npm run smoke:claude:matrix`
 
 ## チェックリスト
-- `npm run compile` が通ること
-- README のスクリーンショット/機能リストが最新版
-- `package.json` の `engines.vscode` とカテゴリが要件を満たす
-- `vsix/` に 5 個超の VSIX が残っていないか確認
-- `AGENTS.md` を VSIX に含めない（`.vscodeignore` 済み）
+- `npm run compile` と `npm test` が通る
+- VSIX 生成→`vsix/commit-maker-<version>.vsix` へ移動→`npm run clean:vsix` 実行（`vsix/` は最新含む最大5個、ルートに VSIX なし）
+- README（機能・スクショ・対応言語）と `package.json`（version / engines / categories / displayName / description）が整合
+- `package.nls.*.json` のキー一致を確認し、`npm run clean:nls` 済み
+- `.env` やシークレットがリポジトリに含まれていない
+- `AGENTS.md` など公開不要物が VSIX に入っていない（`.vscodeignore` で確認）
+- ワークツリー clean、`v<version>` タグ付与・`main` とタグを push、`Publish Extension` ワークフロー成功
 
 ## 開発メモ
 - Webview CSP は nonce 付き。スタイル/スクリプトは同梱のみ。
