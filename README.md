@@ -228,6 +228,29 @@ UIから切り替え可能（Switchable from UI）:
 - **拡張機能**: ログを外部送信しません  
   (Extension itself sends no external logs)
 
+## スポンサー / Sponsors
+
+GitHub Sponsors でのご支援を受け付けています。サポートいただけると嬉しいです！  
+(We welcome support on GitHub Sponsors. Thank you for your support!)
+
+| 金額 / Amount | 特典 / Perks |
+|:---|:---|
+| $3/月 (mo) | README の Sponsors リストに名前を掲載<br/>(Your name in README Sponsors section) |
+| $5/月 (mo) | Sponsors リスト + 次回リリースの Special Thanks に掲載<br/>(Sponsors list + Special Thanks in next release) |
+| $10/月 (mo) | Sponsors リスト + 機能要望を優先検討 ※確約不可<br/>(Sponsors list + Priority consideration for requests *not guaranteed*) |
+
+> [!NOTE]
+> ご支援はプロジェクトの継続開発に活用させていただきます。  
+> (Support goes directly toward sustainable development.)
+
+---
+
+### 🌟 Sponsors リスト / Sponsors List
+ご支援いただいた方々に感謝申し上げます！  
+(Heartfelt thanks to our supporters!)
+
+*まだスポンサーはいません。最初のサポーターになりませんか？ / No sponsors yet — be the first!*
+
 ---
 
 ## ライセンス
