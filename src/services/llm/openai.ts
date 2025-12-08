@@ -107,13 +107,8 @@ export async function callOpenAi({
       },
       parse: raw => {
         const data = raw ? JSON.parse(raw) as any : {};
-        const text =
-          data.output_text ||
-          data.output?.[0]?.content?.[0]?.text ||
-          data.output ||
-          extractFromResponses(data) ||
-          extractFromChat(data);
-        if (typeof text !== 'string' || !text.trim()) {
+        const text = extractOpenAiText(data) || extractFromChat(data);
+        if (!text || !text.trim()) {
           throw new Error(strings.msgLlmEmptyOpenAi);
         }
         return text;
@@ -193,6 +188,45 @@ function extractFromResponses(payload: any): string | undefined {
     return payload.response_text as string;
   }
   return undefined;
+}
+
+function extractOpenAiText(payload: any): string | undefined {
+  if (payload?.output_text && typeof payload.output_text === 'string' && payload.output_text.trim()) {
+    return payload.output_text;
+  }
+
+  const outputs = payload?.output ?? payload?.outputs;
+  const collected: string[] = [];
+  if (Array.isArray(outputs)) {
+    for (const item of outputs) {
+      // content 配列内の text / output_text を収集
+      const contents = item?.content;
+      if (Array.isArray(contents)) {
+        for (const c of contents) {
+          if (typeof c?.text === 'string' && c.text.trim()) collected.push(c.text);
+          else if (typeof c?.output_text === 'string' && c.output_text.trim()) collected.push(c.output_text);
+          else if (typeof c === 'string' && c.trim()) collected.push(c);
+        }
+      }
+      // message オブジェクト内の content を収集（稀に出現）
+      const msg = item?.message;
+      if (msg?.content) {
+        if (typeof msg.content === 'string' && msg.content.trim()) {
+          collected.push(msg.content);
+        } else if (Array.isArray(msg.content)) {
+          for (const c of msg.content) {
+            if (typeof c?.text === 'string' && c.text.trim()) collected.push(c.text);
+          }
+        }
+      }
+    }
+    if (collected.length) {
+      return collected.join('\n');
+    }
+  }
+
+  // 旧構造: response_text や choices をフォールバック
+  return extractFromResponses(payload);
 }
 
 function extractFromChat(payload: any): string | undefined {
