@@ -48,6 +48,7 @@ export const VERBOSITY_OPTIONS: VerbositySetting[] = ['low', 'medium', 'high'];
 export const DEFAULT_VERBOSITY: VerbositySetting = 'medium';
 export const ANTHROPIC_API_VERSION = '2023-06-01';
 export const DEFAULT_CLAUDE_MAX_TOKENS = 2048;
+export const DEFAULT_MAX_OUTPUT_TOKENS = 8192;
 export const GEMINI_GENERATE_SUFFIX = ':generateContent';
 
 // プロバイダー能力を一元管理

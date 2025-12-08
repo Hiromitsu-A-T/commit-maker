@@ -18,6 +18,7 @@ export interface OpenAiCallParams {
   endpoint: string;
   reasoning?: ReasoningEffort;
   verbosity?: VerbositySetting;
+  maxOutputTokens: number;
   abortSignal?: AbortSignal;
   timeoutMs: number;
   logger?: (message: string) => void;
@@ -58,6 +59,7 @@ export async function callOpenAi({
   endpoint,
   reasoning = DEFAULT_REASONING_EFFORT,
   verbosity = DEFAULT_VERBOSITY,
+  maxOutputTokens,
   abortSignal,
   timeoutMs,
   logger
@@ -82,7 +84,7 @@ export async function callOpenAi({
         const body: Record<string, unknown> = {
           model: modelId,
           input: prompt,
-          max_output_tokens: 400
+          max_output_tokens: maxOutputTokens
         };
         if (effectiveReasoning) {
           body.reasoning = { effort: effectiveReasoning };

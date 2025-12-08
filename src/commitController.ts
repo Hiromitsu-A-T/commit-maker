@@ -8,6 +8,7 @@ import {
   COMMIT_MAX_PROMPT_CHARS_STORAGE_KEY,
   COMMIT_PROMPT_STORAGE_KEY,
   COMMIT_PROVIDER_STORAGE_KEY,
+  DEFAULT_MAX_OUTPUT_TOKENS,
   DEFAULT_PROVIDER,
   DEFAULT_REASONING_EFFORT,
   DEFAULT_VERBOSITY,
@@ -526,7 +527,7 @@ export class CommitController implements vscode.Disposable {
 
   private async callLlm(prompt: string): Promise<string> {
     const provider = this.state.provider;
-    const { endpoint, model, apiKey, timeout } = await this.getProviderRuntimeConfig(provider);
+    const { endpoint, model, apiKey, timeout, maxOutputTokens } = await this.getProviderRuntimeConfig(provider);
     const abortSignal = this.currentAbortController?.signal;
     const logEnabled = vscode.workspace.getConfiguration('commitMaker').get<boolean>('logLlm', false);
     const log = logEnabled ? (message: string): void => this.output.appendLine(message) : undefined;
@@ -540,6 +541,7 @@ export class CommitController implements vscode.Disposable {
           model,
           apiKey,
           endpoint,
+          maxOutputTokens,
           reasoning: reasoningEffort,
           verbosity,
           abortSignal,
@@ -576,7 +578,9 @@ export class CommitController implements vscode.Disposable {
     return fn();
   }
 
-  private async getProviderRuntimeConfig(provider: ProviderId): Promise<{ endpoint: string; model: string; apiKey: string; timeout: number }> {
+  private async getProviderRuntimeConfig(
+    provider: ProviderId
+  ): Promise<{ endpoint: string; model: string; apiKey: string; timeout: number; maxOutputTokens: number }> {
     const config = vscode.workspace.getConfiguration('commitMaker');
     const endpoint = getEndpoint(config, provider);
     const model = this.state.model?.trim() || getDefaultModelForProvider(provider);
@@ -589,7 +593,8 @@ export class CommitController implements vscode.Disposable {
       throw new Error(this.strings.msgApiKeyMissing.replace('{provider}', this.providerLabels[provider] || provider));
     }
     const timeout = config.get<number>('requestTimeoutMs', 300000);
-    return { endpoint, model, apiKey, timeout };
+    const maxOutputTokens = config.get<number>('maxOutputTokens', DEFAULT_MAX_OUTPUT_TOKENS);
+    return { endpoint, model, apiKey, timeout, maxOutputTokens };
   }
 
   private async syncPromptPresets(
