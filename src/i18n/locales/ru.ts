@@ -120,9 +120,11 @@ const ru: UiStrings = {
   actionCreatedLabel: 'Создано',
   actionUpdatedLabel: 'Обновлено',
   actionDeletedLabel: 'Удалено',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Формат вывода\n- Строка 1: заголовок ≤50 символов (избегать повелительного наклонения)\n- Строки 2+ (по необходимости): пункты списка с "- "',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Unstaged',
   diffSectionUntracked: '### Untracked {path}',

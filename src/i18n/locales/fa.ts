@@ -120,9 +120,11 @@ const fa: UiStrings = {
   actionCreatedLabel: 'ایجاد شد',
   actionUpdatedLabel: 'به‌روزرسانی شد',
   actionDeletedLabel: 'حذف شد',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# قالب خروجی\n- خط ۱: عنوان تا ۵۰ کاراکتر (از لحن امری پرهیز کنید)\n- خط ۲ به بعد (فقط در صورت نیاز): خطوط بدنه بولت‌دار "- "',
+
+
   diffSectionStaged: '### Stage شده',
   diffSectionUnstaged: '### Unstaged',
   diffSectionUntracked: '### Untracked {path}',

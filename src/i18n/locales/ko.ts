@@ -120,9 +120,11 @@ const ko: UiStrings = {
   actionCreatedLabel: '생성',
   actionUpdatedLabel: '업데이트',
   actionDeletedLabel: '삭제',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# 출력 형식\n- 1행: 50자 이내 제목(명령형 지양)\n- 2행 이후(필요 시): "- "로 시작하는 글머리표 본문',
+
+
   diffSectionStaged: '### 스테이지됨',
   diffSectionUnstaged: '### 미스테이지',
   diffSectionUntracked: '### 미추적 {path}',

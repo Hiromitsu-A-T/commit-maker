@@ -120,9 +120,11 @@ const tr: UiStrings = {
   actionCreatedLabel: 'Oluşturuldu',
   actionUpdatedLabel: 'Güncellendi',
   actionDeletedLabel: 'Silindi',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Çıktı formatı\n- 1. satır: başlık ≤50 karakter (emir kipinden kaçının)\n- 2. satır ve sonrası (gerektiğinde): "- " ile başlayan maddeler',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Unstaged',
   diffSectionUntracked: '### Untracked {path}',

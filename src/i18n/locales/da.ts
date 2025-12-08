@@ -120,9 +120,11 @@ const da: UiStrings = {
   actionCreatedLabel: 'Oprettet',
   actionUpdatedLabel: 'Opdateret',
   actionDeletedLabel: 'Slettet',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Outputformat\n- Linje 1: titel på højst 50 tegn (undgå bydeform)\n- Linje 2+ (kun ved behov): brødtekstlinjer som punkter med "- "',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Ikke-staged',
   diffSectionUntracked: '### U-sporet {path}',

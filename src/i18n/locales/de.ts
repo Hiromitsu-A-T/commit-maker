@@ -120,9 +120,11 @@ const de: UiStrings = {
   actionCreatedLabel: 'Erstellt',
   actionUpdatedLabel: 'Aktualisiert',
   actionDeletedLabel: 'Gelöscht',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Ausgabeformat\n- Zeile 1: Titel ≤50 Zeichen (Imperativ vermeiden)\n- Zeile 2+ (nur bei Bedarf): Stichpunkte mit "- " am Anfang',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Unstaged',
   diffSectionUntracked: '### Untracked {path}',

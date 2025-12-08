@@ -120,9 +120,11 @@ const ur: UiStrings = {
   actionCreatedLabel: 'تخلیق',
   actionUpdatedLabel: 'اپ ڈیٹ',
   actionDeletedLabel: 'حذف',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# آؤٹ پٹ فارمیٹ\n- لائن 1: عنوان 50 حروف میں (imperative نہ ہو)\n- لائن 2+ (صرف ضرورت پر): باڈی بلٹس "- " سے شروع',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Unstaged',
   diffSectionUntracked: '### Untracked {path}',

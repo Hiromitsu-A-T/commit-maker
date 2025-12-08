@@ -120,9 +120,11 @@ const pt: UiStrings = {
   actionCreatedLabel: 'Criado',
   actionUpdatedLabel: 'Atualizado',
   actionDeletedLabel: 'Excluído',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Formato de saída\n- Linha 1: título ≤50 caracteres (evitar imperativo)\n- Linhas 2+ (quando necessário): tópicos iniciando com "- "',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Unstaged',
   diffSectionUntracked: '### Não rastreado {path}',

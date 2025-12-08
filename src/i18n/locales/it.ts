@@ -120,9 +120,11 @@ const it: UiStrings = {
   actionCreatedLabel: 'Creato',
   actionUpdatedLabel: 'Aggiornato',
   actionDeletedLabel: 'Eliminato',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Formato di output\n- Riga 1: titolo entro 50 caratteri (evita l’imperativo)\n- Riga 2+: corpo puntato con "- " solo se necessario',
+
+
   diffSectionStaged: '### Indicizzate',
   diffSectionUnstaged: '### Non indicizzate',
   diffSectionUntracked: '### Non tracciati {path}',

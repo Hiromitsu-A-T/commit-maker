@@ -120,9 +120,11 @@ const fr: UiStrings = {
   actionCreatedLabel: 'Créé',
   actionUpdatedLabel: 'Mis à jour',
   actionDeletedLabel: 'Supprimé',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Format de sortie\n- Ligne 1 : titre ≤50 caractères (éviter l’impératif)\n- Ligne 2+ (si nécessaire) : puces commençant par "- "',
+
+
   diffSectionStaged: '### Indexés',
   diffSectionUnstaged: '### Non indexés',
   diffSectionUntracked: '### Non suivis {path}',

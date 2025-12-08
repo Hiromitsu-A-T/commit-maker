@@ -120,9 +120,11 @@ const uk: UiStrings = {
   actionCreatedLabel: 'Створено',
   actionUpdatedLabel: 'Оновлено',
   actionDeletedLabel: 'Видалено',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Формат виводу\n- Рядок 1: заголовок до 50 символів (уникайте наказового способу)\n- Рядки 2+ (лише за потреби): марковане тіло з "- "',
+
+
   diffSectionStaged: '### Застейджені',
   diffSectionUnstaged: '### Незастейджені',
   diffSectionUntracked: '### Не відстежувано {path}',

@@ -120,9 +120,11 @@ const bn: UiStrings = {
   actionCreatedLabel: 'তৈরি',
   actionUpdatedLabel: 'আপডেট',
   actionDeletedLabel: 'মুছে ফেলা',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# আউটপুট ফরম্যাট\n- ১ম লাইন: ৫০ অক্ষরের মধ্যে শিরোনাম (বিধেয় ভঙ্গি এড়ান)\n- ২য় লাইন থেকে (প্রয়োজনে): "- " দিয়ে বুলেট বডি',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Unstaged',
   diffSectionUntracked: '### Untracked {path}',

@@ -120,9 +120,11 @@ const he: UiStrings = {
   actionCreatedLabel: 'נוצר',
   actionUpdatedLabel: 'עודכן',
   actionDeletedLabel: 'נמחק',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# פורמט פלט\n- שורה 1: כותרת עד 50 תווים (הימנע מציווי)\n- שורות 2+ (רק אם צריך): גוף כנקודות עם "- "',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### לא ב‑stage',
   diffSectionUntracked: '### לא במעקב {path}',

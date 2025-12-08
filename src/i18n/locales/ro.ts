@@ -120,9 +120,11 @@ const ro: UiStrings = {
   actionCreatedLabel: 'Creat',
   actionUpdatedLabel: 'Actualizat',
   actionDeletedLabel: 'Șters',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Format ieșire\n- Linia 1: titlu de max. 50 caractere (evită imperativul)\n- Liniile 2+ (doar la nevoie): corp cu bullet-uri "- "',
+
+
   diffSectionStaged: '### Stagiate',
   diffSectionUnstaged: '### Nestagiate',
   diffSectionUntracked: '### Neversionat {path}',

@@ -111,8 +111,8 @@ export interface UiStrings {
   actionCreatedLabel: string;
   actionUpdatedLabel: string;
   actionDeletedLabel: string;
-
-  outputFormatSection: string;
+  promptGuard: string;
+  userInstructionLabel: string;
   diffSectionStaged: string;
   diffSectionUnstaged: string;
   diffSectionUntracked: string;

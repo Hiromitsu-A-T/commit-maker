@@ -120,9 +120,11 @@ const pl: UiStrings = {
   actionCreatedLabel: 'Utworzono',
   actionUpdatedLabel: 'Zaktualizowano',
   actionDeletedLabel: 'Usunięto',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Format wyjścia\n- Linia 1: tytuł do 50 znaków (unikaj trybu rozkazującego)\n- Linia 2+: punktowane linie z "- " tylko gdy potrzebne',
+
+
   diffSectionStaged: '### Zaindeksowane',
   diffSectionUnstaged: '### Niezaindeksowane',
   diffSectionUntracked: '### Nieśledzone {path}',

@@ -120,9 +120,11 @@ const th: UiStrings = {
   actionCreatedLabel: 'สร้าง',
   actionUpdatedLabel: 'อัปเดต',
   actionDeletedLabel: 'ลบ',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# รูปแบบผลลัพธ์\n- บรรทัด 1: หัวข้อ ≤50 ตัว (เลี่ยงประโยคคำสั่ง)\n- บรรทัด 2+ (เมื่อจำเป็น): รายการที่ขึ้นต้นด้วย "- "',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Unstaged',
   diffSectionUntracked: '### ยังไม่ติดตาม {path}',

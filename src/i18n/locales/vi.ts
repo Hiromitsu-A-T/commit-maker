@@ -120,9 +120,11 @@ const vi: UiStrings = {
   actionCreatedLabel: 'Tạo mới',
   actionUpdatedLabel: 'Cập nhật',
   actionDeletedLabel: 'Đã xóa',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Định dạng output\n- Dòng 1: tiêu đề ≤50 ký tự (tránh mệnh lệnh)\n- Dòng 2+ (khi cần): gạch đầu dòng bắt đầu bằng "- "',
+
+
   diffSectionStaged: '### Đã stage',
   diffSectionUnstaged: '### Chưa stage',
   diffSectionUntracked: '### Chưa theo dõi {path}',

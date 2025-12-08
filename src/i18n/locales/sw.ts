@@ -120,9 +120,11 @@ const sw: UiStrings = {
   actionCreatedLabel: 'Imeundwa',
   actionUpdatedLabel: 'Imesasishwa',
   actionDeletedLabel: 'Imefutwa',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Muundo wa matokeo\n- Mstari wa 1: kichwa hadi herufi 50 (epuka amri)\n- Mistari 2+ (ikihitajika tu): mwili wa orodha unaoanza na "- "',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Zisizo staged',
   diffSectionUntracked: '### Zisizofuatiliwa {path}',

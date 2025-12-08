@@ -120,9 +120,11 @@ const es: UiStrings = {
   actionCreatedLabel: 'Creado',
   actionUpdatedLabel: 'Actualizado',
   actionDeletedLabel: 'Eliminado',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Formato de salida\n- Línea 1: título ≤50 caracteres (evita imperativo)\n- Línea 2+ (solo si es necesario): viñetas que empiezan con "- "',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Sin stage',
   diffSectionUntracked: '### Sin seguimiento {path}',

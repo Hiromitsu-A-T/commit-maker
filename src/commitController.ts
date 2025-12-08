@@ -497,8 +497,10 @@ export class CommitController implements vscode.Disposable {
   }
 
   private buildPrompt(diff: string): string {
+    const guard = this.strings.promptGuard;
+    const userInstructionLabel = this.strings.userInstructionLabel;
     const instruction = this.state.prompt || this.getDefaultPrompt();
-    return `${instruction}\n\n${this.strings.diffHeading}\n${diff}\n\n${this.strings.outputFormatSection}`;
+    return `${guard}\n\n${userInstructionLabel}\n${instruction}\n\n${this.strings.diffHeading}\n${diff}`;
   }
 
   private showPromptToast(message: string): void {

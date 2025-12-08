@@ -120,9 +120,11 @@ const zh: UiStrings = {
   actionCreatedLabel: '新建',
   actionUpdatedLabel: '已更新',
   actionDeletedLabel: '已删除',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# 输出格式\n- 第 1 行：50 字以内的标题（避免命令式）\n- 第 2 行起（仅需要时）：以 "- " 开头的项目符号正文',
+
+
   diffSectionStaged: '### 已暂存',
   diffSectionUnstaged: '### 未暂存',
   diffSectionUntracked: '### 未跟踪 {path}',

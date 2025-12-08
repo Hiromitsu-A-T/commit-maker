@@ -120,9 +120,11 @@ const ar: UiStrings = {
   actionCreatedLabel: 'تم الإنشاء',
   actionUpdatedLabel: 'تم التحديث',
   actionDeletedLabel: 'تم الحذف',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# تنسيق الإخراج\n- السطر 1: عنوان ≤50 حرفاً (تجنب الأسلوب الأمر)\n- السطر 2+ (عند الحاجة): نقاط تبدأ بـ "- "',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Unstaged',
   diffSectionUntracked: '### Untracked {path}',

@@ -120,9 +120,11 @@ const ta: UiStrings = {
   actionCreatedLabel: 'உருவாக்கப்பட்டது',
   actionUpdatedLabel: 'புதுப்பிக்கப்பட்டது',
   actionDeletedLabel: 'நீக்கப்பட்டது',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# வெளியீட்டு வடிவம்\n- வரி 1: 50 எழுத்துகளுக்குள் தலைப்பு (கட்டளைச் சொல் தவிர்க்கவும்)\n- வரி 2+ (தேவையெனில்): "- " மூலம் புள்ளி வடிவ உடல்',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Unstaged',
   diffSectionUntracked: '### Untracked {path}',

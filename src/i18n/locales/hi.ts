@@ -120,9 +120,11 @@ const hi: UiStrings = {
   actionCreatedLabel: 'बनाया',
   actionUpdatedLabel: 'अद्यतन',
   actionDeletedLabel: 'हटाया',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# आउटपुट फॉर्मेट\n- पंक्ति 1: शीर्षक ≤50 अक्षर (आदेशात्मक न हो)\n- पंक्ति 2+ (जरूरत पर): "- " से शुरू बुलेट बॉडी',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Unstaged',
   diffSectionUntracked: '### Untracked {path}',

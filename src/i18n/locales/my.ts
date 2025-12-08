@@ -120,9 +120,11 @@ const my: UiStrings = {
   actionCreatedLabel: 'ဖန်တီး',
   actionUpdatedLabel: 'အပ်ဒိတ်',
   actionDeletedLabel: 'ဖျက်',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Output ပုံစံ\n- စာကြောင်း 1: ခေါင်းစဥ် ≤50 အက္ခရာ (မင်းခိုင်းစကား ရှောင်)\n- စာကြောင်း 2+ (လိုအပ်လျှင်သာ): "- " ဖြင့် စသော bullet',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Unstaged',
   diffSectionUntracked: '### Untracked {path}',

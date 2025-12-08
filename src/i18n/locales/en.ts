@@ -120,9 +120,11 @@ const en: UiStrings = {
   actionCreatedLabel: 'Created',
   actionUpdatedLabel: 'Updated',
   actionDeletedLabel: 'Deleted',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Output format\n- Line 1: title within 50 chars (avoid imperative)\n- Line 2+ (only when needed): bullet body lines starting with \"- \"',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Unstaged',
   diffSectionUntracked: '### Untracked {path}',

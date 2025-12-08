@@ -120,9 +120,11 @@ const tl: UiStrings = {
   actionCreatedLabel: 'Nagawa',
   actionUpdatedLabel: 'Nai-update',
   actionDeletedLabel: 'Nabura',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Format ng output\n- Linya 1: pamagat hanggang 50 char (iwasan ang pang-utos)\n- Linya 2+: bullet body na may "- " kung kailangan lang',
+
+
   diffSectionStaged: '### Nakastage',
   diffSectionUnstaged: '### Hindi nakastage',
   diffSectionUntracked: '### Untracked {path}',

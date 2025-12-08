@@ -120,9 +120,11 @@ const zhTw: UiStrings = {
   actionCreatedLabel: '新增',
   actionUpdatedLabel: '已更新',
   actionDeletedLabel: '已刪除',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# 輸出格式\n- 第 1 行：50 字以內的標題（避免命令語氣）\n- 第 2 行起（僅需要時）：以 "- " 開頭的條列本文',
+
+
   diffSectionStaged: '### 已暫存',
   diffSectionUnstaged: '### 未暫存',
   diffSectionUntracked: '### 未追蹤 {path}',

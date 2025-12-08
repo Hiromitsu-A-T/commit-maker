@@ -120,9 +120,11 @@ const id: UiStrings = {
   actionCreatedLabel: 'Dibuat',
   actionUpdatedLabel: 'Diperbarui',
   actionDeletedLabel: 'Dihapus',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Format output\n- Baris 1: judul ≤50 karakter (hindari imperatif)\n- Baris 2+ (jika perlu): poin yang diawali "- "',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Unstaged',
   diffSectionUntracked: '### Untracked {path}',

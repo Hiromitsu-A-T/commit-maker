@@ -120,9 +120,11 @@ const nl: UiStrings = {
   actionCreatedLabel: 'Aangemaakt',
   actionUpdatedLabel: 'Bijgewerkt',
   actionDeletedLabel: 'Verwijderd',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Outputformaat\n- Regel 1: titel binnen 50 tekens (vermijd gebiedende wijs)\n- Regel 2+ (alleen indien nodig): bodyregels als bullets met "- "',
+
+
   diffSectionStaged: '### Geïndexeerd',
   diffSectionUnstaged: '### Niet-geïndexeerd',
   diffSectionUntracked: '### Niet-gevolgd {path}',

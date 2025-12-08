@@ -120,9 +120,12 @@ const ja: UiStrings = {
   actionCreatedLabel: '新規作成',
   actionUpdatedLabel: '上書き保存',
   actionDeletedLabel: '削除',
+  promptGuard: 'ユーザーが指定した書式・指示を最優先し、そのとおりに出力してください。',
+  userInstructionLabel: '以下はユーザーが指定した指示です:',
 
-  outputFormatSection:
-    '# 出力形式\n- 1 行目: 50 文字以内のタイトル（命令形は避ける）\n- 2 行目以降（必要なときのみ）: "- " で始まる箇条書き本文',
+
+
+
   diffSectionStaged: '### ステージ済み',
   diffSectionUnstaged: '### 未ステージ',
   diffSectionUntracked: '### 未追跡 {path}',

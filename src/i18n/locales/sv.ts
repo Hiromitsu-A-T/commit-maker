@@ -120,9 +120,11 @@ const sv: UiStrings = {
   actionCreatedLabel: 'Skapad',
   actionUpdatedLabel: 'Uppdaterad',
   actionDeletedLabel: 'Raderad',
+  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
+  userInstructionLabel: 'User instructions (verbatim):',
 
-  outputFormatSection:
-    '# Utskriftsformat\n- Rad 1: titel inom 50 tecken (undvik imperativ)\n- Rad 2+ (vid behov): brödtextrader som punkter med "- "',
+
+
   diffSectionStaged: '### Staged',
   diffSectionUnstaged: '### Ej staged',
   diffSectionUntracked: '### Ospårad {path}',
