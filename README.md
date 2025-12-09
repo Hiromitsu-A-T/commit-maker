@@ -16,6 +16,16 @@ Fully customizable AI commit message generator – beyond what Cursor or Copilot
 API keys stay in local SecretStorage; nothing is sent to the server side.
 SecretStorage is VS Code’s local encrypted store; API keys are not synced across machines (Settings Sync disabled) and are read/written only from there.
 
+## 🎬 デモ / Demo
+差分読み込みからメッセージ生成、SCM反映までの一連の流れを確認できます  
+(View the complete workflow from diff loading to message generation and SCM application)
+
+<p align="center">
+  <a href="https://raw.githubusercontent.com/Hiromitsu-A-T/commit-maker/main/media/commit_gen.mov">
+    <img src="https://raw.githubusercontent.com/Hiromitsu-A-T/commit-maker/main/media/commit_gen.gif" alt="Commit Maker デモ | Git commit message generator | コミットメッセージ自動生成" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-width: 100%;">
+  </a>
+</p>
+
 ---
 
 ## なぜ Commit Maker が必要なのか？ / Why Commit Maker?
