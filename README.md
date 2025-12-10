@@ -35,6 +35,9 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 (English) Popular tools like **Cursor**, **GitHub Copilot**, and **Windsurf** come with Git commit message generation. But do you face these issues?
 
 ### 既存ツールの課題 / Common Issues
+
+- **コミットメッセージでトークンコストがかさんでしまう** – 従量課金の AI エディタで、開発やエージェント用の高性能モデルにコミットメッセージまで書かせると、そのぶん高価なトークンを余計に消費してしまう。
+  (English) **Commit messages inflate token cost** – On metered AI editors, letting the same high-end model you use for coding or agents also generate commit messages burns extra expensive tokens.
 - **プロンプトをカスタマイズできない** – チームのコミット規約や Conventional Commits に合わせて細かく調整できない  
   (English) **No prompt customization** – Can't fine-tune for your team's commit conventions or Conventional Commits standards
 - **自分の APIキーが使えない** – Copilot は個人向けに API キーを提供せず、Cursor も BYOK で一部機能が制限される  
@@ -45,6 +48,9 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
   (English) **No preset management** – Can't save multiple commit message styles for different projects or scenarios
 
 ### Commit Maker の解決策 / Commit Maker's Solution
+✅ **コミット専用に安価なモデルを使い分けられる** – この拡張機能なら、コミットメッセージ生成のときだけ軽量・低コストモデル＋カスタムプロンプトに切り替えられるため、開発は高性能モデルのまま、コミットだけコストを抑えられます
+(English) **Use a cheaper dedicated model for commits** – This extension switches only commit message generation to a lightweight, low-cost model with a custom prompt, so you keep a powerful model for development while cutting commit costs.
+
 ✅ **完全 BYOK（Bring Your Own Key）** – OpenAI / Gemini / Claude など、あなたの API キーで動作。ローカルの SecretStorage に暗号化保存され、外部サーバーには一切送信されません。  
 (English) **Full BYOK** – Works with your OpenAI/Gemini/Claude keys, stored encrypted in local SecretStorage, never sent to external servers.
 
