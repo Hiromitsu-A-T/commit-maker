@@ -211,8 +211,8 @@ export class CommitController implements vscode.Disposable {
       vscode.commands.registerCommand('commitMaker.cancelCommitFromSCM', () => {
         void this.cancelCurrent(this.strings.msgCancelled);
       }),
-      vscode.commands.registerCommand('commitMaker.generateCommitFromSCM', async () => {
-        await this.generateAndApplyFromCommand();
+      vscode.commands.registerCommand('commitMaker.generateCommitFromSCM', async (scmArg?: unknown) => {
+        await this.generateAndApplyFromCommand(scmArg);
       })
     );
   }
@@ -348,12 +348,18 @@ export class CommitController implements vscode.Disposable {
     }
   }
 
-  private async generateCommitMessage(includeUnstaged: boolean, includeUntracked: boolean, includeBinary: boolean, progress?: (message: string) => void): Promise<void> {
+  private async generateCommitMessage(
+    includeUnstaged: boolean,
+    includeUntracked: boolean,
+    includeBinary: boolean,
+    progress?: (message: string) => void,
+    repo?: GitRepository
+  ): Promise<void> {
     this.startGeneration();
     try {
-      const repo = await this.getRepositoryOrThrow();
+      const targetRepo = repo ?? (await this.getRepositoryOrThrow());
       progress?.(this.strings.msgCommitGenerateFetchingDiff);
-      const diff = await this.prepareDiff(repo, includeUnstaged, includeUntracked, includeBinary);
+      const diff = await this.prepareDiff(targetRepo, includeUnstaged, includeUntracked, includeBinary);
       const prompt = this.buildPrompt(diff);
       progress?.(this.strings.msgCommitGenerateCallingLlm);
       const result = await this.callLlm(prompt);
@@ -404,17 +410,17 @@ export class CommitController implements vscode.Disposable {
     return diff;
   }
 
-  private async applyCommitMessage(): Promise<void> {
+  private async applyCommitMessage(repo?: GitRepository): Promise<void> {
     if (!this.state.result) {
       void vscode.window.showInformationMessage(this.strings.msgCommitNotGenerated);
       return;
     }
-    const repo = await this.getRepository();
-    if (!repo) {
+    const targetRepo = repo ?? (await this.getRepository());
+    if (!targetRepo) {
       void vscode.window.showErrorMessage(this.strings.msgRepoNotFound);
       return;
     }
-    repo.inputBox.value = this.state.result;
+    targetRepo.inputBox.value = this.state.result;
     void vscode.window.showInformationMessage(this.strings.msgCommitApplySuccess);
   }
 
@@ -450,20 +456,27 @@ export class CommitController implements vscode.Disposable {
     });
   }
 
-  private async generateAndApplyFromCommand(): Promise<void> {
+  private async generateAndApplyFromCommand(scmArg?: unknown): Promise<void> {
+    const rootUri = getRootUriFromScmArg(scmArg);
+    const repo = await this.getRepositoryFromScmArg(scmArg);
+    if (rootUri && !repo) {
+      void vscode.window.showErrorMessage(this.strings.msgRepoNotFound);
+      return;
+    }
     await this.runWithScmProgress(this.strings.msgCommitGenerateTitle, async report => {
       await this.generateCommitMessage(
         this.state.includeUnstaged,
         this.state.includeUntracked,
         this.state.includeBinary,
-        report
+        report,
+        repo
       );
       if (this.state.status === 'error') {
         // エラー時は apply を試さない（generate 側でメッセージ済み）
         return;
       }
       report(this.strings.msgCommitApplyProgress);
-      await this.applyCommitMessage();
+      await this.applyCommitMessage(repo);
     }).catch(() => {
       // generateCommitMessage 内で通知済みなのでここでは握りつぶす
     });
@@ -614,15 +627,15 @@ export class CommitController implements vscode.Disposable {
     }
   }
 
-  private async getRepositoryOrThrow(): Promise<GitRepository> {
-    const repo = await this.getRepository();
+  private async getRepositoryOrThrow(rootUri?: vscode.Uri): Promise<GitRepository> {
+    const repo = await this.getRepository(rootUri);
     if (!repo) {
       throw new Error(this.strings.msgRepoNotFound);
     }
     return repo;
   }
 
-  private async getRepository(): Promise<GitRepository | undefined> {
+  private async getRepository(rootUri?: vscode.Uri): Promise<GitRepository | undefined> {
     const gitExtension = vscode.extensions.getExtension('vscode.git');
     if (!gitExtension) {
       return undefined;
@@ -634,6 +647,11 @@ export class CommitController implements vscode.Disposable {
     const repos = api?.repositories;
     if (!repos?.length) {
       return undefined;
+    }
+
+    if (rootUri?.fsPath) {
+      const match = repos.find(repo => repo.rootUri?.fsPath === rootUri.fsPath);
+      return match;
     }
 
     const activeUri = vscode.window.activeTextEditor?.document.uri;
@@ -650,6 +668,17 @@ export class CommitController implements vscode.Disposable {
     return repos[0];
   }
 
+  private async getRepositoryFromScmArg(scmArg?: unknown): Promise<GitRepository | undefined> {
+    const rootUri = getRootUriFromScmArg(scmArg);
+    return this.getRepository(rootUri);
+  }
+
+}
+
+function getRootUriFromScmArg(arg: unknown): vscode.Uri | undefined {
+  if (!arg || typeof arg !== 'object') return undefined;
+  const maybe = arg as { rootUri?: vscode.Uri; sourceControl?: { rootUri?: vscode.Uri } };
+  return maybe.rootUri ?? maybe.sourceControl?.rootUri;
 }
 
 function getEnvVarName(provider: ProviderId): string[] {
