@@ -16,16 +16,6 @@ Fully customizable AI commit message generator – beyond what Cursor or Copilot
 API keys stay in local SecretStorage; nothing is sent to the server side.
 SecretStorage is VS Code’s local encrypted store; API keys are not synced across machines (Settings Sync disabled) and are read/written only from there.
 
-> [!TIP]
-> 同じ作者が開発しているアプリ **Quick Recorder** です。ご興味があれば、こちらもご覧ください。  
-> (English) **Quick Recorder** is another app by the same author.  
-> https://www.quick-recorder.com/  
-> App Store (iPhone/iPad/Watch): https://apps.apple.com/app/id6753174719
->
-> <p align="center">
->   <img src="https://raw.githubusercontent.com/Hiromitsu-A-T/commit-maker/main/media/pr_quick_recorder.png" alt="Quick Recorder iPad / Apple Watch preview" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); width: 100%; max-width: 760px; height: auto;">
-> </p>
-
 ## 🎬 デモ / Demo
 差分読み込みからメッセージ生成、SCM反映までの一連の流れを確認できます  
 (View the complete workflow from diff loading to message generation and SCM application)
@@ -258,6 +248,18 @@ UIから切り替え可能（Switchable from UI）:
   (Diffs sent only to your chosen LLM provider)
 - **拡張機能**: ログを外部送信しません  
   (Extension itself sends no external logs)
+
+## [PR] 関連アプリ / Related App
+
+同じ作者が開発している音声メモアプリ **Quick Recorder** です。ご興味があればご覧ください。  
+(English) **Quick Recorder** is another app by the same author.
+
+- Web: https://www.quick-recorder.com/
+- App Store (iPhone/iPad/Watch): https://apps.apple.com/app/id6753174719
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Hiromitsu-A-T/commit-maker/main/media/pr_quick_recorder.png" alt="Quick Recorder iPad / Apple Watch preview" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); width: 100%; max-width: 760px; height: auto;">
+</p>
 
 ## スポンサー / Sponsors
 
