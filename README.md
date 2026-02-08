@@ -16,6 +16,10 @@ Fully customizable AI commit message generator – beyond what Cursor or Copilot
 API keys stay in local SecretStorage; nothing is sent to the server side.
 SecretStorage is VS Code’s local encrypted store; API keys are not synced across machines (Settings Sync disabled) and are read/written only from there.
 
+> 同じ作者が開発しているアプリ **Quick Recorder** です。ご興味があれば、こちらもご覧ください。  
+> https://www.quick-recorder.com/  
+> iPhone/iPad/Watch 向け App Store: https://apps.apple.com/app/id6753174719
+
 ## 🎬 デモ / Demo
 差分読み込みからメッセージ生成、SCM反映までの一連の流れを確認できます  
 (View the complete workflow from diff loading to message generation and SCM application)
