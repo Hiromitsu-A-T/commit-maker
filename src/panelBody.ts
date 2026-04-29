@@ -12,7 +12,7 @@ export function renderPanelBody(strings: UiStrings): string {
       </div>
     </section>
 
-    <section>
+    <section id="apiKeySection">
       <h3 class="mt0">${strings.apiKeySectionTitle}</h3>
       <div class="badge-row" id="apiKeyStatusRow"></div>
       <div class="row mt6">
@@ -64,6 +64,29 @@ export function renderPanelBody(strings: UiStrings): string {
           <label for="verbosity">${strings.verbosityLabel}</label>
           <select id="verbosity"></select>
         </div>
+      </div>
+      <div id="localModelPanel" class="mt8 hidden">
+        <h3 class="mt0">${strings.localModelSectionTitle}</h3>
+        <div class="badge-row" id="localModelStatusRow"></div>
+        <div class="row mt8">
+          <div>
+            <label for="localModelName">${strings.localModelLabel}</label>
+            <input id="localModelName" type="text" readonly />
+          </div>
+          <div>
+            <label for="localModelStatus">${strings.localModelStatusLabel}</label>
+            <input id="localModelStatus" type="text" readonly />
+          </div>
+        </div>
+        <div class="buttons two-col">
+          <button id="localModelDownload" class="primary" type="button">${strings.localModelDownloadButton}</button>
+          <button id="localModelDelete" class="secondary" type="button">${strings.localModelDeleteButton}</button>
+        </div>
+        <div class="buttons two-col">
+          <button id="localModelCancel" class="secondary" type="button">${strings.localModelCancelButton}</button>
+          <button id="localModelTest" class="secondary" type="button">${strings.localModelTestButton}</button>
+        </div>
+        <div class="hint" id="localModelHint"></div>
       </div>
     </section>
 

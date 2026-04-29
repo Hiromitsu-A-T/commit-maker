@@ -4,6 +4,7 @@ export function queryElements(): PanelElements {
   const get = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
   return {
     language: get('language') as HTMLSelectElement | null,
+    apiKeySection: get('apiKeySection'),
     apiKeyProvider: get('apiKeyProvider') as HTMLSelectElement | null,
     apiKeyInput: get('apiKeyInput') as HTMLInputElement | null,
     apiKeyPreview: get('apiKeyPreview'),
@@ -32,6 +33,15 @@ export function queryElements(): PanelElements {
     modelHelp: get('modelHelp'),
     customModelRow: get('customModelRow'),
     customModel: get('customModel') as HTMLInputElement | null,
+    localModelPanel: get('localModelPanel'),
+    localModelStatusRow: get('localModelStatusRow'),
+    localModelName: get('localModelName') as HTMLInputElement | null,
+    localModelStatus: get('localModelStatus') as HTMLInputElement | null,
+    localModelDownload: get('localModelDownload') as HTMLButtonElement | null,
+    localModelCancel: get('localModelCancel') as HTMLButtonElement | null,
+    localModelDelete: get('localModelDelete') as HTMLButtonElement | null,
+    localModelTest: get('localModelTest') as HTMLButtonElement | null,
+    localModelHint: get('localModelHint'),
     reasoning: get('reasoning') as HTMLSelectElement | null,
     verbosity: get('verbosity') as HTMLSelectElement | null,
     reasoningRow: get('reasoningRow'),

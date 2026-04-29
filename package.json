@@ -1,8 +1,8 @@
 {
   "name": "commit-maker",
   "displayName": "Commit Maker – コミットメーカー",
-  "description": "Git の差分から AI でコミットメッセージを自動生成し、SCM 入力欄へ反映する BYOK 拡張（コミットメーカー）。AI commit message generator for Git diff that auto-fills the SCM box (BYOK).",
-  "version": "0.2.10",
+  "description": "Git の差分から AI でコミットメッセージを自動生成し、SCM 入力欄へ反映する BYOK / Local 対応拡張（コミットメーカー）。AI commit message generator for Git diff with BYOK and Local model support.",
+  "version": "0.3.0",
   "publisher": "Hiromitsu",
   "license": "Apache-2.0",
   "repository": {
@@ -105,7 +105,8 @@
           "enum": [
             "openai",
             "gemini",
-            "claude"
+            "claude",
+            "local"
           ],
           "default": "gemini",
           "description": "選択する LLM プロバイダー"
@@ -124,6 +125,11 @@
           "type": "string",
           "default": "https://api.anthropic.com/v1/messages",
           "description": "Anthropic Claude messages API エンドポイント"
+        },
+        "commitMaker.endpointLocal": {
+          "type": "string",
+          "default": "http://127.0.0.1",
+          "description": "Local provider 内部用エンドポイント（通常は変更不要）"
         },
         "commitMaker.model": {
           "type": "string",
@@ -165,6 +171,51 @@
           "type": "string",
           "default": "commit-maker/api-key/claude",
           "description": "Claude 用 API キーを保存する SecretStorage のキー名"
+        },
+        "commitMaker.apiKeySecretLocal": {
+          "type": "string",
+          "default": "",
+          "description": "Local provider は API キーを使用しません"
+        },
+        "commitMaker.localRuntimePath": {
+          "type": "string",
+          "default": "",
+          "description": "自動取得 runtime を使わない場合の llama-server 実行ファイルパス"
+        },
+        "commitMaker.localModelUrl": {
+          "type": "string",
+          "default": "https://huggingface.co/Edge-Quant/Qwen3-4B-Instruct-2507-Q4_K_M-GGUF/resolve/main/qwen3-4b-instruct-2507-q4_k_m.gguf",
+          "description": "Local provider がダウンロードする GGUF モデル URL"
+        },
+        "commitMaker.localModelFilename": {
+          "type": "string",
+          "default": "qwen3-4b-instruct-2507-q4_k_m.gguf",
+          "description": "Local provider の保存ファイル名"
+        },
+        "commitMaker.localModelSha256": {
+          "type": "string",
+          "default": "1571ec5115bcfed4b4327fc27b5f44ea284806caf5331eef89326191c9b031d6",
+          "description": "Local provider の GGUF モデル検証用 SHA256"
+        },
+        "commitMaker.localContextSize": {
+          "type": "number",
+          "default": 32768,
+          "description": "Local provider の llama.cpp context size"
+        },
+        "commitMaker.localThreads": {
+          "type": "number",
+          "default": 0,
+          "description": "Local provider の CPU スレッド数。0 で llama.cpp に任せる"
+        },
+        "commitMaker.localGpuLayers": {
+          "type": "number",
+          "default": 99,
+          "description": "Local provider の GPU offload layers"
+        },
+        "commitMaker.localKeepAliveMs": {
+          "type": "number",
+          "default": 300000,
+          "description": "Local provider の llama-server を生成後に保持する時間（ミリ秒）。0 で自動停止しない"
         },
         "commitMaker.requestTimeoutMs": {
           "type": "number",
@@ -210,7 +261,8 @@
     "dev:prep": "npm run build:nls && npm run compile",
     "build:nls": "node scripts/copy-package-nls.js",
     "clean:nls": "node scripts/clean-package-nls.js",
-    "package": "npm run compile && npm run build:media && npm run build:nls && npx vsce package --no-rewrite-relative-links && npm run clean:nls",
+    "package": "npm run compile && npm run build:media && npm run build:nls && npx vsce package --no-dependencies --no-rewrite-relative-links && npm run clean:nls",
+    "package:preview": "npm run compile && npm run build:media && npm run build:nls && npx vsce package --pre-release --no-dependencies --no-rewrite-relative-links && npm run clean:nls",
     "publish:marketplace": "npx vsce publish",
     "publish:openvsx": "npx ovsx publish --packagePath vsix/commit-maker-*.vsix",
     "clean:vsix": "node scripts/clean-vsix.js",
@@ -221,7 +273,8 @@
     "smoke:gemini": "ts-node --transpile-only scripts/smoke-gemini.ts",
     "smoke:gemini:matrix": "ts-node --transpile-only scripts/smoke-gemini-matrix.ts",
     "smoke:claude": "ts-node --transpile-only scripts/smoke-claude.ts",
-    "smoke:claude:matrix": "ts-node --transpile-only scripts/smoke-claude-matrix.ts"
+    "smoke:claude:matrix": "ts-node --transpile-only scripts/smoke-claude-matrix.ts",
+    "smoke:local:runtime": "ts-node --project tsconfig.json scripts/smoke-local-runtime.ts"
   },
   "devDependencies": {
     "@types/node": "^18.19.0",

@@ -51,14 +51,16 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 ✅ **コミット専用に安価なモデルを使い分けられる** – この拡張機能なら、コミットメッセージ生成のときだけ軽量・低コストモデル＋カスタムプロンプトに切り替えられるため、開発は高性能モデルのまま、コミットだけコストを抑えられます
 (English) **Use a cheaper dedicated model for commits** – This extension switches only commit message generation to a lightweight, low-cost model with a custom prompt, so you keep a powerful model for development while cutting commit costs.
 
-✅ **完全 BYOK（Bring Your Own Key）** – OpenAI / Gemini / Claude など、あなたの API キーで動作。ローカルの SecretStorage に暗号化保存され、外部サーバーには一切送信されません。  
-(English) **Full BYOK** – Works with your OpenAI/Gemini/Claude keys, stored encrypted in local SecretStorage, never sent to external servers.
+✅ **BYOK / ローカルモデル対応** – OpenAI / Gemini / Claude はあなたの API キーで動作。Local を選ぶ場合は API キー不要で、必要な llama.cpp runtime とモデルだけを後からダウンロードします。  
+(English) **BYOK / local model support** – Cloud providers use your own keys; Local needs no API key and downloads only the required llama.cpp runtime and model when you choose it.
+
+> **Local provider preview**: Local LLM support is being released first as a VS Code pre-release for cross-platform validation. macOS arm64 has been verified end-to-end; Windows/Linux runtime auto-install is covered by CI smoke tests and will be promoted to stable after real-device verification.
 
 ✅ **プロンプトを複数保存・切り替え** – GUI で複数のプロンプトプリセットを保存し、ワンクリックで切り替え可能。チーム規約、個人用、実験用など、用途に応じて使い分けられます。  
 (English) **Save & switch multiple prompts** – Store presets in the GUI and switch with one click for team rules, personal use, or experiments.
 
-✅ **プロバイダー・モデルを自由に選択** – 同じ UI で Gemini の高速モデル（`gemini-2.5-flash-lite`）から OpenAI の高精度モデルまで即座に切り替え。コストと速度を最適化できます。  
-(English) **Flexible provider/model selection** – Switch instantly between Gemini's fast models and OpenAI's precision models in the same UI to optimize cost and speed.
+✅ **プロバイダー・モデルを自由に選択** – 同じ UI で Gemini の高速モデル、OpenAI / Claude、ローカル LLM を切り替え。コスト・速度・プライバシーを最適化できます。  
+(English) **Flexible provider/model selection** – Switch between Gemini, OpenAI, Claude, and Local LLMs in the same UI.
 
 ✅ **差分を完全に把握** – Staged / Unstaged / 未追跡 / バイナリを見出し付きで取得。デフォルトで未ステージ・未追跡も含めるため、Git commit 漏れを防止。  
 (English) **Complete diff coverage** – Fetch staged/unstaged/untracked/binary with headings; defaults include unstaged & untracked to prevent commit omissions.
@@ -70,8 +72,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
   (English) **One-click Git commit message generation** – AI reads your Git diff and fills the SCM box instantly with professional commit messages
 - **プロンプトプリセットの保存・管理**: GUI で複数保存し、PC 内の全ワークスペースで共通利用（Settings Sync を除く）  
   (English) **Prompt preset management** – Save multiple in GUI, shared across local workspaces (except Settings Sync)
-- **推奨モデルは高速・低コスト**: デフォルトで Gemini `gemini-2.5-flash-lite` を採用。必要に応じて OpenAI / Claude へ切り替え可能  
-  (English) **Fast & low-cost default** – Gemini `gemini-2.5-flash-lite` by default; switch to OpenAI/Claude as needed
+- **推奨モデルは高速・低コスト**: デフォルトで Gemini `gemini-2.5-flash-lite` を採用。必要に応じて OpenAI / Claude / Local へ切り替え可能  
+  (English) **Fast & low-cost default** – Gemini `gemini-2.5-flash-lite` by default; switch to OpenAI/Claude/Local as needed
 - **追加指示欄でさらにカスタマイズ**: 「英語で短く」「絵文字なし」「Conventional Commits 準拠」など、チームのコミットルールに合わせて自由に指定  
   (English) **Custom instructions field** – Add rules like "short in English", "no emojis", or "follow Conventional Commits" to fit your team's commit standards
 - **SCM ツールバーからも実行可能**: パネルを開かず、杖アイコンから「差分取得→生成→適用」を一発で完了  
@@ -89,6 +91,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
   (English) **API keys stay local** – Encrypted in VS Code SecretStorage, not synced across machines, Settings Sync disabled.
 - **差分は選択したプロバイダーのみに送信**: 拡張機能自体は外部にログを送信しません。  
   (English) **Diffs sent only to your chosen provider** – The extension itself sends no external logs.
+- **Local 選択時は差分を外部送信しません**: llama.cpp runtime とローカルモデルはユーザー操作でダウンロードし、SHA-256 検証後に PC 内で実行します。  
+  (English) **Local keeps diffs on-device** – The llama.cpp runtime and model are downloaded only by user action, verified with SHA-256, and run locally.
 
 
 ## 使い方 / Quick Start
@@ -105,6 +109,12 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 
 > 💡 **BYOK方式**: すべて自分のAPIキーを使用。利用料は各プロバイダーの課金体系に従います。  
 > (BYOK only: bring your own keys; usage is billed by each provider)
+
+Local を選ぶ場合、API キーは不要です。初回の「モデルをダウンロード」で llama.cpp runtime と GGUF モデルを取得し、以後は PC 内で生成します。  
+(For Local, no API key is required. The first "Download model" action fetches the llama.cpp runtime and GGUF model, then generation runs on your machine.)
+
+Local の GGUF モデルは約 2.3 GB です。不要になった場合はローカルモデル欄の「削除」からモデル本体を削除できます。  
+(The Local GGUF model is about 2.3 GB. You can remove the model file from the Local model section when you no longer need it.)
 
 **3. プロバイダー・モデルを選択**  
 推奨: **Gemini** → `gemini-2.5-flash-lite`（高速・低コスト）  
@@ -178,7 +188,7 @@ UIから切り替え可能（Switchable from UI）:
 
 | 設定キー | 説明 |
 |---------|------|
-| `commitMaker.provider` | プロバイダー設定（Gemini / OpenAI / Claude） |
+| `commitMaker.provider` | プロバイダー設定（Gemini / OpenAI / Claude / Local） |
 | `commitMaker.model` | モデル設定（例: `gemini-2.5-flash-lite`） |
 | `commitMaker.endpoint*` | カスタムエンドポイント設定 |
 | `commitMaker.apiKeySecret*` | SecretStorage に保存するキー名 |
@@ -186,6 +196,7 @@ UIから切り替え可能（Switchable from UI）:
 | `commitMaker.verbosity` | OpenAI Responses の出力詳細度 |
 | `commitMaker.requestTimeoutMs` | LLM 呼び出しタイムアウト（ミリ秒） |
 | `commitMaker.logLlm` | LLM リクエスト/リトライのログ記録（デフォルト: off） |
+| `commitMaker.local*` | Local provider のモデル URL / SHA256 / llama.cpp 自動取得・実行設定 |
 
 (Configuration keys for provider, model, endpoints, API key storage, OpenAI-specific parameters, timeout, and logging)
 
@@ -240,6 +251,7 @@ UIから切り替え可能（Switchable from UI）:
 ### 動作環境 / Requirements
 - **VS Code**: 1.94 以降（1.94+）
 - **Git**: リポジトリ上で動作（Requires Git repository）
+- **Local provider**: llama.cpp の `llama-server` を使用。通常は OS/CPU に合う runtime を自動取得し、開発時のみ `commitMaker.localRuntimePath` で実行ファイルを上書き可能
 
 ### プライバシー / Privacy
 - **APIキー**: SecretStorageにのみ保存、外部送信なし  

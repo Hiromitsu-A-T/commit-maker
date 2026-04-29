@@ -41,6 +41,15 @@ export const COMMIT_REASONING_STORAGE_KEY = 'commitMaker.commitReasoning';
 export const COMMIT_VERBOSITY_STORAGE_KEY = 'commitMaker.commitVerbosity';
 export const COMMIT_MAX_PROMPT_CHARS_STORAGE_KEY = 'commitMaker.commitMaxPromptChars';
 export const COMMIT_LANGUAGE_STORAGE_KEY = 'commitMaker.language';
+export const DEFAULT_LOCAL_MODEL_ID = 'commit-maker-local-qwen3-4b';
+export const DEFAULT_LOCAL_MODEL_FILENAME = 'qwen3-4b-instruct-2507-q4_k_m.gguf';
+export const DEFAULT_LOCAL_MODEL_URL =
+  'https://huggingface.co/Edge-Quant/Qwen3-4B-Instruct-2507-Q4_K_M-GGUF/resolve/main/qwen3-4b-instruct-2507-q4_k_m.gguf';
+export const DEFAULT_LOCAL_MODEL_SHA256 = '1571ec5115bcfed4b4327fc27b5f44ea284806caf5331eef89326191c9b031d6';
+export const DEFAULT_LOCAL_MODEL_SIZE_BYTES = 2_497_279_136;
+export const DEFAULT_LOCAL_CONTEXT_SIZE = 32768;
+export const DEFAULT_LOCAL_GPU_LAYERS = 99;
+export const DEFAULT_LOCAL_KEEP_ALIVE_MS = 300000;
 
 export const REASONING_EFFORT_OPTIONS: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high'];
 export const DEFAULT_REASONING_EFFORT: ReasoningEffort = 'none';
@@ -60,6 +69,7 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       badge: 'Gemini',
       description: strings.providerDescriptionGemini,
       apiKeyPlaceholder: 'AIza...',
+      requiresApiKey: true,
       models: ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'],
       defaultModel: 'gemini-2.5-flash-lite',
       issueUrl: 'https://aistudio.google.com/app/api-keys',
@@ -74,6 +84,7 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       badge: 'OpenAI',
       description: strings.providerDescriptionOpenAi,
       apiKeyPlaceholder: 'sk-...',
+      requiresApiKey: true,
       models: [
         'gpt-5-nano',
         'gpt-5-mini',
@@ -98,6 +109,7 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       badge: 'Claude',
       description: strings.providerDescriptionClaude,
       apiKeyPlaceholder: 'sk-ant-...',
+      requiresApiKey: true,
       models: [
         'claude-haiku-4-5-20251001',
         'claude-sonnet-4-5-20250929',
@@ -112,6 +124,21 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       defaultSecret: 'commit-maker/api-key/claude',
       supportsReasoning: false,
       supportsVerbosity: false
+    },
+    {
+      id: 'local',
+      label: strings.providerLabelLocal,
+      badge: 'Local',
+      description: strings.providerDescriptionLocal,
+      apiKeyPlaceholder: '',
+      requiresApiKey: false,
+      models: [DEFAULT_LOCAL_MODEL_ID],
+      defaultModel: DEFAULT_LOCAL_MODEL_ID,
+      issueUrl: 'https://huggingface.co/Edge-Quant/Qwen3-4B-Instruct-2507-Q4_K_M-GGUF',
+      defaultEndpoint: 'http://127.0.0.1',
+      defaultSecret: '',
+      supportsReasoning: false,
+      supportsVerbosity: false
     }
   ];
 }
@@ -120,12 +147,13 @@ export const PROVIDER_CAPABILITIES: ProviderCapability[] = buildProviderCapabili
 
 // 派生データ（既存 API 互換のまま残す）
 export function buildProviderOptions(capabilities: ProviderCapability[] = PROVIDER_CAPABILITIES): ProviderOption[] {
-  return capabilities.map(({ id, label, badge, description, apiKeyPlaceholder }) => ({
+  return capabilities.map(({ id, label, badge, description, apiKeyPlaceholder, requiresApiKey }) => ({
     id,
     label,
     badge,
     description,
-    apiKeyPlaceholder
+    apiKeyPlaceholder,
+    requiresApiKey
   }));
 }
 

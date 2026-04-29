@@ -1,6 +1,6 @@
 import { LanguageCode, isLanguageCode, SUPPORTED_LANG_CODES } from './i18n/languages';
 
-export type ProviderId = 'openai' | 'gemini' | 'claude';
+export type ProviderId = 'openai' | 'gemini' | 'claude' | 'local';
 export type ReasoningEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high';
 export type VerbositySetting = 'low' | 'medium' | 'high';
 export type CommitStatus = 'idle' | 'loading' | 'ready' | 'error';
@@ -12,6 +12,7 @@ export interface ProviderOption {
   badge: string;
   description: string;
   apiKeyPlaceholder: string;
+  requiresApiKey: boolean;
 }
 
 export interface ProviderCapability extends ProviderOption {
@@ -35,6 +36,19 @@ export interface ApiKeySubmission {
   value: string;
 }
 
+export type LocalModelStatus = 'notDownloaded' | 'downloading' | 'ready' | 'loading' | 'error';
+
+export interface LocalModelState {
+  id: string;
+  label: string;
+  status: LocalModelStatus;
+  sizeLabel: string;
+  downloadedBytes?: number;
+  totalBytes?: number;
+  path?: string;
+  error?: string;
+}
+
 export interface PromptPreset {
   id: string;
   label: string;
@@ -44,7 +58,7 @@ export interface PromptPreset {
 
 
 export function isProviderId(value: unknown): value is ProviderId {
-  return value === 'openai' || value === 'gemini' || value === 'claude';
+  return value === 'openai' || value === 'gemini' || value === 'claude' || value === 'local';
 }
 
 export function isReasoningEffort(value: unknown): value is ReasoningEffort {

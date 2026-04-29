@@ -8,7 +8,8 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "lib": ["ES2020", "DOM"],
-    "types": []
+    "types": [],
+    "newLine": "crlf"
   },
   "include": ["src/**/*.ts"]
 }

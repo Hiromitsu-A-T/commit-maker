@@ -2,6 +2,7 @@ export function queryElements() {
     const get = (id) => document.getElementById(id);
     return {
         language: get('language'),
+        apiKeySection: get('apiKeySection'),
         apiKeyProvider: get('apiKeyProvider'),
         apiKeyInput: get('apiKeyInput'),
         apiKeyPreview: get('apiKeyPreview'),
@@ -30,6 +31,15 @@ export function queryElements() {
         modelHelp: get('modelHelp'),
         customModelRow: get('customModelRow'),
         customModel: get('customModel'),
+        localModelPanel: get('localModelPanel'),
+        localModelStatusRow: get('localModelStatusRow'),
+        localModelName: get('localModelName'),
+        localModelStatus: get('localModelStatus'),
+        localModelDownload: get('localModelDownload'),
+        localModelCancel: get('localModelCancel'),
+        localModelDelete: get('localModelDelete'),
+        localModelTest: get('localModelTest'),
+        localModelHint: get('localModelHint'),
         reasoning: get('reasoning'),
         verbosity: get('verbosity'),
         reasoningRow: get('reasoningRow'),

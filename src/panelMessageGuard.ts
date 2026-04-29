@@ -59,6 +59,12 @@ export function sanitizeMessage(message: unknown): WebviewInboundMessage | undef
       return isString((candidate as any).value)
         ? { type: candidate.type, value: (candidate as any).value as any }
         : undefined;
+    case 'localModelDownload':
+    case 'localModelCancelDownload':
+    case 'localModelDelete':
+    case 'localModelTest':
+    case 'localModelRefresh':
+      return { type: candidate.type };
     case 'commitGenerate': {
       const value = (candidate as any).value || {};
       return {

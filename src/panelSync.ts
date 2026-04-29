@@ -23,6 +23,7 @@ export function toPanelState(state: CommitState): Partial<PanelState> {
     commitMaxPromptMode: state.maxPromptMode,
     commitReasoning: state.reasoning,
     commitVerbosity: state.verbosity,
+    localModel: state.localModel,
     strings: STRINGS[language] ?? STRINGS[DEFAULT_LANGUAGE],
     promptToast: state.promptToast
   };
