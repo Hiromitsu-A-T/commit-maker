@@ -519,13 +519,14 @@ export class CommitController implements vscode.Disposable {
     repo?: GitRepository
   ): Promise<void> {
     this.startGeneration();
+    const report = (message: string): void => this.reportGenerationProgress(message, progress);
     try {
       const targetRepo = repo ?? (await this.getRepositoryOrThrow());
-      progress?.(this.strings.msgCommitGenerateFetchingDiff);
+      report(this.strings.msgCommitGenerateFetchingDiff);
       const diff = await this.prepareDiff(targetRepo, includeUnstaged, includeUntracked, includeBinary);
-      progress?.(this.strings.msgCommitGenerateCallingLlm);
+      report(this.strings.msgCommitGenerateCallingLlm);
       const result = this.state.provider === 'local'
-        ? await this.generateLocalCommitMessage(diff, progress)
+        ? await this.generateLocalCommitMessage(diff, report)
         : await this.callLlm(this.buildPrompt(diff));
       this.handleGenerationSuccess(result);
     } catch (error) {
@@ -537,7 +538,7 @@ export class CommitController implements vscode.Disposable {
 
   private startGeneration(): void {
     this.currentAbortController = new AbortController();
-    this.setStatus('loading', { result: undefined, lastError: undefined });
+    this.setStatus('loading', { result: undefined, lastError: undefined, progressMessage: undefined });
   }
 
   private async finishGeneration(): Promise<void> {
@@ -546,12 +547,12 @@ export class CommitController implements vscode.Disposable {
   }
 
   private handleGenerationSuccess(result: string): void {
-    this.setStatus('ready', { result: result.trim(), lastError: undefined });
+    this.setStatus('ready', { result: result.trim(), lastError: undefined, progressMessage: undefined });
   }
 
   private handleGenerationError(error: unknown): void {
     const message = error instanceof Error ? error.message : String(error);
-    this.setStatus('error', { lastError: message });
+    this.setStatus('error', { lastError: message, progressMessage: undefined });
     void vscode.window.showErrorMessage(`${this.strings.msgCommitGenerateFailedPrefix}${message}`);
   }
 
@@ -659,19 +660,27 @@ export class CommitController implements vscode.Disposable {
     if (this.currentAbortController) {
       this.currentAbortController.abort();
     }
-    this.setStatus('error', { lastError: reason });
+    this.setStatus('error', { lastError: reason, progressMessage: undefined });
     await vscode.commands.executeCommand('setContext', 'commitMaker.commitGenerating', false);
   }
 
   private setStatus(
     status: CommitState['status'],
-    payload: { result?: string; lastError?: string | undefined }
+    payload: { result?: string | undefined; lastError?: string | undefined; progressMessage?: string | undefined }
   ): void {
     this.state.status = status;
-    if (payload.result !== undefined) this.state.result = payload.result;
-    if (payload.lastError !== undefined) this.state.lastError = payload.lastError;
+    if ('result' in payload) this.state.result = payload.result;
+    if ('lastError' in payload) this.state.lastError = payload.lastError;
+    if ('progressMessage' in payload) this.state.progressMessage = payload.progressMessage;
     this.panel.updateState({ ...withStatus(this.state, status), commitResult: this.state.result });
     void vscode.commands.executeCommand('setContext', 'commitMaker.commitGenerating', status === 'loading');
+  }
+
+  private reportGenerationProgress(message: string, progress?: (message: string) => void): void {
+    progress?.(message);
+    if (this.state.status !== 'loading') return;
+    this.state.progressMessage = message;
+    this.panel.updateState({ commitProgress: message });
   }
 
   private buildPrompt(diff: string): string {
@@ -696,12 +705,13 @@ export class CommitController implements vscode.Disposable {
     const promptOverhead = this.buildPrompt('').length + 2000;
     const chunkLimit = Math.max(12000, promptLimit - promptOverhead);
     const chunks = splitTextIntoChunks(diff, chunkLimit);
+    const chunkSummaryMaxOutputTokens = 256;
     const summaries: string[] = [];
     for (let index = 0; index < chunks.length; index += 1) {
-      progress?.(`Local: 大きな差分を分割要約中 ${index + 1}/${chunks.length}`);
+      progress?.(this.formatLocalChunkProgress(index + 1, chunks.length));
       summaries.push(await this.callLocalPrompt(
         this.buildLocalChunkSummaryPrompt(chunks[index], index + 1, chunks.length),
-        512
+        chunkSummaryMaxOutputTokens
       ));
     }
 
@@ -726,6 +736,10 @@ export class CommitController implements vscode.Disposable {
       `Diff chunk ${index}/${total}:`,
       diffChunk
     ].join('\n');
+  }
+
+  private formatLocalChunkProgress(index: number, total: number): string {
+    return `Local ${index}/${total} · ${this.strings.msgCommitGenerateCallingLlm}`;
   }
 
   private showPromptToast(message: string): void {

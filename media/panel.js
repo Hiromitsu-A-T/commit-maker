@@ -190,6 +190,7 @@
           'commitStatus',
           'commitResult',
           'commitLastError',
+          'commitProgress',
           'commitIncludeUnstaged',
           'commitIncludeUntracked',
           'commitIncludeBinary',

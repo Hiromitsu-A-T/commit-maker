@@ -50,6 +50,7 @@ export interface PanelElements {
 
 export interface PanelStateSnapshot {
   commitStatus: string;
+  commitProgress?: string;
   commitIncludeUnstaged: boolean;
   commitIncludeUntracked: boolean;
   commitIncludeBinary: boolean;

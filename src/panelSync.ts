@@ -25,7 +25,8 @@ export function toPanelState(state: CommitState): Partial<PanelState> {
     commitVerbosity: state.verbosity,
     localModel: state.localModel,
     strings: STRINGS[language] ?? STRINGS[DEFAULT_LANGUAGE],
-    promptToast: state.promptToast
+    promptToast: state.promptToast,
+    commitProgress: state.progressMessage
   };
 }
 
@@ -33,6 +34,7 @@ export function withStatus(state: CommitState, status: PanelState['commitStatus'
   return {
     commitStatus: status,
     commitResult: state.result,
-    commitLastError: state.lastError
+    commitLastError: state.lastError,
+    commitProgress: state.progressMessage
   };
 }
