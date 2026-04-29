@@ -5,13 +5,15 @@ import { DEFAULT_PROVIDER_ENDPOINTS, DEFAULT_PROVIDER_SECRETS } from './constant
 const ENDPOINT_CONFIG_KEY: Record<ProviderId, string> = {
   openai: 'endpoint',
   claude: 'endpointClaude',
-  gemini: 'endpointGemini'
+  gemini: 'endpointGemini',
+  local: 'endpointLocal'
 };
 
 const API_KEY_CONFIG_KEY: Record<ProviderId, string> = {
   openai: 'apiKeySecret',
   claude: 'apiKeySecretClaude',
-  gemini: 'apiKeySecretGemini'
+  gemini: 'apiKeySecretGemini',
+  local: 'apiKeySecretLocal'
 };
 
 export function getEndpoint(config: vscode.WorkspaceConfiguration, provider: ProviderId): string {

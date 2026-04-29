@@ -3,6 +3,8 @@ import {
   DEFAULT_PROVIDER,
   DEFAULT_REASONING_EFFORT,
   DEFAULT_VERBOSITY,
+  DEFAULT_LOCAL_MODEL_ID,
+  DEFAULT_LOCAL_MODEL_SIZE_BYTES,
   MODEL_SUGGESTIONS_BY_PROVIDER,
   REASONING_EFFORT_OPTIONS,
   VERBOSITY_OPTIONS,
@@ -12,7 +14,15 @@ import {
   buildProviderOptions,
   buildProviderIssueUrls
 } from './constants';
-import { ProviderId, ProviderOption, ReasoningEffort, VerbositySetting, PromptPreset, LanguageCode } from './types';
+import {
+  ProviderId,
+  ProviderOption,
+  ReasoningEffort,
+  VerbositySetting,
+  PromptPreset,
+  LanguageCode,
+  LocalModelState
+} from './types';
 import { WebviewInboundMessage, WebviewOutboundMessage, PanelState } from './panelMessages';
 import { sanitizeMessage } from './panelMessageGuard';
 import { renderPanelBody } from './panelBody';
@@ -68,9 +78,20 @@ const ALLOWED_STATE_KEYS: (keyof PanelState)[] = [
   'commitMaxPromptMode',
   'commitReasoning',
   'commitVerbosity',
+  'localModel',
   'strings',
   'promptToast'
 ];
+
+function createDefaultLocalModelState(): LocalModelState {
+  return {
+    id: DEFAULT_LOCAL_MODEL_ID,
+    label: 'Commit Maker Local 4B',
+    status: 'notDownloaded',
+    sizeLabel: `${(DEFAULT_LOCAL_MODEL_SIZE_BYTES / 1024 / 1024 / 1024).toFixed(1)} GB`,
+    totalBytes: DEFAULT_LOCAL_MODEL_SIZE_BYTES
+  };
+}
 
 function createDefaultState(language: LanguageCode = DEFAULT_LANGUAGE): PanelState {
   const defaultModel = getDefaultModelForProvider(DEFAULT_PROVIDER);
@@ -81,7 +102,8 @@ function createDefaultState(language: LanguageCode = DEFAULT_LANGUAGE): PanelSta
     apiKeys: {
       openai: { ready: false },
       gemini: { ready: false },
-      claude: { ready: false }
+      claude: { ready: false },
+      local: { ready: false }
     },
     commitPrompt: getDefaultCommitPrompt(language),
     promptPresets: [...promptPresets],
@@ -101,6 +123,7 @@ function createDefaultState(language: LanguageCode = DEFAULT_LANGUAGE): PanelSta
     commitMaxPromptMode: DEFAULT_PROMPT_LIMIT.maxPromptMode,
     commitReasoning: DEFAULT_REASONING_EFFORT,
     commitVerbosity: DEFAULT_VERBOSITY,
+    localModel: createDefaultLocalModelState(),
     strings: STRINGS[language] ?? STRINGS[DEFAULT_LANGUAGE],
     promptToast: undefined
   };
@@ -128,6 +151,11 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
   private readonly onCommitMaxPromptEmitter = new vscode.EventEmitter<{ mode: 'unlimited' | 'limited'; value: number | null }>();
   private readonly onCommitReasoningEmitter = new vscode.EventEmitter<ReasoningEffort>();
   private readonly onCommitVerbosityEmitter = new vscode.EventEmitter<VerbositySetting>();
+  private readonly onLocalModelDownloadEmitter = new vscode.EventEmitter<void>();
+  private readonly onLocalModelCancelDownloadEmitter = new vscode.EventEmitter<void>();
+  private readonly onLocalModelDeleteEmitter = new vscode.EventEmitter<void>();
+  private readonly onLocalModelTestEmitter = new vscode.EventEmitter<void>();
+  private readonly onLocalModelRefreshEmitter = new vscode.EventEmitter<void>();
   private readonly onLanguageEmitter = new vscode.EventEmitter<LanguageCode>();
   private readonly onSavePromptPresetEmitter = new vscode.EventEmitter<{ title: string; body: string }>();
   private readonly onApplyPromptPresetEmitter = new vscode.EventEmitter<{ id: string }>();
@@ -148,6 +176,11 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
   public readonly onDidChangeCommitMaxPrompt = this.onCommitMaxPromptEmitter.event;
   public readonly onDidChangeCommitReasoning = this.onCommitReasoningEmitter.event;
   public readonly onDidChangeCommitVerbosity = this.onCommitVerbosityEmitter.event;
+  public readonly onDidRequestLocalModelDownload = this.onLocalModelDownloadEmitter.event;
+  public readonly onDidRequestLocalModelCancelDownload = this.onLocalModelCancelDownloadEmitter.event;
+  public readonly onDidRequestLocalModelDelete = this.onLocalModelDeleteEmitter.event;
+  public readonly onDidRequestLocalModelTest = this.onLocalModelTestEmitter.event;
+  public readonly onDidRequestLocalModelRefresh = this.onLocalModelRefreshEmitter.event;
   public readonly onDidChangeLanguage = this.onLanguageEmitter.event;
   public readonly onDidSavePromptPreset = this.onSavePromptPresetEmitter.event;
   public readonly onDidApplyPromptPreset = this.onApplyPromptPresetEmitter.event;
@@ -186,6 +219,11 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
         this.handleCommitReasoningChanged((message as Extract<WebviewInboundMessage, { type: 'commitReasoningChanged' }>).value),
       commitVerbosityChanged: message =>
         this.handleCommitVerbosityChanged((message as Extract<WebviewInboundMessage, { type: 'commitVerbosityChanged' }>).value),
+      localModelDownload: () => this.handleLocalModelDownload(),
+      localModelCancelDownload: () => this.handleLocalModelCancelDownload(),
+      localModelDelete: () => this.handleLocalModelDelete(),
+      localModelTest: () => this.handleLocalModelTest(),
+      localModelRefresh: () => this.handleLocalModelRefresh(),
       languageChanged: message =>
         this.handleLanguageChanged((message as Extract<WebviewInboundMessage, { type: 'languageChanged' }>).value),
       commitGenerate: message =>
@@ -233,6 +271,11 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
     this.onCommitIncludeBinaryEmitter.dispose();
     this.onCommitReasoningEmitter.dispose();
     this.onCommitVerbosityEmitter.dispose();
+    this.onLocalModelDownloadEmitter.dispose();
+    this.onLocalModelCancelDownloadEmitter.dispose();
+    this.onLocalModelDeleteEmitter.dispose();
+    this.onLocalModelTestEmitter.dispose();
+    this.onLocalModelRefreshEmitter.dispose();
     this.onLanguageEmitter.dispose();
   }
 
@@ -345,6 +388,26 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
   private handleCommitVerbosityChanged(value: VerbositySetting): void {
     this.state.commitVerbosity = value;
     this.onCommitVerbosityEmitter.fire(value);
+  }
+
+  private handleLocalModelDownload(): void {
+    this.onLocalModelDownloadEmitter.fire();
+  }
+
+  private handleLocalModelCancelDownload(): void {
+    this.onLocalModelCancelDownloadEmitter.fire();
+  }
+
+  private handleLocalModelDelete(): void {
+    this.onLocalModelDeleteEmitter.fire();
+  }
+
+  private handleLocalModelTest(): void {
+    this.onLocalModelTestEmitter.fire();
+  }
+
+  private handleLocalModelRefresh(): void {
+    this.onLocalModelRefreshEmitter.fire();
   }
 
   private handleLanguageChanged(value: LanguageCode): void {

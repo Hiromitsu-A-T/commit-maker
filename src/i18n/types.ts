@@ -25,6 +25,21 @@ export interface UiStrings {
   providerLabelGemini: string;
   providerLabelOpenAi: string;
   providerLabelClaude: string;
+  providerLabelLocal: string;
+  localModelSectionTitle: string;
+  localModelLabel: string;
+  localModelStatusLabel: string;
+  localModelDownloadButton: string;
+  localModelCancelButton: string;
+  localModelDeleteButton: string;
+  localModelTestButton: string;
+  localModelStatusNotDownloaded: string;
+  localModelStatusDownloading: string;
+  localModelStatusReady: string;
+  localModelStatusLoading: string;
+  localModelStatusError: string;
+  localModelSizePrefix: string;
+  localModelNeedDownload: string;
 
   promptSectionTitle: string;
   presetNamePlaceholder: string;
@@ -75,6 +90,7 @@ export interface UiStrings {
   providerDescriptionGemini: string;
   providerDescriptionOpenAi: string;
   providerDescriptionClaude: string;
+  providerDescriptionLocal: string;
 
   msgApiKeySaved: string;
   msgApiKeySavePick: string;
@@ -95,6 +111,14 @@ export interface UiStrings {
   msgLlmEmptyOpenAi: string;
   msgLlmEmptyGemini: string;
   msgLlmEmptyClaude: string;
+  msgLlmEmptyLocal: string;
+  msgLocalModelMissing: string;
+  msgLocalModelDownloadComplete: string;
+  msgLocalModelDownloadFailed: string;
+  msgLocalModelDownloadCancelled: string;
+  msgLocalModelDeleted: string;
+  msgLocalRuntimeMissing: string;
+  msgLocalServerStartFailed: string;
   msgHttpsInvalid: string;
   msgHttpsRequired: string;
   msgGitDiffFailed: string;

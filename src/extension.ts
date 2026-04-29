@@ -9,7 +9,6 @@ import { getStrings, DEFAULT_LANGUAGE } from './i18n/strings';
 export function activate(context: vscode.ExtensionContext): void {
   const language = getLanguage(context);
   const strings = getStrings(language);
-  const providerCapabilities = buildProviderCapabilities(strings);
   const output = vscode.window.createOutputChannel('Commit Maker');
   const viewProvider = new CommitPanelProvider(context.extensionUri);
   const commitController = new CommitController(context, viewProvider, output);
@@ -50,13 +49,16 @@ async function saveApiKey(context: vscode.ExtensionContext): Promise<void> {
   const strings = getStrings(language);
   const providerCapabilities = buildProviderCapabilities(strings);
   const provider = await vscode.window.showQuickPick(
-    providerCapabilities.map(p => ({ label: p.label, value: p.id })),
+    providerCapabilities.filter(p => p.requiresApiKey).map(p => ({ label: p.label, value: p.id })),
     { placeHolder: strings.msgApiKeySavePick }
   );
   if (!provider) {
     return;
   }
-  const providerId = provider.value as 'openai' | 'gemini' | 'claude';
+  const providerId = provider.value as ProviderId;
+  if (providerId === 'local') {
+    return;
+  }
   const config = vscode.workspace.getConfiguration('commitMaker');
   const secretKey = getApiKeySecretName(config, providerId);
 
@@ -73,6 +75,9 @@ async function saveApiKey(context: vscode.ExtensionContext): Promise<void> {
 }
 
 async function storeApiKey(context: vscode.ExtensionContext, provider: ProviderId, value: string): Promise<void> {
+  if (provider === 'local') {
+    return;
+  }
   const config = vscode.workspace.getConfiguration('commitMaker');
   const secretKey = getApiKeySecretName(config, provider);
   await context.secrets.store(secretKey ?? '', value);
@@ -89,12 +94,14 @@ async function refreshApiKeyState(context: vscode.ExtensionContext, panel: Commi
   const keys: Record<ProviderId, string | undefined> = {
     openai: getApiKeySecretName(config, 'openai'),
     gemini: getApiKeySecretName(config, 'gemini'),
-    claude: getApiKeySecretName(config, 'claude')
+    claude: getApiKeySecretName(config, 'claude'),
+    local: undefined
   };
   const apiKeys: Record<ProviderId, { ready: boolean; preview?: string; length?: number }> = {
     openai: { ready: false },
     gemini: { ready: false },
-    claude: { ready: false }
+    claude: { ready: false },
+    local: { ready: false }
   };
   for (const provider of Object.keys(keys) as ProviderId[]) {
     const envValue = getEnvVarNames(provider).map(name => process.env[name]).find(Boolean);

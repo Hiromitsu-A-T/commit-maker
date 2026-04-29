@@ -2,12 +2,52 @@ name: Publish Extension
 
 on:
   workflow_dispatch:
+    inputs:
+      channel:
+        description: "Release channel"
+        required: true
+        default: "stable"
+        type: choice
+        options:
+          - stable
+          - preview
   push:
     tags:
       - "v*"
 
 jobs:
+  local-runtime-smoke:
+    name: Local runtime smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run compile
+
+      - name: Smoke local runtime auto install
+        run: npm run smoke:local:runtime
+
   publish:
+    needs: local-runtime-smoke
     runs-on: ubuntu-latest
 
     steps:
@@ -23,20 +63,43 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Resolve release channel
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            CHANNEL="${{ inputs.channel }}"
+          else
+            CHANNEL="stable"
+          fi
+          if [ "$CHANNEL" = "preview" ]; then
+            echo "PRE_RELEASE_FLAG=--pre-release" >> "$GITHUB_ENV"
+          else
+            echo "PRE_RELEASE_FLAG=" >> "$GITHUB_ENV"
+          fi
+          echo "Release channel: $CHANNEL"
+
       - name: Build webview helpers
         run: npm run build:media
 
       - name: Build
         run: npm run compile
 
+      - name: Test
+        run: npm test
+
       - name: Package VSIX
         run: |
           VERSION=$(node -p "require('./package.json').version")
           npm run build:nls
-          npx vsce package --no-rewrite-relative-links
+          npx vsce package --no-dependencies --no-rewrite-relative-links $PRE_RELEASE_FLAG
           mkdir -p vsix
           mv commit-maker-${VERSION}.vsix vsix/
           npm run clean:nls
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: commit-maker-vsix
+          path: vsix/*.vsix
 
       - name: Publish to VS Marketplace (best effort)
         continue-on-error: true
@@ -44,7 +107,7 @@ jobs:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          npx vsce publish --packagePath vsix/commit-maker-${VERSION}.vsix
+          npx vsce publish --packagePath vsix/commit-maker-${VERSION}.vsix $PRE_RELEASE_FLAG
       - name: Ensure Open VSX namespace
         if: always()
         env:
@@ -58,7 +121,7 @@ jobs:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          npx ovsx publish vsix/commit-maker-${VERSION}.vsix --skip-duplicate
+          npx ovsx publish vsix/commit-maker-${VERSION}.vsix --skip-duplicate $PRE_RELEASE_FLAG
 
       - name: Clean stray VSIX and enforce limit (keep latest 5)
         if: always()

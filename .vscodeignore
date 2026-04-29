@@ -11,6 +11,13 @@ vsix/
 coverage/
 .vscode-test/
 npm-debug.log*
+package-lock.json
 **/*.map
-src/**/*.test.ts
+src/
+scripts/
+i18n/
+media/src/
+media/tsconfig.json
+tsconfig.json
 out/**/*.test.js*
+out/testRunner.js

@@ -1,5 +1,6 @@
 export interface PanelElements {
   language: HTMLSelectElement | null;
+  apiKeySection: HTMLElement | null;
   apiKeyProvider: HTMLSelectElement | null;
   apiKeyInput: HTMLInputElement | null;
   apiKeyPreview: HTMLElement | null;
@@ -28,6 +29,15 @@ export interface PanelElements {
   modelHelp: HTMLElement | null;
   customModelRow: HTMLElement | null;
   customModel: HTMLInputElement | null;
+  localModelPanel: HTMLElement | null;
+  localModelStatusRow: HTMLElement | null;
+  localModelName: HTMLInputElement | null;
+  localModelStatus: HTMLInputElement | null;
+  localModelDownload: HTMLButtonElement | null;
+  localModelCancel: HTMLButtonElement | null;
+  localModelDelete: HTMLButtonElement | null;
+  localModelTest: HTMLButtonElement | null;
+  localModelHint: HTMLElement | null;
   reasoning: HTMLSelectElement | null;
   verbosity: HTMLSelectElement | null;
   reasoningRow: HTMLElement | null;
@@ -49,4 +59,5 @@ export interface PanelStateSnapshot {
   commitReasoning?: string;
   commitVerbosity?: string;
   apiKeys?: Record<string, { ready: boolean }>;
+  localModel?: { status: string; label: string; sizeLabel: string; downloadedBytes?: number; totalBytes?: number };
 }

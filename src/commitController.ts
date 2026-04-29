@@ -9,6 +9,11 @@ import {
   COMMIT_PROMPT_STORAGE_KEY,
   COMMIT_PROVIDER_STORAGE_KEY,
   DEFAULT_MAX_OUTPUT_TOKENS,
+  DEFAULT_LOCAL_CONTEXT_SIZE,
+  DEFAULT_LOCAL_GPU_LAYERS,
+  DEFAULT_LOCAL_KEEP_ALIVE_MS,
+  DEFAULT_LOCAL_MODEL_ID,
+  DEFAULT_LOCAL_MODEL_SIZE_BYTES,
   DEFAULT_PROVIDER,
   DEFAULT_REASONING_EFFORT,
   DEFAULT_VERBOSITY,
@@ -37,6 +42,14 @@ import { applyPromptLimit } from './promptLimit';
 import { callOpenAi } from './services/llm/openai';
 import { callClaude } from './services/llm/claude';
 import { callGemini } from './services/llm/gemini';
+import { callLocalLlm, stopLocalLlmRuntime } from './services/llm/local';
+import {
+  deleteLocalModel,
+  downloadLocalModel,
+  formatBytes,
+  inspectLocalModel
+} from './services/localModel';
+import { ensureLocalRuntime } from './services/localRuntime';
 import {
   applyPresetById,
   deletePresetById,
@@ -73,6 +86,7 @@ export class CommitController implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
   private state: CommitState;
   private currentAbortController: AbortController | undefined;
+  private currentModelDownloadAbortController: AbortController | undefined;
   private get strings() {
     return getStrings(this.state.language || DEFAULT_LANGUAGE);
   }
@@ -92,11 +106,14 @@ export class CommitController implements vscode.Disposable {
     this.normalizeReasoningForModel();
     this.normalizeVerbosityForModel();
     this.hydratePanel();
+    void this.refreshLocalModelState();
     this.registerPanelHandlers();
     this.registerCommands();
   }
 
   public dispose(): void {
+    this.currentModelDownloadAbortController?.abort();
+    stopLocalLlmRuntime();
     while (this.disposables.length) {
       this.disposables.pop()?.dispose();
     }
@@ -202,6 +219,21 @@ export class CommitController implements vscode.Disposable {
       }),
       this.panel.onDidRequestCommitApply(() => {
         void this.applyCommitMessage();
+      }),
+      this.panel.onDidRequestLocalModelDownload(() => {
+        void this.downloadLocalModel();
+      }),
+      this.panel.onDidRequestLocalModelCancelDownload(() => {
+        this.cancelLocalModelDownload();
+      }),
+      this.panel.onDidRequestLocalModelDelete(() => {
+        void this.deleteLocalModel();
+      }),
+      this.panel.onDidRequestLocalModelTest(() => {
+        void this.testLocalModel();
+      }),
+      this.panel.onDidRequestLocalModelRefresh(() => {
+        void this.refreshLocalModelState();
       })
     );
   }
@@ -269,7 +301,14 @@ export class CommitController implements vscode.Disposable {
       verbosity,
       promptPresets: presets,
       activePromptPresetId: activeId,
-      language
+      language,
+      localModel: {
+        id: DEFAULT_LOCAL_MODEL_ID,
+        label: 'Commit Maker Local 4B',
+        status: 'notDownloaded',
+        sizeLabel: formatBytes(DEFAULT_LOCAL_MODEL_SIZE_BYTES),
+        totalBytes: DEFAULT_LOCAL_MODEL_SIZE_BYTES
+      }
     };
   }
 
@@ -345,6 +384,125 @@ export class CommitController implements vscode.Disposable {
       const fallback = getDefaultModelForProvider(provider);
       this.state.model = fallback;
       this.state.customModel = fallback;
+    }
+  }
+
+  private async refreshLocalModelState(): Promise<void> {
+    const config = vscode.workspace.getConfiguration('commitMaker');
+    const localModel = await inspectLocalModel(this.context, config);
+    this.state.localModel = localModel;
+    this.panel.updateState({ localModel });
+  }
+
+  private async downloadLocalModel(): Promise<void> {
+    if (this.currentModelDownloadAbortController) {
+      return;
+    }
+    const config = vscode.workspace.getConfiguration('commitMaker');
+    const controller = new AbortController();
+    this.currentModelDownloadAbortController = controller;
+    let lastPanelUpdate = 0;
+    try {
+      const pending = await inspectLocalModel(this.context, config);
+      this.state.localModel = { ...pending, status: 'downloading', downloadedBytes: 0, error: undefined };
+      this.panel.updateState({ localModel: this.state.localModel });
+
+      const localModel = await downloadLocalModel(this.context, config, controller.signal, progress => {
+        const now = Date.now();
+        if (now - lastPanelUpdate < 500) return;
+        lastPanelUpdate = now;
+        this.state.localModel = {
+          ...this.state.localModel!,
+          status: 'downloading',
+          downloadedBytes: progress.downloadedBytes,
+          totalBytes: progress.totalBytes ?? this.state.localModel?.totalBytes
+        };
+        this.panel.updateState({ localModel: this.state.localModel });
+      });
+      await ensureLocalRuntime(
+        this.context,
+        this.context.extensionUri,
+        config,
+        controller.signal,
+        undefined,
+        this.createLocalLogger(config)
+      );
+      this.state.localModel = localModel;
+      this.panel.updateState({ localModel });
+      void vscode.window.showInformationMessage(this.strings.msgLocalModelDownloadComplete);
+    } catch (error) {
+      const aborted = controller.signal.aborted;
+      const detail = error instanceof Error ? error.message : String(error);
+      const localModel = await inspectLocalModel(this.context, config);
+      this.state.localModel = {
+        ...localModel,
+        status: aborted ? 'notDownloaded' : 'error',
+        error: aborted ? undefined : detail
+      };
+      this.panel.updateState({ localModel: this.state.localModel });
+      if (aborted) {
+        void vscode.window.showInformationMessage(this.strings.msgLocalModelDownloadCancelled);
+      } else {
+        void vscode.window.showErrorMessage(this.strings.msgLocalModelDownloadFailed.replace('{detail}', detail));
+      }
+    } finally {
+      this.currentModelDownloadAbortController = undefined;
+    }
+  }
+
+  private cancelLocalModelDownload(): void {
+    this.currentModelDownloadAbortController?.abort();
+  }
+
+  private async deleteLocalModel(): Promise<void> {
+    this.cancelLocalModelDownload();
+    const config = vscode.workspace.getConfiguration('commitMaker');
+    stopLocalLlmRuntime();
+    try {
+      const localModel = await deleteLocalModel(this.context, config);
+      this.state.localModel = localModel;
+      this.panel.updateState({ localModel });
+      void vscode.window.showInformationMessage(this.strings.msgLocalModelDeleted);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      const localModel = await inspectLocalModel(this.context, config);
+      this.state.localModel = { ...localModel, status: 'error', error: detail };
+      this.panel.updateState({ localModel: this.state.localModel });
+      void vscode.window.showErrorMessage(detail);
+    }
+  }
+
+  private async testLocalModel(): Promise<void> {
+    const prev = this.state.localModel;
+    if (!prev || prev.status !== 'ready') {
+      void vscode.window.showErrorMessage(this.strings.msgLocalModelMissing);
+      return;
+    }
+    this.state.localModel = { ...prev, status: 'loading' };
+    this.panel.updateState({ localModel: this.state.localModel });
+    try {
+      const runtime = await this.getLocalRuntimeConfig();
+      await callLocalLlm({
+        prompt: 'Return exactly: local model ready',
+        modelPath: runtime.modelPath,
+        extensionUri: this.context.extensionUri,
+        runtimePath: runtime.runtimePath,
+        timeoutMs: runtime.timeout,
+        maxOutputTokens: 64,
+        contextSize: runtime.contextSize,
+        threads: runtime.threads,
+        gpuLayers: runtime.gpuLayers,
+        keepAliveMs: runtime.keepAliveMs,
+        logger: runtime.logger
+      });
+      this.state.localModel = { ...prev, status: 'ready', error: undefined };
+      this.panel.updateState({ localModel: this.state.localModel });
+      void vscode.window.showInformationMessage(this.strings.localModelStatusReady);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      this.state.localModel = { ...prev, status: 'error', error: detail };
+      this.panel.updateState({ localModel: this.state.localModel });
+      void vscode.window.showErrorMessage(this.strings.msgLocalServerStartFailed.replace('{detail}', detail));
     }
   }
 
@@ -581,7 +739,24 @@ export class CommitController implements vscode.Disposable {
           abortSignal,
           timeoutMs: timeout,
           logger: log
-        })
+        }),
+      local: async () => {
+        const runtime = await this.getLocalRuntimeConfig();
+        return callLocalLlm({
+          prompt,
+          modelPath: runtime.modelPath,
+          extensionUri: this.context.extensionUri,
+          runtimePath: runtime.runtimePath,
+          abortSignal,
+          timeoutMs: runtime.timeout,
+          maxOutputTokens: maxOutputTokens,
+          contextSize: runtime.contextSize,
+          threads: runtime.threads,
+          gpuLayers: runtime.gpuLayers,
+          keepAliveMs: runtime.keepAliveMs,
+          logger: log
+        });
+      }
     };
 
     const fn = dispatcher[provider];
@@ -597,6 +772,11 @@ export class CommitController implements vscode.Disposable {
     const config = vscode.workspace.getConfiguration('commitMaker');
     const endpoint = getEndpoint(config, provider);
     const model = this.state.model?.trim() || getDefaultModelForProvider(provider);
+    if (provider === 'local') {
+      const timeout = config.get<number>('requestTimeoutMs', 300000);
+      const maxOutputTokens = config.get<number>('maxOutputTokens', DEFAULT_MAX_OUTPUT_TOKENS);
+      return { endpoint, model, apiKey: '', timeout, maxOutputTokens };
+    }
     const apiKeyName = getApiKeySecretName(config, provider);
     const envKey = getEnvVarName(provider);
     const apiKey =
@@ -608,6 +788,52 @@ export class CommitController implements vscode.Disposable {
     const timeout = config.get<number>('requestTimeoutMs', 300000);
     const maxOutputTokens = config.get<number>('maxOutputTokens', DEFAULT_MAX_OUTPUT_TOKENS);
     return { endpoint, model, apiKey, timeout, maxOutputTokens };
+  }
+
+  private async getLocalRuntimeConfig(): Promise<{
+    modelPath: string;
+    runtimePath: string;
+    timeout: number;
+    contextSize: number;
+    threads: number;
+    gpuLayers: number;
+    keepAliveMs: number;
+    logger?: (message: string) => void;
+  }> {
+    const config = vscode.workspace.getConfiguration('commitMaker');
+    let localModel = this.state.localModel;
+    if (!localModel || localModel.status !== 'ready' || !localModel.path) {
+      localModel = await inspectLocalModel(this.context, config);
+      this.state.localModel = localModel;
+      this.panel.updateState({ localModel });
+    }
+    if (!localModel.path || localModel.status !== 'ready') {
+      throw new Error(this.strings.msgLocalModelMissing);
+    }
+    const logger = this.createLocalLogger(config);
+    const runtimePath = await ensureLocalRuntime(
+      this.context,
+      this.context.extensionUri,
+      config,
+      this.currentAbortController?.signal,
+      undefined,
+      logger
+    );
+    return {
+      modelPath: localModel.path,
+      runtimePath,
+      timeout: config.get<number>('requestTimeoutMs', 300000),
+      contextSize: config.get<number>('localContextSize', DEFAULT_LOCAL_CONTEXT_SIZE),
+      threads: config.get<number>('localThreads', 0),
+      gpuLayers: config.get<number>('localGpuLayers', DEFAULT_LOCAL_GPU_LAYERS),
+      keepAliveMs: config.get<number>('localKeepAliveMs', DEFAULT_LOCAL_KEEP_ALIVE_MS),
+      logger
+    };
+  }
+
+  private createLocalLogger(config: vscode.WorkspaceConfiguration): ((message: string) => void) | undefined {
+    const logEnabled = config.get<boolean>('logLlm', false);
+    return logEnabled ? (message: string): void => this.output.appendLine(message) : undefined;
   }
 
   private async syncPromptPresets(

@@ -1,4 +1,4 @@
-import { ProviderId, ReasoningEffort, VerbositySetting, PromptPreset, LanguageCode } from './types';
+import { ProviderId, ReasoningEffort, VerbositySetting, PromptPreset, LanguageCode, LocalModelState } from './types';
 
 export interface CommitState {
   prompt: string;
@@ -19,4 +19,5 @@ export interface CommitState {
   verbosity: VerbositySetting;
   promptToast?: string;
   language: LanguageCode;
+  localModel?: LocalModelState;
 }

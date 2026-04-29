@@ -15,6 +15,11 @@ export async function runPanelMessageGuardTests(): Promise<void> {
   shouldPass({ type: 'ready' });
   shouldPass({ type: 'commitPromptChanged', value: 'x' });
   shouldPass({ type: 'commitIncludeBinaryChanged', value: true });
+  shouldPass({ type: 'localModelDownload' });
+  shouldPass({ type: 'localModelCancelDownload' });
+  shouldPass({ type: 'localModelDelete' });
+  shouldPass({ type: 'localModelTest' });
+  shouldPass({ type: 'localModelRefresh' });
   shouldFail({});
   shouldFail({ type: 'commitPromptChanged', value: 1 });
   shouldFail({ type: 'unknown' });

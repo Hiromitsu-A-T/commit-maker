@@ -1,4 +1,4 @@
-import { ProviderId, ReasoningEffort, VerbositySetting, MaxPromptMode, LanguageCode } from './types';
+import { ProviderId, ReasoningEffort, VerbositySetting, MaxPromptMode, LanguageCode, LocalModelState } from './types';
 import { UiStrings } from './i18n/types';
 
 // Webview -> Extension
@@ -19,6 +19,11 @@ export type WebviewInboundMessage =
   | { type: 'commitMaxPromptChanged'; value: { mode: MaxPromptMode; value: number | null } }
   | { type: 'commitReasoningChanged'; value: ReasoningEffort }
   | { type: 'commitVerbosityChanged'; value: VerbositySetting }
+  | { type: 'localModelDownload' }
+  | { type: 'localModelCancelDownload' }
+  | { type: 'localModelDelete' }
+  | { type: 'localModelTest' }
+  | { type: 'localModelRefresh' }
   | { type: 'commitGenerate'; value: { includeUnstaged: boolean; includeUntracked: boolean; includeBinary: boolean } }
   | { type: 'commitApply' }
   | { type: 'openExternal'; url: string }
@@ -47,6 +52,7 @@ export interface PanelState {
   commitMaxPromptMode?: MaxPromptMode;
   commitReasoning: ReasoningEffort;
   commitVerbosity: VerbositySetting;
+  localModel: LocalModelState;
   strings: UiStrings;
   promptToast?: string;
 }

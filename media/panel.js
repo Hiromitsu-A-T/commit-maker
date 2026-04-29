@@ -43,6 +43,7 @@
     const get = id => document.getElementById(id);
     return {
       language: get('language'),
+      apiKeySection: get('apiKeySection'),
       apiKeyProvider: get('apiKeyProvider'),
       apiKeyInput: get('apiKeyInput'),
       apiKeyPreview: get('apiKeyPreview'),
@@ -71,6 +72,15 @@
       modelHelp: get('modelHelp'),
       customModelRow: get('customModelRow'),
       customModel: get('customModel'),
+      localModelPanel: get('localModelPanel'),
+      localModelStatusRow: get('localModelStatusRow'),
+      localModelName: get('localModelName'),
+      localModelStatus: get('localModelStatus'),
+      localModelDownload: get('localModelDownload'),
+      localModelCancel: get('localModelCancel'),
+      localModelDelete: get('localModelDelete'),
+      localModelTest: get('localModelTest'),
+      localModelHint: get('localModelHint'),
       reasoning: get('reasoning'),
       verbosity: get('verbosity'),
       reasoningRow: get('reasoningRow'),
@@ -130,12 +140,29 @@
     return Boolean(providerSupportsVerbosity?.[provider]) && !isVerbosityBlocked(modelId);
   }
 
-  function getReadyProviders() {
-    return providerOptions.filter(opt => state.apiKeys?.[opt.id]?.ready);
+  function providerRequiresApiKey(provider) {
+    const opt = providerOptions.find(item => item.id === provider);
+    return opt ? opt.requiresApiKey !== false : true;
   }
 
-  function hasAnyApiKey() {
-    return getReadyProviders().length > 0;
+  function getSelectableProviders() {
+    return providerOptions;
+  }
+
+  function hasAnyProvider() {
+    return getSelectableProviders().length > 0;
+  }
+
+  function isLocalProvider(provider) {
+    return !providerRequiresApiKey(provider);
+  }
+
+  function isLocalModelReady() {
+    return state.localModel?.status === 'ready';
+  }
+
+  function isProviderConfigured(provider) {
+    return !providerRequiresApiKey(provider) || Boolean(state.apiKeys?.[provider]?.ready);
   }
 
   function handleMessage(event) {
@@ -170,6 +197,7 @@
           'commitMaxPromptMode',
           'commitReasoning',
           'commitVerbosity',
+          'localModel',
           'strings',
           'promptToast'
         ];
@@ -299,6 +327,18 @@
         }
       });
     }
+    if (els.localModelDownload) {
+      els.localModelDownload.addEventListener('click', () => send({ type: 'localModelDownload' }));
+    }
+    if (els.localModelCancel) {
+      els.localModelCancel.addEventListener('click', () => send({ type: 'localModelCancelDownload' }));
+    }
+    if (els.localModelDelete) {
+      els.localModelDelete.addEventListener('click', () => send({ type: 'localModelDelete' }));
+    }
+    if (els.localModelTest) {
+      els.localModelTest.addEventListener('click', () => send({ type: 'localModelTest' }));
+    }
     Events.onChange(els.reasoning, ev => {
       const value = String(ev.target.value);
       const allowed = getAllowedReasoningOptions(getCurrentModelId());
@@ -326,6 +366,7 @@
     renderPromptLimit();
     renderProviders();
     renderModels();
+    renderLocalModel();
     renderReasoning();
     renderVerbosity();
     renderResult();
@@ -382,8 +423,10 @@
   }
 
   function renderButtonsState() {
+    const localBlocked = isLocalProvider(state.commitProvider) && !isLocalModelReady();
+    const cloudBlocked = providerRequiresApiKey(state.commitProvider) && !isProviderConfigured(state.commitProvider);
     if (els.generate) {
-      els.generate.disabled = state.commitStatus === 'loading';
+      els.generate.disabled = state.commitStatus === 'loading' || localBlocked || cloudBlocked;
     }
     if (els.apply) {
       els.apply.disabled = state.commitStatus === 'loading' || !state.commitResult;
@@ -460,11 +503,15 @@
   }
 
   function renderApiKeySection() {
+    show(els.apiKeySection, !isLocalProvider(state.commitProvider), 'block');
     if (!els.apiKeyProvider) return;
     const t = getStrings();
     els.apiKeyProvider.innerHTML = '';
-    const active = state.apiKeyProvider || providerOptions[0]?.id;
-    for (const opt of providerOptions) {
+    const cloudProviderOptions = providerOptions.filter(opt => providerRequiresApiKey(opt.id));
+    const active = cloudProviderOptions.some(opt => opt.id === state.apiKeyProvider)
+      ? state.apiKeyProvider
+      : cloudProviderOptions[0]?.id;
+    for (const opt of cloudProviderOptions) {
       const node = document.createElement('option');
       node.value = opt.id;
       node.textContent = opt.badge + ' — ' + opt.label;
@@ -492,17 +539,17 @@
   }
 
   function renderApiKeyBadges() {
-    Render.renderApiKeyBadges(els, providerOptions, state, getStrings());
+    Render.renderApiKeyBadges(els, providerOptions.filter(opt => providerRequiresApiKey(opt.id)), state, getStrings());
   }
 
   function renderProviders() {
     if (!els.provider) return;
     const t = getStrings();
     els.provider.innerHTML = '';
-    const readyProviders = getReadyProviders();
-    const hasAnyKey = hasAnyApiKey();
+    const selectableProviders = getSelectableProviders();
+    const hasProvider = hasAnyProvider();
 
-    if (!hasAnyKey) {
+    if (!hasProvider) {
       const placeholder = document.createElement('option');
       placeholder.value = '';
       placeholder.textContent = t.providerNeedKey || '';
@@ -515,15 +562,15 @@
       return;
     }
 
-    const active = readyProviders.some(p => p.id === state.commitProvider)
+    const active = selectableProviders.some(p => p.id === state.commitProvider)
       ? state.commitProvider
-      : readyProviders[0]?.id;
+      : selectableProviders[0]?.id;
     if (active && state.commitProvider !== active) {
       state.commitProvider = active;
       send({ type: 'commitProviderChanged', value: active });
     }
 
-    for (const opt of readyProviders) {
+    for (const opt of selectableProviders) {
       const node = document.createElement('option');
       node.value = opt.id;
       node.textContent = opt.badge + ' — ' + opt.label;
@@ -540,19 +587,24 @@
     const t = getStrings();
     els.model.innerHTML = '';
     const suggestions = state.commitModelSuggestions ?? [];
-    const hasAnyKey = hasAnyApiKey();
     const providerId = state.commitProvider || providerOptions[0]?.id;
-    const hasProvider = Boolean(providerId) && hasAnyKey;
+    const hasProvider = Boolean(providerId) && getSelectableProviders().some(opt => opt.id === providerId);
+    const providerConfigured = isProviderConfigured(providerId);
+    const localProvider = isLocalProvider(providerId);
 
-    if (!hasProvider) {
+    if (!hasProvider || !providerConfigured) {
       const placeholder = document.createElement('option');
       placeholder.value = '';
-      placeholder.textContent = t.providerNeedKey || '';
+      placeholder.textContent = localProvider
+        ? (t.localModelNeedDownload || '')
+        : (t.providerNeedKey || '');
       placeholder.selected = true;
       placeholder.disabled = true;
       els.model.appendChild(placeholder);
       if (els.modelHelp) {
-        els.modelHelp.textContent = t.modelNeedKey || '';
+        els.modelHelp.textContent = localProvider
+          ? (t.localModelNeedDownload || '')
+          : (t.modelNeedKey || '');
       }
       show(els.customModelRow, false);
       show(els.reasoningRow, false);
@@ -568,13 +620,15 @@
       opt.selected = model === state.commitModel;
       els.model.appendChild(opt);
     }
-    const customOpt = document.createElement('option');
-    customOpt.value = '__custom__';
-    customOpt.textContent = t.customModelOption || 'Custom…';
-    customOpt.selected = !suggestions.includes(state.commitModel ?? '');
-    els.model.appendChild(customOpt);
-
-    const isCustom = customOpt.selected;
+    let isCustom = false;
+    if (!localProvider) {
+      const customOpt = document.createElement('option');
+      customOpt.value = '__custom__';
+      customOpt.textContent = t.customModelOption || 'Custom…';
+      customOpt.selected = !suggestions.includes(state.commitModel ?? '');
+      els.model.appendChild(customOpt);
+      isCustom = customOpt.selected;
+    }
     show(els.customModelRow, isCustom, 'block');
     if (isCustom && els.customModel) {
       els.customModel.value = state.commitCustomModel || state.commitModel || '';
@@ -584,12 +638,95 @@
     }
   }
 
+  function renderLocalModel() {
+    const visible = isLocalProvider(state.commitProvider);
+    show(els.localModelPanel, visible, 'block');
+    if (!visible) return;
+    const t = getStrings();
+    const model = state.localModel || {};
+    const statusLabel = getLocalModelStatusLabel(model.status, t);
+    if (els.localModelName) {
+      els.localModelName.value = model.label || state.commitModel || '';
+    }
+    if (els.localModelStatus) {
+      els.localModelStatus.value = statusLabel;
+    }
+    if (els.localModelHint) {
+      const downloaded = model.downloadedBytes || 0;
+      const total = model.totalBytes || 0;
+      const sizeText = model.sizeLabel || '-';
+      if (model.status === 'downloading' && downloaded > 0) {
+        const percent = total > 0 ? ' · ' + getDownloadPercent(downloaded, total) + '%' : '';
+        els.localModelHint.textContent = (t.localModelSizePrefix || '') + formatBytes(downloaded) + ' / ' + (total ? formatBytes(total) : sizeText) + percent;
+      } else if (model.status === 'notDownloaded') {
+        els.localModelHint.textContent = (t.localModelSizePrefix || '') + sizeText + ' · ' + (t.localModelNeedDownload || '');
+      } else if (model.error) {
+        els.localModelHint.textContent = model.error;
+      } else {
+        els.localModelHint.textContent = (t.localModelSizePrefix || '') + sizeText;
+      }
+    }
+    if (els.localModelStatusRow) {
+      Dom.updateBadges(els.localModelStatusRow, [
+        {
+          text: statusLabel,
+          className: model.status === 'ready' ? 'success' : model.status === 'error' ? 'danger' : model.status === 'downloading' ? 'warn' : ''
+        }
+      ]);
+    }
+    const downloading = model.status === 'downloading';
+    if (els.localModelDownload) {
+      els.localModelDownload.textContent = getLocalModelDownloadButtonLabel(model, t);
+      els.localModelDownload.disabled = downloading || model.status === 'ready';
+    }
+    if (els.localModelCancel) els.localModelCancel.disabled = !downloading;
+    if (els.localModelDelete) els.localModelDelete.disabled = downloading || model.status !== 'ready';
+    if (els.localModelTest) els.localModelTest.disabled = downloading || model.status !== 'ready';
+  }
+
+  function getLocalModelDownloadButtonLabel(model, t) {
+    if (model.status !== 'downloading') {
+      return t.localModelDownloadButton || 'Download model';
+    }
+    const downloaded = model.downloadedBytes || 0;
+    const total = model.totalBytes || 0;
+    if (downloaded > 0 && total > 0) {
+      return (t.localModelStatusDownloading || 'Downloading') + ' ' + getDownloadPercent(downloaded, total) + '%';
+    }
+    return (t.localModelStatusDownloading || 'Downloading') + '...';
+  }
+
+  function getDownloadPercent(downloaded, total) {
+    if (!downloaded || !total || total <= 0) return 0;
+    return Math.max(0, Math.min(100, Math.floor((downloaded / total) * 100)));
+  }
+
+  function getLocalModelStatusLabel(status, t) {
+    if (status === 'downloading') return t.localModelStatusDownloading || 'Downloading';
+    if (status === 'ready') return t.localModelStatusReady || 'Ready';
+    if (status === 'loading') return t.localModelStatusLoading || 'Loading';
+    if (status === 'error') return t.localModelStatusError || 'Error';
+    return t.localModelStatusNotDownloaded || 'Not downloaded';
+  }
+
+  function formatBytes(bytes) {
+    if (!bytes || bytes <= 0) return '-';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let value = bytes;
+    let index = 0;
+    while (value >= 1024 && index < units.length - 1) {
+      value /= 1024;
+      index += 1;
+    }
+    return value.toFixed(index >= 3 ? 1 : 0) + ' ' + units[index];
+  }
+
   function renderReasoning() {
     if (!els.reasoning) return;
     const allowed = getAllowedReasoningOptions(getCurrentModelId());
     const value = allowed.includes(state.commitReasoning) ? state.commitReasoning : allowed[0];
     renderSelect(els.reasoning, allowed, value);
-    const visible = hasAnyApiKey() && providerAllowsReasoning(state.commitProvider) && allowed.length > 0;
+    const visible = isProviderConfigured(state.commitProvider) && providerAllowsReasoning(state.commitProvider) && allowed.length > 0;
     show(els.reasoningRow, visible, 'block');
     setDisabled(els.reasoning, !visible);
   }
@@ -599,7 +736,7 @@
     const allowed = getAllowedVerbosityOptions(getCurrentModelId());
     const value = allowed.includes(state.commitVerbosity) ? state.commitVerbosity : allowed[0];
     renderSelect(els.verbosity, allowed, value);
-    const visible = hasAnyApiKey() && providerAllowsVerbosity(state.commitProvider, state.commitModel) && allowed.length > 0;
+    const visible = isProviderConfigured(state.commitProvider) && providerAllowsVerbosity(state.commitProvider, state.commitModel) && allowed.length > 0;
     show(els.verbosityRow, visible, 'block');
     setDisabled(els.verbosity, !visible);
   }
