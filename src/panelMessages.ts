@@ -45,6 +45,7 @@ export interface PanelState {
   commitStatus: 'idle' | 'loading' | 'ready' | 'error';
   commitResult?: string;
   commitLastError?: string;
+  commitProgress?: string;
   commitIncludeUnstaged: boolean;
   commitIncludeUntracked: boolean;
   commitIncludeBinary: boolean;

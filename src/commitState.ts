@@ -15,6 +15,7 @@ export interface CommitState {
   status: 'idle' | 'loading' | 'ready' | 'error';
   result?: string;
   lastError?: string;
+  progressMessage?: string;
   reasoning: ReasoningEffort;
   verbosity: VerbositySetting;
   promptToast?: string;

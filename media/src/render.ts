@@ -21,6 +21,9 @@ function renderStatus(els: any, state: any, strings: any): void {
           ? t.statusError
           : t.statusIdle;
   badges.push({ text: statusText, className: statusClass });
+  if (state.commitStatus === 'loading' && state.commitProgress) {
+    badges.push({ text: state.commitProgress });
+  }
   badges.push({ text: state.commitIncludeUnstaged ? t.badgeUnstagedOn : t.badgeUnstagedOff });
   badges.push({ text: (state.commitProvider || '-') + ' · ' + (state.commitModel || state.commitCustomModel || '-') });
   Dom.updateBadges(els.statusRow, badges);
