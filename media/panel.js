@@ -675,16 +675,20 @@
       ]);
     }
     const downloading = model.status === 'downloading';
+    const busy = downloading || model.status === 'loading';
     if (els.localModelDownload) {
       els.localModelDownload.textContent = getLocalModelDownloadButtonLabel(model, t);
-      els.localModelDownload.disabled = downloading || model.status === 'ready';
+      els.localModelDownload.disabled = busy || model.status === 'ready';
     }
     if (els.localModelCancel) els.localModelCancel.disabled = !downloading;
-    if (els.localModelDelete) els.localModelDelete.disabled = downloading || model.status !== 'ready';
-    if (els.localModelTest) els.localModelTest.disabled = downloading || model.status !== 'ready';
+    if (els.localModelDelete) els.localModelDelete.disabled = busy || model.status !== 'ready';
+    if (els.localModelTest) els.localModelTest.disabled = busy || model.status !== 'ready';
   }
 
   function getLocalModelDownloadButtonLabel(model, t) {
+    if (model.status === 'loading') {
+      return t.localModelStatusLoading || 'Loading';
+    }
     if (model.status !== 'downloading') {
       return t.localModelDownloadButton || 'Download model';
     }
