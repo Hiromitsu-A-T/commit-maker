@@ -50,6 +50,7 @@ export const DEFAULT_LOCAL_MODEL_SIZE_BYTES = 2_497_279_136;
 export const DEFAULT_LOCAL_CONTEXT_SIZE = 32768;
 export const DEFAULT_LOCAL_GPU_LAYERS = 99;
 export const DEFAULT_LOCAL_KEEP_ALIVE_MS = 300000;
+export const DEFAULT_LOCAL_MAX_OUTPUT_TOKENS = 2048;
 
 export const REASONING_EFFORT_OPTIONS: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high'];
 export const DEFAULT_REASONING_EFFORT: ReasoningEffort = 'none';

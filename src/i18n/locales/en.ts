@@ -36,7 +36,7 @@ const en: UiStrings = {
   localModelStatusNotDownloaded: 'Not downloaded',
   localModelStatusDownloading: 'Downloading',
   localModelStatusReady: 'Ready',
-  localModelStatusLoading: 'Loading',
+  localModelStatusLoading: 'Preparing',
   localModelStatusError: 'Error',
   localModelSizePrefix: 'Size: ',
   localModelNeedDownload: 'Download the local model first.',

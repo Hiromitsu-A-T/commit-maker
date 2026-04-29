@@ -36,7 +36,7 @@ const ja: UiStrings = {
   localModelStatusNotDownloaded: '未ダウンロード',
   localModelStatusDownloading: 'ダウンロード中',
   localModelStatusReady: '利用可能',
-  localModelStatusLoading: '起動中',
+  localModelStatusLoading: '準備中',
   localModelStatusError: 'エラー',
   localModelSizePrefix: 'サイズ: ',
   localModelNeedDownload: 'ローカルモデルをダウンロードしてください。',

@@ -12,6 +12,7 @@ import {
   DEFAULT_LOCAL_CONTEXT_SIZE,
   DEFAULT_LOCAL_GPU_LAYERS,
   DEFAULT_LOCAL_KEEP_ALIVE_MS,
+  DEFAULT_LOCAL_MAX_OUTPUT_TOKENS,
   DEFAULT_LOCAL_MODEL_ID,
   DEFAULT_LOCAL_MODEL_SIZE_BYTES,
   DEFAULT_PROVIDER,
@@ -38,7 +39,7 @@ import {
   isLanguageCode
 } from './types';
 import { collectDiff } from './services/diffCollector';
-import { applyPromptLimit } from './promptLimit';
+import { applyPromptLimit, getLocalPromptCharLimit, splitTextIntoChunks } from './promptLimit';
 import { callOpenAi } from './services/llm/openai';
 import { callClaude } from './services/llm/claude';
 import { callGemini } from './services/llm/gemini';
@@ -409,16 +410,20 @@ export class CommitController implements vscode.Disposable {
 
       const localModel = await downloadLocalModel(this.context, config, controller.signal, progress => {
         const now = Date.now();
-        if (now - lastPanelUpdate < 500) return;
+        const totalBytes = progress.totalBytes ?? this.state.localModel?.totalBytes;
+        const isComplete = Boolean(totalBytes && progress.downloadedBytes >= totalBytes);
+        if (!isComplete && now - lastPanelUpdate < 500) return;
         lastPanelUpdate = now;
         this.state.localModel = {
           ...this.state.localModel!,
           status: 'downloading',
           downloadedBytes: progress.downloadedBytes,
-          totalBytes: progress.totalBytes ?? this.state.localModel?.totalBytes
+          totalBytes
         };
         this.panel.updateState({ localModel: this.state.localModel });
       });
+      this.state.localModel = { ...localModel, status: 'loading', error: undefined };
+      this.panel.updateState({ localModel: this.state.localModel });
       await ensureLocalRuntime(
         this.context,
         this.context.extensionUri,
@@ -518,9 +523,10 @@ export class CommitController implements vscode.Disposable {
       const targetRepo = repo ?? (await this.getRepositoryOrThrow());
       progress?.(this.strings.msgCommitGenerateFetchingDiff);
       const diff = await this.prepareDiff(targetRepo, includeUnstaged, includeUntracked, includeBinary);
-      const prompt = this.buildPrompt(diff);
       progress?.(this.strings.msgCommitGenerateCallingLlm);
-      const result = await this.callLlm(prompt);
+      const result = this.state.provider === 'local'
+        ? await this.generateLocalCommitMessage(diff, progress)
+        : await this.callLlm(this.buildPrompt(diff));
       this.handleGenerationSuccess(result);
     } catch (error) {
       this.handleGenerationError(error);
@@ -675,6 +681,53 @@ export class CommitController implements vscode.Disposable {
     return `${guard}\n\n${userInstructionLabel}\n${instruction}\n\n${this.strings.diffHeading}\n${diff}`;
   }
 
+  private async generateLocalCommitMessage(diff: string, progress?: (message: string) => void): Promise<string> {
+    const config = vscode.workspace.getConfiguration('commitMaker');
+    const maxOutputTokens = this.getConfiguredMaxOutputTokens(config, DEFAULT_LOCAL_MAX_OUTPUT_TOKENS);
+    const promptLimit = getLocalPromptCharLimit(
+      config.get<number>('localContextSize', DEFAULT_LOCAL_CONTEXT_SIZE),
+      maxOutputTokens
+    );
+    const prompt = this.buildPrompt(diff);
+    if (prompt.length <= promptLimit) {
+      return this.callLlm(prompt);
+    }
+
+    const promptOverhead = this.buildPrompt('').length + 2000;
+    const chunkLimit = Math.max(12000, promptLimit - promptOverhead);
+    const chunks = splitTextIntoChunks(diff, chunkLimit);
+    const summaries: string[] = [];
+    for (let index = 0; index < chunks.length; index += 1) {
+      progress?.(`Local: 大きな差分を分割要約中 ${index + 1}/${chunks.length}`);
+      summaries.push(await this.callLocalPrompt(
+        this.buildLocalChunkSummaryPrompt(chunks[index], index + 1, chunks.length),
+        512
+      ));
+    }
+
+    progress?.(this.strings.msgCommitGenerateCallingLlm);
+    return this.callLlm(this.buildPrompt(
+      summaries
+        .map((summary, index) => `## Chunk ${index + 1}/${summaries.length}\n${summary.trim()}`)
+        .join('\n\n')
+    ));
+  }
+
+  private buildLocalChunkSummaryPrompt(diffChunk: string, index: number, total: number): string {
+    const instruction = this.state.prompt || this.getDefaultPrompt();
+    return [
+      'You are summarizing one chunk of a large Git diff for a later commit message.',
+      'Extract only concrete, commit-relevant facts. Keep file paths, feature names, bug fixes, tests, and behavioral changes.',
+      'Do not write the final commit message yet. Do not include markdown fences.',
+      '',
+      `${this.strings.userInstructionLabel}`,
+      instruction,
+      '',
+      `Diff chunk ${index}/${total}:`,
+      diffChunk
+    ].join('\n');
+  }
+
   private showPromptToast(message: string): void {
     this.state.promptToast = message;
     this.panel.updateState({ promptToast: message });
@@ -741,21 +794,7 @@ export class CommitController implements vscode.Disposable {
           logger: log
         }),
       local: async () => {
-        const runtime = await this.getLocalRuntimeConfig();
-        return callLocalLlm({
-          prompt,
-          modelPath: runtime.modelPath,
-          extensionUri: this.context.extensionUri,
-          runtimePath: runtime.runtimePath,
-          abortSignal,
-          timeoutMs: runtime.timeout,
-          maxOutputTokens: maxOutputTokens,
-          contextSize: runtime.contextSize,
-          threads: runtime.threads,
-          gpuLayers: runtime.gpuLayers,
-          keepAliveMs: runtime.keepAliveMs,
-          logger: log
-        });
+        return this.callLocalPrompt(prompt, maxOutputTokens, log);
       }
     };
 
@@ -766,6 +805,28 @@ export class CommitController implements vscode.Disposable {
     return fn();
   }
 
+  private async callLocalPrompt(
+    prompt: string,
+    maxOutputTokens: number,
+    logger?: (message: string) => void
+  ): Promise<string> {
+    const runtime = await this.getLocalRuntimeConfig();
+    return callLocalLlm({
+      prompt,
+      modelPath: runtime.modelPath,
+      extensionUri: this.context.extensionUri,
+      runtimePath: runtime.runtimePath,
+      abortSignal: this.currentAbortController?.signal,
+      timeoutMs: runtime.timeout,
+      maxOutputTokens,
+      contextSize: runtime.contextSize,
+      threads: runtime.threads,
+      gpuLayers: runtime.gpuLayers,
+      keepAliveMs: runtime.keepAliveMs,
+      logger: logger ?? runtime.logger
+    });
+  }
+
   private async getProviderRuntimeConfig(
     provider: ProviderId
   ): Promise<{ endpoint: string; model: string; apiKey: string; timeout: number; maxOutputTokens: number }> {
@@ -774,7 +835,7 @@ export class CommitController implements vscode.Disposable {
     const model = this.state.model?.trim() || getDefaultModelForProvider(provider);
     if (provider === 'local') {
       const timeout = config.get<number>('requestTimeoutMs', 300000);
-      const maxOutputTokens = config.get<number>('maxOutputTokens', DEFAULT_MAX_OUTPUT_TOKENS);
+      const maxOutputTokens = this.getConfiguredMaxOutputTokens(config, DEFAULT_LOCAL_MAX_OUTPUT_TOKENS);
       return { endpoint, model, apiKey: '', timeout, maxOutputTokens };
     }
     const apiKeyName = getApiKeySecretName(config, provider);
@@ -788,6 +849,19 @@ export class CommitController implements vscode.Disposable {
     const timeout = config.get<number>('requestTimeoutMs', 300000);
     const maxOutputTokens = config.get<number>('maxOutputTokens', DEFAULT_MAX_OUTPUT_TOKENS);
     return { endpoint, model, apiKey, timeout, maxOutputTokens };
+  }
+
+  private getConfiguredMaxOutputTokens(config: vscode.WorkspaceConfiguration, fallback: number): number {
+    const inspected = config.inspect<number>('maxOutputTokens') as any;
+    const configured = (
+      inspected?.workspaceFolderLanguageValue ??
+      inspected?.workspaceLanguageValue ??
+      inspected?.globalLanguageValue ??
+      inspected?.workspaceFolderValue ??
+      inspected?.workspaceValue ??
+      inspected?.globalValue
+    );
+    return typeof configured === 'number' && configured > 0 ? configured : fallback;
   }
 
   private async getLocalRuntimeConfig(): Promise<{
