@@ -2,7 +2,7 @@
   "name": "commit-maker",
   "displayName": "Commit Maker – コミットメーカー",
   "description": "Git の差分から AI でコミットメッセージを自動生成し、SCM 入力欄へ反映する BYOK / Local 対応拡張（コミットメーカー）。AI commit message generator for Git diff with BYOK and Local model support.",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "publisher": "Hiromitsu",
   "license": "Apache-2.0",
   "repository": {

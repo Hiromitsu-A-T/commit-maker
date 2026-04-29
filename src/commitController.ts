@@ -622,13 +622,12 @@ export class CommitController implements vscode.Disposable {
   }
 
   private async generateAndApplyFromCommand(scmArg?: unknown): Promise<void> {
-    const rootUri = getRootUriFromScmArg(scmArg);
     const repo = await this.getRepositoryFromScmArg(scmArg);
-    if (rootUri && !repo) {
+    if (!repo) {
       void vscode.window.showErrorMessage(this.strings.msgRepoNotFound);
       return;
     }
-    await this.runWithScmProgress(this.strings.msgCommitGenerateTitle, async report => {
+    await this.runWithScmProgress(this.strings.msgCommitGenerateTitle, this.state.provider === 'local', async report => {
       await this.generateCommitMessage(
         this.state.includeUnstaged,
         this.state.includeUntracked,
@@ -642,18 +641,29 @@ export class CommitController implements vscode.Disposable {
       }
       report(this.strings.msgCommitApplyProgress);
       await this.applyCommitMessage(repo);
-    }).catch(() => {
-      // generateCommitMessage 内で通知済みなのでここでは握りつぶす
+    }).catch(error => {
+      this.handleUnexpectedCommandError(error);
     });
   }
 
-  private async runWithScmProgress<T>(title: string, work: (report: (message: string) => void) => Promise<T>): Promise<T> {
-    return vscode.window.withProgress({ location: vscode.ProgressLocation.SourceControl, title, cancellable: true }, async (progress, token) => {
+  private async runWithScmProgress<T>(
+    title: string,
+    showNotification: boolean,
+    work: (report: (message: string) => void) => Promise<T>
+  ): Promise<T> {
+    const location = showNotification ? vscode.ProgressLocation.Notification : vscode.ProgressLocation.SourceControl;
+    return vscode.window.withProgress({ location, title, cancellable: true }, async (progress, token) => {
       token.onCancellationRequested(() => {
         void this.cancelCurrent(this.strings.msgCancelled);
       });
       return await work(message => progress.report({ message }));
     });
+  }
+
+  private handleUnexpectedCommandError(error: unknown): void {
+    const message = error instanceof Error ? error.message : String(error);
+    this.setStatus('error', { lastError: message, progressMessage: undefined });
+    void vscode.window.showErrorMessage(`${this.strings.msgCommitGenerateFailedPrefix}${message}`);
   }
 
   private async cancelCurrent(reason = this.strings.msgCancelled): Promise<void> {
@@ -964,7 +974,7 @@ export class CommitController implements vscode.Disposable {
     }
 
     if (rootUri?.fsPath) {
-      const match = repos.find(repo => repo.rootUri?.fsPath === rootUri.fsPath);
+      const match = repos.find(repo => sameFsPath(repo.rootUri?.fsPath, rootUri.fsPath));
       return match;
     }
 
@@ -990,9 +1000,37 @@ export class CommitController implements vscode.Disposable {
 }
 
 function getRootUriFromScmArg(arg: unknown): vscode.Uri | undefined {
-  if (!arg || typeof arg !== 'object') return undefined;
-  const maybe = arg as { rootUri?: vscode.Uri; sourceControl?: { rootUri?: vscode.Uri } };
-  return maybe.rootUri ?? maybe.sourceControl?.rootUri;
+  return findRootUri(arg, 0, new Set<object>());
+}
+
+function findRootUri(value: unknown, depth: number, seen: Set<object>): vscode.Uri | undefined {
+  if (!value || typeof value !== 'object' || depth > 3) return undefined;
+  if (isUriLike(value)) return value as vscode.Uri;
+  if (seen.has(value)) return undefined;
+  seen.add(value);
+
+  const maybe = value as Record<string, unknown>;
+  return (
+    findRootUri(maybe.rootUri, depth + 1, seen) ??
+    findRootUri(maybe.sourceControl, depth + 1, seen) ??
+    findRootUri(maybe.provider, depth + 1, seen) ??
+    findRootUri(maybe.repository, depth + 1, seen) ??
+    findRootUri(maybe.resourceGroup, depth + 1, seen)
+  );
+}
+
+function isUriLike(value: object): boolean {
+  const maybe = value as { fsPath?: unknown; scheme?: unknown };
+  return typeof maybe.fsPath === 'string' && typeof maybe.scheme === 'string';
+}
+
+function sameFsPath(left?: string, right?: string): boolean {
+  if (!left || !right) return false;
+  const normalizedLeft = path.resolve(left);
+  const normalizedRight = path.resolve(right);
+  return process.platform === 'win32'
+    ? normalizedLeft.toLowerCase() === normalizedRight.toLowerCase()
+    : normalizedLeft === normalizedRight;
 }
 
 function getEnvVarName(provider: ProviderId): string[] {
