@@ -39,7 +39,7 @@ import {
   isLanguageCode
 } from './types';
 import { collectDiff } from './services/diffCollector';
-import { applyPromptLimit, getLocalPromptCharLimit, splitTextIntoChunks } from './promptLimit';
+import { applyPromptLimit, buildLocalDiffDigest, getLocalPromptCharLimit } from './promptLimit';
 import { callOpenAi } from './services/llm/openai';
 import { callClaude } from './services/llm/claude';
 import { callGemini } from './services/llm/gemini';
@@ -708,48 +708,16 @@ export class CommitController implements vscode.Disposable {
       maxOutputTokens
     );
     const prompt = this.buildPrompt(diff);
-    if (prompt.length <= promptLimit) {
+    const fastPromptLimit = Math.min(promptLimit, 12000);
+    if (prompt.length <= fastPromptLimit) {
       return this.callLlm(prompt);
     }
 
-    const promptOverhead = this.buildPrompt('').length + 2000;
-    const chunkLimit = Math.max(12000, promptLimit - promptOverhead);
-    const chunks = splitTextIntoChunks(diff, chunkLimit);
-    const chunkSummaryMaxOutputTokens = 256;
-    const summaries: string[] = [];
-    for (let index = 0; index < chunks.length; index += 1) {
-      progress?.(this.formatLocalChunkProgress(index + 1, chunks.length));
-      summaries.push(await this.callLocalPrompt(
-        this.buildLocalChunkSummaryPrompt(chunks[index], index + 1, chunks.length),
-        chunkSummaryMaxOutputTokens
-      ));
-    }
-
-    progress?.(this.strings.msgCommitGenerateCallingLlm);
-    return this.callLlm(this.buildPrompt(
-      summaries
-        .map((summary, index) => `## Chunk ${index + 1}/${summaries.length}\n${summary.trim()}`)
-        .join('\n\n')
-    ));
-  }
-
-  private buildLocalChunkSummaryPrompt(diffChunk: string, index: number, total: number): string {
-    const instruction = this.state.prompt || this.getDefaultPrompt();
-    return [
-      'You are summarizing one chunk of a large Git diff for a later commit message.',
-      'Extract only concrete, commit-relevant facts. Keep file paths, feature names, bug fixes, tests, and behavioral changes.',
-      'Do not write the final commit message yet. Do not include markdown fences.',
-      '',
-      `${this.strings.userInstructionLabel}`,
-      instruction,
-      '',
-      `Diff chunk ${index}/${total}:`,
-      diffChunk
-    ].join('\n');
-  }
-
-  private formatLocalChunkProgress(index: number, total: number): string {
-    return `Local ${index}/${total} · ${this.strings.msgCommitGenerateCallingLlm}`;
+    const promptOverhead = this.buildPrompt('').length + 1000;
+    const digestLimit = Math.max(8000, Math.min(16000, promptLimit - promptOverhead));
+    progress?.(`Local digest · ${this.strings.msgCommitGenerateCallingLlm}`);
+    const digest = buildLocalDiffDigest(diff, digestLimit);
+    return this.callLlm(this.buildPrompt(digest));
   }
 
   private showPromptToast(message: string): void {
