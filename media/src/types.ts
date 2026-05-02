@@ -60,5 +60,5 @@ export interface PanelStateSnapshot {
   commitReasoning?: string;
   commitVerbosity?: string;
   apiKeys?: Record<string, { ready: boolean }>;
-  localModel?: { id?: string; status: string; label: string; sizeLabel: string; downloadedBytes?: number; totalBytes?: number };
+  localModel?: { id?: string; status: string; label: string; sizeLabel: string; downloadedBytes?: number; totalBytes?: number; hasPartialDownload?: boolean };
 }
