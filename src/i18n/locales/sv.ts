@@ -7,7 +7,7 @@ const sv: UiStrings = {
   languageSectionTitle: 'Visningsspråk',
   languageName: 'Svenska',
 
-  apiKeySectionTitle: 'API-nyckel',
+  apiKeySectionTitle: 'API-nyckel / modell',
   apiKeyProviderLabel: 'Leverantör att spara till',
   apiKeyIssueButton: 'Hämta API-nyckel',
   apiKeyLabel: 'API-nyckel',

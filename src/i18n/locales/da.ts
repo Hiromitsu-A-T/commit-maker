@@ -7,7 +7,7 @@ const da: UiStrings = {
   languageSectionTitle: 'Visningssprog',
   languageName: 'Dansk',
 
-  apiKeySectionTitle: 'API-nøgle',
+  apiKeySectionTitle: 'API-nøgle / model',
   apiKeyProviderLabel: 'Udbyder at gemme hos',
   apiKeyIssueButton: 'Hent API-nøgle',
   apiKeyLabel: 'API-nøgle',

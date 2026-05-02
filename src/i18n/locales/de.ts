@@ -7,7 +7,7 @@ const de: UiStrings = {
   languageSectionTitle: 'Anzeigesprache',
   languageName: 'Deutsch',
 
-  apiKeySectionTitle: 'API-Schlüssel',
+  apiKeySectionTitle: 'API-Schlüssel / Modell',
   apiKeyProviderLabel: 'Anbieter zum Speichern',
   apiKeyIssueButton: 'API-Schlüssel holen',
   apiKeyLabel: 'API-Schlüssel',

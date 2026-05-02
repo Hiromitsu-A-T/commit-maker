@@ -7,7 +7,7 @@ const fr: UiStrings = {
   languageSectionTitle: 'Langue d’affichage',
   languageName: 'Français',
 
-  apiKeySectionTitle: 'Clé API',
+  apiKeySectionTitle: 'Clé API / modèle',
   apiKeyProviderLabel: 'Fournisseur de stockage',
   apiKeyIssueButton: 'Obtenir une clé API',
   apiKeyLabel: 'Clé API',

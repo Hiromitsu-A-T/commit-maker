@@ -7,7 +7,7 @@ const nl: UiStrings = {
   languageSectionTitle: 'Weergavetaal',
   languageName: 'Nederlands',
 
-  apiKeySectionTitle: 'API-sleutel',
+  apiKeySectionTitle: 'API-sleutel / model',
   apiKeyProviderLabel: 'Provider om op te slaan',
   apiKeyIssueButton: 'API-sleutel ophalen',
   apiKeyLabel: 'API-sleutel',

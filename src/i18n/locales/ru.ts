@@ -7,7 +7,7 @@ const ru: UiStrings = {
   languageSectionTitle: 'Язык интерфейса',
   languageName: 'Русский',
 
-  apiKeySectionTitle: 'API-ключ',
+  apiKeySectionTitle: 'API-ключ / модель',
   apiKeyProviderLabel: 'Провайдер для сохранения',
   apiKeyIssueButton: 'Получить API-ключ',
   apiKeyLabel: 'API-ключ',

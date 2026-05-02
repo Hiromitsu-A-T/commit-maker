@@ -7,7 +7,7 @@ const ja: UiStrings = {
   languageSectionTitle: '表示言語',
   languageName: '日本語',
 
-  apiKeySectionTitle: 'API キー',
+  apiKeySectionTitle: 'API キー / モデル',
   apiKeyProviderLabel: '保存先プロバイダー',
   apiKeyIssueButton: 'APIキー発行',
   apiKeyLabel: 'API キー',

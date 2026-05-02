@@ -7,7 +7,7 @@ const th: UiStrings = {
   languageSectionTitle: 'ภาษาแสดงผล',
   languageName: 'ไทย',
 
-  apiKeySectionTitle: 'API Key',
+  apiKeySectionTitle: 'คีย์ API / โมเดล',
   apiKeyProviderLabel: 'ผู้ให้บริการที่บันทึก',
   apiKeyIssueButton: 'ขอ API key',
   apiKeyLabel: 'API Key',

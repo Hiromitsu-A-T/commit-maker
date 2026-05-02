@@ -7,7 +7,7 @@ const my: UiStrings = {
   languageSectionTitle: 'ပြသဘာသာစကား',
   languageName: 'မြန်မာ',
 
-  apiKeySectionTitle: 'API Key',
+  apiKeySectionTitle: 'API သော့ / မော်ဒယ်',
   apiKeyProviderLabel: 'သိမ်းမည့် ပေးသွင်းသူ',
   apiKeyIssueButton: 'API key ရယူရန်',
   apiKeyLabel: 'API Key',

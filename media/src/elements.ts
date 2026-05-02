@@ -5,6 +5,7 @@ export function queryElements(): PanelElements {
   return {
     language: get('language') as HTMLSelectElement | null,
     apiKeySection: get('apiKeySection'),
+    apiKeyCloudPanel: get('apiKeyCloudPanel'),
     apiKeyProvider: get('apiKeyProvider') as HTMLSelectElement | null,
     apiKeyInput: get('apiKeyInput') as HTMLInputElement | null,
     apiKeyPreview: get('apiKeyPreview'),

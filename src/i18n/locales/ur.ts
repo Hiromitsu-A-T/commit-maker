@@ -7,7 +7,7 @@ const ur: UiStrings = {
   languageSectionTitle: 'ڈسپلے زبان',
   languageName: 'اردو',
 
-  apiKeySectionTitle: 'API کلید',
+  apiKeySectionTitle: 'API کلید / ماڈل',
   apiKeyProviderLabel: 'محفوظ کرنے کے لیے فراہم کنندہ',
   apiKeyIssueButton: 'API کلید حاصل کریں',
   apiKeyLabel: 'API کلید',

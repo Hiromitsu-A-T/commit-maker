@@ -7,7 +7,7 @@ const nb: UiStrings = {
   languageSectionTitle: 'Visningsspråk',
   languageName: 'Norsk (Bokmål)',
 
-  apiKeySectionTitle: 'API-nøkkel',
+  apiKeySectionTitle: 'API-nøkkel / modell',
   apiKeyProviderLabel: 'Tilbyder å lagre hos',
   apiKeyIssueButton: 'Hent API-nøkkel',
   apiKeyLabel: 'API-nøkkel',

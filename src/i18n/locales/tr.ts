@@ -7,7 +7,7 @@ const tr: UiStrings = {
   languageSectionTitle: 'Görüntüleme dili',
   languageName: 'Türkçe',
 
-  apiKeySectionTitle: 'API Anahtarı',
+  apiKeySectionTitle: 'API Anahtarı / Model',
   apiKeyProviderLabel: 'Kaydedilecek sağlayıcı',
   apiKeyIssueButton: 'API anahtarı al',
   apiKeyLabel: 'API Anahtarı',

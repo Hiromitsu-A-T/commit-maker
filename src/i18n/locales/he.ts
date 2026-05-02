@@ -7,7 +7,7 @@ const he: UiStrings = {
   languageSectionTitle: 'שפת תצוגה',
   languageName: 'עברית',
 
-  apiKeySectionTitle: 'מפתח API',
+  apiKeySectionTitle: 'מפתח API / מודל',
   apiKeyProviderLabel: 'ספק לשמירה',
   apiKeyIssueButton: 'קבל מפתח API',
   apiKeyLabel: 'מפתח API',

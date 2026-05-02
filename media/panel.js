@@ -44,6 +44,7 @@
     return {
       language: get('language'),
       apiKeySection: get('apiKeySection'),
+      apiKeyCloudPanel: get('apiKeyCloudPanel'),
       apiKeyProvider: get('apiKeyProvider'),
       apiKeyInput: get('apiKeyInput'),
       apiKeyPreview: get('apiKeyPreview'),
@@ -504,7 +505,9 @@
   }
 
   function renderApiKeySection() {
-    show(els.apiKeySection, !isLocalProvider(state.commitProvider), 'block');
+    const isLocal = isLocalProvider(state.commitProvider);
+    show(els.apiKeySection, true, 'block');
+    show(els.apiKeyCloudPanel, !isLocal, 'block');
     if (!els.apiKeyProvider) return;
     const t = getStrings();
     els.apiKeyProvider.innerHTML = '';

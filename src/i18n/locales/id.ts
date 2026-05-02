@@ -7,7 +7,7 @@ const id: UiStrings = {
   languageSectionTitle: 'Bahasa tampilan',
   languageName: 'Bahasa Indonesia',
 
-  apiKeySectionTitle: 'API Key',
+  apiKeySectionTitle: 'Kunci API / Model',
   apiKeyProviderLabel: 'Penyedia untuk menyimpan',
   apiKeyIssueButton: 'Dapatkan API key',
   apiKeyLabel: 'API Key',

@@ -7,7 +7,7 @@ const en: UiStrings = {
   languageSectionTitle: 'Display language',
   languageName: 'English',
 
-  apiKeySectionTitle: 'API Key',
+  apiKeySectionTitle: 'API Key / Model',
   apiKeyProviderLabel: 'Provider to save',
   apiKeyIssueButton: 'Get API key',
   apiKeyLabel: 'API Key',

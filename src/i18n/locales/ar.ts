@@ -7,7 +7,7 @@ const ar: UiStrings = {
   languageSectionTitle: 'لغة العرض',
   languageName: 'العربية',
 
-  apiKeySectionTitle: 'مفتاح الـ API',
+  apiKeySectionTitle: 'مفتاح API / النموذج',
   apiKeyProviderLabel: 'المزوّد للحفظ',
   apiKeyIssueButton: 'الحصول على مفتاح',
   apiKeyLabel: 'مفتاح الـ API',

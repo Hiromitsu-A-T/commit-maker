@@ -7,7 +7,7 @@ const vi: UiStrings = {
   languageSectionTitle: 'Ngôn ngữ hiển thị',
   languageName: 'Tiếng Việt',
 
-  apiKeySectionTitle: 'API Key',
+  apiKeySectionTitle: 'Khóa API / Mô hình',
   apiKeyProviderLabel: 'Nhà cung cấp lưu trữ',
   apiKeyIssueButton: 'Lấy API key',
   apiKeyLabel: 'API Key',
