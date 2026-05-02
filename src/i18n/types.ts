@@ -8,7 +8,6 @@ export interface UiStrings {
   languageName: string;
 
   apiKeySectionTitle: string;
-  apiKeyProviderLabel: string;
   apiKeyIssueButton: string;
   apiKeyLabel: string;
   apiKeyPlaceholder: string;
@@ -26,9 +25,7 @@ export interface UiStrings {
   providerLabelOpenAi: string;
   providerLabelClaude: string;
   providerLabelLocal: string;
-  localModelSectionTitle: string;
   localModelLabel: string;
-  localModelStatusLabel: string;
   localModelDownloadButton: string;
   localModelCancelButton: string;
   localModelDeleteButton: string;

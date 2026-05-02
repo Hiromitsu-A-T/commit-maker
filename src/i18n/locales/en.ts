@@ -8,7 +8,6 @@ const en: UiStrings = {
   languageName: 'English',
 
   apiKeySectionTitle: 'API Key / Model',
-  apiKeyProviderLabel: 'Provider to save',
   apiKeyIssueButton: 'Get API key',
   apiKeyLabel: 'API Key',
   apiKeyPlaceholder: 'sk-... / AIza... / sk-ant-...',
@@ -26,9 +25,7 @@ const en: UiStrings = {
   providerLabelOpenAi: 'OpenAI (GPT-5 family)',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelLocal: 'Local LLM',
-  localModelSectionTitle: 'Local model',
   localModelLabel: 'Model',
-  localModelStatusLabel: 'Status',
   localModelDownloadButton: 'Download model',
   localModelCancelButton: 'Cancel',
   localModelDeleteButton: 'Delete',
