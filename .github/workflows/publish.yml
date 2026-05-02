@@ -110,6 +110,7 @@ jobs:
           npx vsce publish --packagePath vsix/commit-maker-${VERSION}.vsix $PRE_RELEASE_FLAG
       - name: Ensure Open VSX namespace
         if: always()
+        continue-on-error: true
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
@@ -117,6 +118,7 @@ jobs:
 
       - name: Publish to Open VSX
         if: always()
+        continue-on-error: true
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
