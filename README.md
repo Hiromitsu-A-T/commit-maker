@@ -7,12 +7,14 @@
 <p align="center"><em>Git の差分からコミットメッセージを AI 生成し、SCM へ即反映する commit / コミット特化ツール</em></p>
 
 **Git の差分を読み取り、最適なコミットメッセージを自動生成して SCM 入力欄へ反映する VS Code 拡張（コミットメーカー / commit message generator）です。**  
-Cursor や Copilot では実現できない、完全カスタマイズ可能な AI コミットメッセージ生成ツール。Git commit を効率化し、チーム全体のコミット品質を向上させます。
+Gemini / OpenAI / Claude の API キー（BYOK）に加えて、API キー不要のローカル LLM にも対応。Local を選べば API 利用料なしでコミットメッセージを生成できます。
+Cursor や Copilot では実現しにくい、完全カスタマイズ可能な AI コミットメッセージ生成ツール。Git commit を効率化し、チーム全体のコミット品質を向上させます。
 キーはすべてローカルの SecretStorage に保存され、サーバー側に記録を残しません。
 SecretStorage とは VS Code が提供するローカル暗号化ストレージで、APIキーはPCをまたいで同期されません（Settings Sync も無効）。API キーはこの領域からのみ読み書きします。
 
 (English) **VS Code extension that reads your Git diff and auto-fills the SCM commit box with a generated message.**  
-Fully customizable AI commit message generator – beyond what Cursor or Copilot can offer. Streamline your Git commits and elevate your team's commit quality with professional commit messages.
+Use your own Gemini / OpenAI / Claude API key (BYOK), or use the Local LLM provider without an API key. Local can generate commit messages without cloud API charges.
+Fully customizable AI commit message generator beyond what Cursor or Copilot commonly offer. Streamline your Git commits and elevate your team's commit quality with professional commit messages.
 API keys stay in local SecretStorage; nothing is sent to the server side.
 SecretStorage is VS Code’s local encrypted store; API keys are not synced across machines (Settings Sync disabled) and are read/written only from there.
 
@@ -54,7 +56,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 ✅ **BYOK / ローカルモデル対応** – OpenAI / Gemini / Claude はあなたの API キーで動作。Local を選ぶ場合は API キー不要で、必要な llama.cpp runtime とモデルだけを後からダウンロードします。  
 (English) **BYOK / local model support** – Cloud providers use your own keys; Local needs no API key and downloads only the required llama.cpp runtime and model when you choose it.
 
-> **Local provider preview**: Local LLM support is being released first as a VS Code pre-release for cross-platform validation. macOS arm64 has been verified end-to-end; Windows/Linux runtime auto-install is covered by CI smoke tests and will be promoted to stable after real-device verification.
+> **Local provider note**: Local は API 利用料なしで使えますが、生成速度は PC の CPU/GPU・メモリ・差分サイズに大きく依存します。クラウド API より遅い場合があります。  
+> (Local can run without cloud API charges, but generation speed depends heavily on your CPU/GPU, memory, and diff size. It may be slower than cloud APIs.)
 
 ✅ **プロンプトを複数保存・切り替え** – GUI で複数のプロンプトプリセットを保存し、ワンクリックで切り替え可能。チーム規約、個人用、実験用など、用途に応じて使い分けられます。  
 (English) **Save & switch multiple prompts** – Store presets in the GUI and switch with one click for team rules, personal use, or experiments.
@@ -74,6 +77,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
   (English) **Prompt preset management** – Save multiple in GUI, shared across local workspaces (except Settings Sync)
 - **推奨モデルは高速・低コスト**: デフォルトで Gemini `gemini-2.5-flash-lite` を採用。必要に応じて OpenAI / Claude / Local へ切り替え可能  
   (English) **Fast & low-cost default** – Gemini `gemini-2.5-flash-lite` by default; switch to OpenAI/Claude/Local as needed
+- **Local LLM なら API 利用料なし**: モデルをダウンロードすると PC 内のリソースで生成可能。速度は端末性能と差分サイズに依存  
+  (English) **No cloud API charge with Local LLM** – Download a model and generate on your machine; speed depends on device specs and diff size
 - **追加指示欄でさらにカスタマイズ**: 「英語で短く」「絵文字なし」「Conventional Commits 準拠」など、チームのコミットルールに合わせて自由に指定  
   (English) **Custom instructions field** – Add rules like "short in English", "no emojis", or "follow Conventional Commits" to fit your team's commit standards
 - **SCM ツールバーからも実行可能**: パネルを開かず、杖アイコンから「差分取得→生成→適用」を一発で完了  
@@ -112,6 +117,9 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 
 Local を選ぶ場合、API キーは不要です。上部のモデル欄で GGUF モデルを選び、「モデルをダウンロード」で llama.cpp runtime と選択モデルを取得し、以後は PC 内で生成します。  
 (For Local, no API key is required. Choose a GGUF model in the top model field, then use "Download model" to fetch the llama.cpp runtime and selected model. Generation runs on your machine.)
+
+Local は API 利用料なしで使えますが、クラウド API より生成が遅い場合があります。速度は PC の CPU/GPU・メモリ・差分サイズに依存します。  
+(Local can run without cloud API charges, but it may be slower than cloud APIs. Speed depends on your CPU/GPU, memory, and diff size.)
 
 Local の GGUF モデルは 1 件あたり約 2.5 GB です。不要になった場合は上部のローカルモデル欄の「削除」から選択中モデルの本体を削除できます。  
 (Each Local GGUF model is about 2.5 GB. You can remove the selected model file from the top Local model section when you no longer need it.)
