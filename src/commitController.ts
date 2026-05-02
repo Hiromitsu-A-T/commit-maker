@@ -4,6 +4,7 @@ import {
   COMMIT_INCLUDE_UNSTAGED_STORAGE_KEY,
   COMMIT_INCLUDE_UNTRACKED_STORAGE_KEY,
   COMMIT_INCLUDE_BINARY_STORAGE_KEY,
+  COMMIT_API_KEY_PROVIDER_STORAGE_KEY,
   COMMIT_MODEL_STORAGE_KEY,
   COMMIT_LOCAL_MODEL_STORAGE_KEY,
   COMMIT_MAX_PROMPT_CHARS_STORAGE_KEY,
@@ -166,6 +167,12 @@ export class CommitController implements vscode.Disposable {
           this.panel.updateState(toPanelState(this.state));
         }
       }),
+      this.panel.onDidChangeApiKeyProvider(value => {
+        if (isProviderId(value)) {
+          this.state.apiKeyProvider = value;
+          void this.context.globalState.update(COMMIT_API_KEY_PROVIDER_STORAGE_KEY, value);
+        }
+      }),
       this.panel.onDidChangeCommitProvider(value => {
         if (isProviderId(value)) {
           this.setProvider(value);
@@ -273,9 +280,12 @@ export class CommitController implements vscode.Disposable {
       void this.context.globalState.update(COMMIT_PROMPT_STORAGE_KEY, promptFromWorkspace);
     }
     const provider = this.context.workspaceState.get<ProviderId>(COMMIT_PROVIDER_STORAGE_KEY, DEFAULT_PROVIDER);
+    const storedApiKeyProvider = this.context.globalState.get<string>(COMMIT_API_KEY_PROVIDER_STORAGE_KEY);
+    const apiKeyProvider = isProviderId(storedApiKeyProvider) ? storedApiKeyProvider : provider;
     const storedModel = this.context.workspaceState.get<string>(COMMIT_MODEL_STORAGE_KEY);
     const storedLocalModelId = this.context.workspaceState.get<string>(COMMIT_LOCAL_MODEL_STORAGE_KEY);
-    const localModelId = resolveLocalModelId(storedLocalModelId || (provider === 'local' ? storedModel : undefined));
+    const storedGlobalLocalModelId = this.context.globalState.get<string>(COMMIT_LOCAL_MODEL_STORAGE_KEY);
+    const localModelId = resolveLocalModelId(storedLocalModelId || storedGlobalLocalModelId || (provider === 'local' ? storedModel : undefined));
     const model = provider === 'local'
       ? resolveLocalModelId(storedModel || localModelId)
       : storedModel || getDefaultModelForProvider(provider);
@@ -312,6 +322,7 @@ export class CommitController implements vscode.Disposable {
       verbosity,
       promptPresets: presets,
       activePromptPresetId: activeId,
+      apiKeyProvider,
       language,
       localModelId,
       localModel: createDefaultLocalModelState(localModelId)
@@ -328,6 +339,7 @@ export class CommitController implements vscode.Disposable {
 
   private setProvider(provider: ProviderId): void {
     this.state.provider = provider;
+    this.state.apiKeyProvider = provider;
     const fallbackModel = provider === 'local'
       ? resolveLocalModelId(this.state.localModelId || DEFAULT_LOCAL_MODEL_ID)
       : getDefaultModelForProvider(provider);
@@ -335,6 +347,7 @@ export class CommitController implements vscode.Disposable {
     this.setModel(fallbackModel, true);
 
     void this.context.workspaceState.update(COMMIT_PROVIDER_STORAGE_KEY, provider);
+    void this.context.globalState.update(COMMIT_API_KEY_PROVIDER_STORAGE_KEY, provider);
     this.panel.updateState(toPanelState(this.state));
   }
 
@@ -346,6 +359,7 @@ export class CommitController implements vscode.Disposable {
       this.state.customModel = nextModel;
       this.state.localModel = createDefaultLocalModelState(nextModel);
       void this.context.workspaceState.update(COMMIT_LOCAL_MODEL_STORAGE_KEY, nextModel);
+      void this.context.globalState.update(COMMIT_LOCAL_MODEL_STORAGE_KEY, nextModel);
       void this.refreshLocalModelState();
     } else if (isCustom) {
       this.state.customModel = nextModel;
@@ -399,6 +413,7 @@ export class CommitController implements vscode.Disposable {
       this.state.model = localModelId;
       this.state.customModel = localModelId;
       void this.context.workspaceState.update(COMMIT_LOCAL_MODEL_STORAGE_KEY, localModelId);
+      void this.context.globalState.update(COMMIT_LOCAL_MODEL_STORAGE_KEY, localModelId);
       return;
     }
     const currentCustom = this.state.customModel;
@@ -425,6 +440,7 @@ export class CommitController implements vscode.Disposable {
     const next = resolveLocalModelId(modelId);
     this.state.localModelId = next;
     void this.context.workspaceState.update(COMMIT_LOCAL_MODEL_STORAGE_KEY, next);
+    void this.context.globalState.update(COMMIT_LOCAL_MODEL_STORAGE_KEY, next);
     if (this.state.provider === 'local') {
       this.state.model = next;
       this.state.customModel = next;

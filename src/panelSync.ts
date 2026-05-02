@@ -11,6 +11,7 @@ export function toPanelState(state: CommitState): Partial<PanelState> {
     commitPrompt: state.prompt,
     promptPresets: state.promptPresets,
     activePromptPresetId: state.activePromptPresetId,
+    apiKeyProvider: state.apiKeyProvider,
     commitProvider: state.provider,
     commitModel: state.model,
     commitCustomModel: state.customModel ?? state.model,

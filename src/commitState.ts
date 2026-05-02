@@ -4,6 +4,7 @@ export interface CommitState {
   prompt: string;
   promptPresets: PromptPreset[];
   activePromptPresetId?: string;
+  apiKeyProvider: ProviderId;
   provider: ProviderId;
   model: string;
   customModel?: string;

@@ -34,6 +34,7 @@ export const COMMIT_PROMPT_STORAGE_KEY = 'commitMaker.commitPrompt';
 export const PROMPT_PRESETS_STORAGE_KEY = 'commitMaker.promptPresets';
 export const ACTIVE_PROMPT_PRESET_STORAGE_KEY = 'commitMaker.promptPreset.active';
 export const COMMIT_PROVIDER_STORAGE_KEY = 'commitMaker.commitProvider';
+export const COMMIT_API_KEY_PROVIDER_STORAGE_KEY = 'commitMaker.apiKeyProvider';
 export const COMMIT_MODEL_STORAGE_KEY = 'commitMaker.commitModel';
 export const COMMIT_INCLUDE_UNSTAGED_STORAGE_KEY = 'commitMaker.commitIncludeUnstaged';
 export const COMMIT_INCLUDE_UNTRACKED_STORAGE_KEY = 'commitMaker.commitIncludeUntracked';
