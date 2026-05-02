@@ -4,7 +4,8 @@ import {
   PromptPreset,
   ProviderOption,
   ReasoningEffort,
-  VerbositySetting
+  VerbositySetting,
+  LocalModelDefinition
 } from './types';
 import { DEFAULT_LANGUAGE, getStrings } from './i18n/strings';
 import { UiStrings } from './i18n/types';
@@ -40,13 +41,36 @@ export const COMMIT_INCLUDE_BINARY_STORAGE_KEY = 'commitMaker.commitIncludeBinar
 export const COMMIT_REASONING_STORAGE_KEY = 'commitMaker.commitReasoning';
 export const COMMIT_VERBOSITY_STORAGE_KEY = 'commitMaker.commitVerbosity';
 export const COMMIT_MAX_PROMPT_CHARS_STORAGE_KEY = 'commitMaker.commitMaxPromptChars';
+export const COMMIT_LOCAL_MODEL_STORAGE_KEY = 'commitMaker.localModelId';
 export const COMMIT_LANGUAGE_STORAGE_KEY = 'commitMaker.language';
-export const DEFAULT_LOCAL_MODEL_ID = 'commit-maker-local-qwen3-4b';
-export const DEFAULT_LOCAL_MODEL_FILENAME = 'qwen3-4b-instruct-2507-q4_k_m.gguf';
-export const DEFAULT_LOCAL_MODEL_URL =
-  'https://huggingface.co/Edge-Quant/Qwen3-4B-Instruct-2507-Q4_K_M-GGUF/resolve/main/qwen3-4b-instruct-2507-q4_k_m.gguf';
-export const DEFAULT_LOCAL_MODEL_SHA256 = '1571ec5115bcfed4b4327fc27b5f44ea284806caf5331eef89326191c9b031d6';
-export const DEFAULT_LOCAL_MODEL_SIZE_BYTES = 2_497_279_136;
+export const LEGACY_DEFAULT_LOCAL_MODEL_ID = 'commit-maker-local-qwen3-4b';
+export const DEFAULT_LOCAL_MODEL_ID = 'Qwen3-4B-Instruct-2507-Q4_K_M';
+export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
+  {
+    id: DEFAULT_LOCAL_MODEL_ID,
+    label: 'Qwen3-4B-Instruct-2507 Q4_K_M',
+    filename: 'qwen3-4b-instruct-2507-q4_k_m.gguf',
+    url: 'https://huggingface.co/Edge-Quant/Qwen3-4B-Instruct-2507-Q4_K_M-GGUF/resolve/main/qwen3-4b-instruct-2507-q4_k_m.gguf',
+    sha256: '1571ec5115bcfed4b4327fc27b5f44ea284806caf5331eef89326191c9b031d6',
+    sizeBytes: 2_497_279_136,
+    contextSize: 262_144,
+    legacyIds: [LEGACY_DEFAULT_LOCAL_MODEL_ID]
+  },
+  {
+    id: 'Qwen3-4B-Thinking-2507-Q4_K_M',
+    label: 'Qwen3-4B-Thinking-2507 Q4_K_M',
+    filename: 'Qwen3-4B-Thinking-2507-Q4_K_M.gguf',
+    url: 'https://huggingface.co/unsloth/Qwen3-4B-Thinking-2507-GGUF/resolve/main/Qwen3-4B-Thinking-2507-Q4_K_M.gguf',
+    sha256: 'ddd52e18200baab281c5c46f70d544ce4d4fe4846eab1608f2fff48a64554212',
+    sizeBytes: 2_497_281_152,
+    contextSize: 262_144
+  }
+];
+export const DEFAULT_LOCAL_MODEL = LOCAL_MODEL_DEFINITIONS[0];
+export const DEFAULT_LOCAL_MODEL_FILENAME = DEFAULT_LOCAL_MODEL.filename;
+export const DEFAULT_LOCAL_MODEL_URL = DEFAULT_LOCAL_MODEL.url;
+export const DEFAULT_LOCAL_MODEL_SHA256 = DEFAULT_LOCAL_MODEL.sha256;
+export const DEFAULT_LOCAL_MODEL_SIZE_BYTES = DEFAULT_LOCAL_MODEL.sizeBytes;
 export const DEFAULT_LOCAL_CONTEXT_SIZE = 32768;
 export const DEFAULT_LOCAL_GPU_LAYERS = 99;
 export const DEFAULT_LOCAL_KEEP_ALIVE_MS = 300000;
@@ -133,7 +157,7 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       description: strings.providerDescriptionLocal,
       apiKeyPlaceholder: '',
       requiresApiKey: false,
-      models: [DEFAULT_LOCAL_MODEL_ID],
+      models: LOCAL_MODEL_DEFINITIONS.map(model => model.id),
       defaultModel: DEFAULT_LOCAL_MODEL_ID,
       issueUrl: 'https://huggingface.co/Edge-Quant/Qwen3-4B-Instruct-2507-Q4_K_M-GGUF',
       defaultEndpoint: 'http://127.0.0.1',

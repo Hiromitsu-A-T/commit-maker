@@ -35,7 +35,7 @@ export function queryElements(): PanelElements {
     customModelRow: get('customModelRow'),
     customModel: get('customModel') as HTMLInputElement | null,
     localModelPanel: get('localModelPanel'),
-    localModelName: get('localModelName') as HTMLInputElement | null,
+    localModelName: get('localModelName') as HTMLSelectElement | null,
     localModelStatus: get('localModelStatus'),
     localModelDownload: get('localModelDownload') as HTMLButtonElement | null,
     localModelCancel: get('localModelCancel') as HTMLButtonElement | null,

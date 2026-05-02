@@ -3,75 +3,91 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import {
-  DEFAULT_LOCAL_MODEL_FILENAME,
+  DEFAULT_LOCAL_MODEL,
   DEFAULT_LOCAL_MODEL_ID,
-  DEFAULT_LOCAL_MODEL_SHA256,
-  DEFAULT_LOCAL_MODEL_SIZE_BYTES,
-  DEFAULT_LOCAL_MODEL_URL
+  LEGACY_DEFAULT_LOCAL_MODEL_ID,
+  LOCAL_MODEL_DEFINITIONS
 } from '../constants';
-import { LocalModelState } from '../types';
-
-export interface LocalModelDefinition {
-  id: string;
-  label: string;
-  filename: string;
-  url: string;
-  sha256: string;
-  sizeBytes: number;
-}
+import { LocalModelDefinition, LocalModelOption, LocalModelState } from '../types';
 
 export interface DownloadProgress {
   downloadedBytes: number;
   totalBytes?: number;
 }
 
-export const LOCAL_MODEL: LocalModelDefinition = {
-  id: DEFAULT_LOCAL_MODEL_ID,
-  label: 'Commit Maker Local 4B',
-  filename: DEFAULT_LOCAL_MODEL_FILENAME,
-  url: DEFAULT_LOCAL_MODEL_URL,
-  sha256: DEFAULT_LOCAL_MODEL_SHA256,
-  sizeBytes: DEFAULT_LOCAL_MODEL_SIZE_BYTES
-};
+export const LOCAL_MODELS: LocalModelDefinition[] = LOCAL_MODEL_DEFINITIONS;
 
-export function getLocalModelDefinition(config: vscode.WorkspaceConfiguration): LocalModelDefinition {
+export function getLocalModelOptions(): LocalModelOption[] {
+  return LOCAL_MODELS.map(model => ({
+    id: model.id,
+    label: model.label,
+    sizeLabel: formatBytes(model.sizeBytes)
+  }));
+}
+
+export function resolveLocalModelId(value: string | undefined): string {
+  const candidate = value?.trim();
+  if (!candidate || candidate === LEGACY_DEFAULT_LOCAL_MODEL_ID) return DEFAULT_LOCAL_MODEL_ID;
+  return LOCAL_MODELS.some(model => model.id === candidate) ? candidate : DEFAULT_LOCAL_MODEL_ID;
+}
+
+export function getLocalModelDefinition(
+  config: vscode.WorkspaceConfiguration,
+  modelId?: string
+): LocalModelDefinition {
+  const base = getCatalogModel(modelId);
   const configuredUrl = getConfiguredString(config, 'localModelUrl');
   const configuredSha256 = getConfiguredString(config, 'localModelSha256');
-  const url = configuredUrl?.trim() || LOCAL_MODEL.url;
+  const configuredFilename = getConfiguredString(config, 'localModelFilename');
+  const url = configuredUrl?.trim() || base.url;
   const sha256 = configuredSha256 !== undefined
     ? configuredSha256.trim()
-    : url === LOCAL_MODEL.url
-      ? LOCAL_MODEL.sha256
+    : url === base.url
+      ? base.sha256
       : '';
-  const filename = sanitizeFilename(config.get<string>('localModelFilename', LOCAL_MODEL.filename) || LOCAL_MODEL.filename);
+  const filename = sanitizeFilename(configuredFilename?.trim() || base.filename);
   return {
-    ...LOCAL_MODEL,
+    ...base,
     url,
     sha256,
     filename
   };
 }
 
+export function createDefaultLocalModelState(modelId?: string): LocalModelState {
+  const model = getCatalogModel(modelId);
+  return {
+    id: model.id,
+    label: model.label,
+    status: 'notDownloaded',
+    sizeLabel: formatBytes(model.sizeBytes),
+    totalBytes: model.sizeBytes
+  };
+}
+
 export async function inspectLocalModel(
   context: vscode.ExtensionContext,
-  config: vscode.WorkspaceConfiguration
+  config: vscode.WorkspaceConfiguration,
+  modelId?: string
 ): Promise<LocalModelState> {
-  const model = getLocalModelDefinition(config);
-  const modelPath = getLocalModelPath(context, model);
-  try {
-    const stat = await fs.promises.stat(modelPath);
-    if (stat.isFile() && stat.size > 0) {
-      return {
-        id: model.id,
-        label: model.label,
-        status: 'ready',
-        sizeLabel: formatBytes(stat.size),
-        totalBytes: stat.size,
-        path: modelPath
-      };
+  const model = getLocalModelDefinition(config, modelId);
+  const [modelPath] = getLocalModelPaths(context, model);
+  for (const candidatePath of getLocalModelPaths(context, model)) {
+    try {
+      const stat = await fs.promises.stat(candidatePath);
+      if (stat.isFile() && stat.size > 0) {
+        return {
+          id: model.id,
+          label: model.label,
+          status: 'ready',
+          sizeLabel: formatBytes(stat.size),
+          totalBytes: stat.size,
+          path: candidatePath
+        };
+      }
+    } catch {
+      // Missing file is the normal first-run state.
     }
-  } catch {
-    // Missing file is the normal first-run state.
   }
   return {
     id: model.id,
@@ -86,10 +102,11 @@ export async function inspectLocalModel(
 export async function downloadLocalModel(
   context: vscode.ExtensionContext,
   config: vscode.WorkspaceConfiguration,
+  modelId: string | undefined,
   abortSignal: AbortSignal | undefined,
   onProgress: (progress: DownloadProgress) => void
 ): Promise<LocalModelState> {
-  const model = getLocalModelDefinition(config);
+  const model = getLocalModelDefinition(config, modelId);
   const modelPath = getLocalModelPath(context, model);
   const tmpPath = `${modelPath}.download`;
   await fs.promises.mkdir(path.dirname(modelPath), { recursive: true });
@@ -109,7 +126,7 @@ export async function downloadLocalModel(
       }
     }
     await fs.promises.rename(tmpPath, modelPath);
-    return await inspectLocalModel(context, config);
+    return await inspectLocalModel(context, config, model.id);
   } catch (error) {
     await removeIfExists(tmpPath);
     throw error;
@@ -118,17 +135,27 @@ export async function downloadLocalModel(
 
 export async function deleteLocalModel(
   context: vscode.ExtensionContext,
-  config: vscode.WorkspaceConfiguration
+  config: vscode.WorkspaceConfiguration,
+  modelId?: string
 ): Promise<LocalModelState> {
-  const model = getLocalModelDefinition(config);
-  const modelPath = getLocalModelPath(context, model);
-  await removeIfExists(modelPath);
-  await removeIfExists(`${modelPath}.download`);
-  return await inspectLocalModel(context, config);
+  const model = getLocalModelDefinition(config, modelId);
+  for (const modelPath of getLocalModelPaths(context, model)) {
+    await removeIfExists(modelPath);
+    await removeIfExists(`${modelPath}.download`);
+  }
+  return await inspectLocalModel(context, config, model.id);
 }
 
 export function getLocalModelPath(context: vscode.ExtensionContext, model: LocalModelDefinition): string {
   return path.join(context.globalStorageUri.fsPath, 'models', model.id, model.filename);
+}
+
+function getLocalModelPaths(context: vscode.ExtensionContext, model: LocalModelDefinition): string[] {
+  const paths = [getLocalModelPath(context, model)];
+  for (const legacyId of model.legacyIds ?? []) {
+    paths.push(path.join(context.globalStorageUri.fsPath, 'models', legacyId, model.filename));
+  }
+  return [...new Set(paths)];
 }
 
 export function formatBytes(bytes: number | undefined): string {
@@ -218,7 +245,12 @@ async function removeIfExists(filePath: string): Promise<void> {
 
 function sanitizeFilename(value: string): string {
   const base = path.basename(value.trim());
-  return base || LOCAL_MODEL.filename;
+  return base || DEFAULT_LOCAL_MODEL.filename;
+}
+
+function getCatalogModel(modelId: string | undefined): LocalModelDefinition {
+  const id = resolveLocalModelId(modelId);
+  return LOCAL_MODELS.find(model => model.id === id) ?? DEFAULT_LOCAL_MODEL;
 }
 
 function getConfiguredString(config: vscode.WorkspaceConfiguration, key: string): string | undefined {

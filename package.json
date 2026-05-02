@@ -2,7 +2,7 @@
   "name": "commit-maker",
   "displayName": "Commit Maker – コミットメーカー",
   "description": "Git の差分から AI でコミットメッセージを自動生成し、SCM 入力欄へ反映する BYOK / Local 対応拡張（コミットメーカー）。AI commit message generator for Git diff with BYOK and Local model support.",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "publisher": "Hiromitsu",
   "license": "Apache-2.0",
   "repository": {
@@ -184,18 +184,18 @@
         },
         "commitMaker.localModelUrl": {
           "type": "string",
-          "default": "https://huggingface.co/Edge-Quant/Qwen3-4B-Instruct-2507-Q4_K_M-GGUF/resolve/main/qwen3-4b-instruct-2507-q4_k_m.gguf",
-          "description": "Local provider がダウンロードする GGUF モデル URL"
+          "default": "",
+          "description": "空なら選択モデルを使用。指定時は Local provider の GGUF モデル URL を上書き"
         },
         "commitMaker.localModelFilename": {
           "type": "string",
-          "default": "qwen3-4b-instruct-2507-q4_k_m.gguf",
-          "description": "Local provider の保存ファイル名"
+          "default": "",
+          "description": "空なら選択モデルを使用。指定時は Local provider の保存ファイル名を上書き"
         },
         "commitMaker.localModelSha256": {
           "type": "string",
-          "default": "1571ec5115bcfed4b4327fc27b5f44ea284806caf5331eef89326191c9b031d6",
-          "description": "Local provider の GGUF モデル検証用 SHA256"
+          "default": "",
+          "description": "空なら選択モデルを使用。指定時は Local provider の GGUF モデル検証用 SHA256 を上書き"
         },
         "commitMaker.localContextSize": {
           "type": "number",

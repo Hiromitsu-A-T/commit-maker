@@ -49,6 +49,23 @@ export interface LocalModelState {
   error?: string;
 }
 
+export interface LocalModelDefinition {
+  id: string;
+  label: string;
+  filename: string;
+  url: string;
+  sha256: string;
+  sizeBytes: number;
+  contextSize: number;
+  legacyIds?: string[];
+}
+
+export interface LocalModelOption {
+  id: string;
+  label: string;
+  sizeLabel: string;
+}
+
 export interface PromptPreset {
   id: string;
   label: string;

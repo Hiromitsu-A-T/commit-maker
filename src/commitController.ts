@@ -5,6 +5,7 @@ import {
   COMMIT_INCLUDE_UNTRACKED_STORAGE_KEY,
   COMMIT_INCLUDE_BINARY_STORAGE_KEY,
   COMMIT_MODEL_STORAGE_KEY,
+  COMMIT_LOCAL_MODEL_STORAGE_KEY,
   COMMIT_MAX_PROMPT_CHARS_STORAGE_KEY,
   COMMIT_PROMPT_STORAGE_KEY,
   COMMIT_PROVIDER_STORAGE_KEY,
@@ -14,7 +15,6 @@ import {
   DEFAULT_LOCAL_KEEP_ALIVE_MS,
   DEFAULT_LOCAL_MAX_OUTPUT_TOKENS,
   DEFAULT_LOCAL_MODEL_ID,
-  DEFAULT_LOCAL_MODEL_SIZE_BYTES,
   DEFAULT_PROVIDER,
   DEFAULT_REASONING_EFFORT,
   DEFAULT_VERBOSITY,
@@ -47,8 +47,9 @@ import { callLocalLlm, stopLocalLlmRuntime } from './services/llm/local';
 import {
   deleteLocalModel,
   downloadLocalModel,
-  formatBytes,
-  inspectLocalModel
+  createDefaultLocalModelState,
+  inspectLocalModel,
+  resolveLocalModelId
 } from './services/localModel';
 import { ensureLocalRuntime } from './services/localRuntime';
 import {
@@ -175,6 +176,11 @@ export class CommitController implements vscode.Disposable {
           this.setModel(value);
         }
       }),
+      this.panel.onDidChangeLocalModel(value => {
+        if (value) {
+          void this.setLocalModel(value);
+        }
+      }),
       this.panel.onDidChangeCommitCustomModel(value => {
         if (value) {
           this.setModel(value, true);
@@ -268,7 +274,11 @@ export class CommitController implements vscode.Disposable {
     }
     const provider = this.context.workspaceState.get<ProviderId>(COMMIT_PROVIDER_STORAGE_KEY, DEFAULT_PROVIDER);
     const storedModel = this.context.workspaceState.get<string>(COMMIT_MODEL_STORAGE_KEY);
-    const model = storedModel || getDefaultModelForProvider(provider);
+    const storedLocalModelId = this.context.workspaceState.get<string>(COMMIT_LOCAL_MODEL_STORAGE_KEY);
+    const localModelId = resolveLocalModelId(storedLocalModelId || (provider === 'local' ? storedModel : undefined));
+    const model = provider === 'local'
+      ? resolveLocalModelId(storedModel || localModelId)
+      : storedModel || getDefaultModelForProvider(provider);
     const includeUnstaged = this.context.workspaceState.get<boolean>(
       COMMIT_INCLUDE_UNSTAGED_STORAGE_KEY,
       DEFAULT_INCLUDE_FLAGS.includeUnstaged
@@ -303,13 +313,8 @@ export class CommitController implements vscode.Disposable {
       promptPresets: presets,
       activePromptPresetId: activeId,
       language,
-      localModel: {
-        id: DEFAULT_LOCAL_MODEL_ID,
-        label: 'Commit Maker Local 4B',
-        status: 'notDownloaded',
-        sizeLabel: formatBytes(DEFAULT_LOCAL_MODEL_SIZE_BYTES),
-        totalBytes: DEFAULT_LOCAL_MODEL_SIZE_BYTES
-      }
+      localModelId,
+      localModel: createDefaultLocalModelState(localModelId)
     };
   }
 
@@ -323,7 +328,9 @@ export class CommitController implements vscode.Disposable {
 
   private setProvider(provider: ProviderId): void {
     this.state.provider = provider;
-    const fallbackModel = getDefaultModelForProvider(provider);
+    const fallbackModel = provider === 'local'
+      ? resolveLocalModelId(this.state.localModelId || DEFAULT_LOCAL_MODEL_ID)
+      : getDefaultModelForProvider(provider);
     // プロバイダーを切り替えたら常にそのプロバイダーのデフォルトモデルへリセットする
     this.setModel(fallbackModel, true);
 
@@ -332,16 +339,24 @@ export class CommitController implements vscode.Disposable {
   }
 
   private setModel(model: string, isCustom = false): void {
-    this.state.model = model;
-    if (isCustom) {
-      this.state.customModel = model;
+    const nextModel = this.state.provider === 'local' ? resolveLocalModelId(model) : model;
+    this.state.model = nextModel;
+    if (this.state.provider === 'local') {
+      this.state.localModelId = nextModel;
+      this.state.customModel = nextModel;
+      this.state.localModel = createDefaultLocalModelState(nextModel);
+      void this.context.workspaceState.update(COMMIT_LOCAL_MODEL_STORAGE_KEY, nextModel);
+      void this.refreshLocalModelState();
+    } else if (isCustom) {
+      this.state.customModel = nextModel;
     }
     this.normalizeReasoningForModel();
     this.normalizeVerbosityForModel();
-    void this.context.workspaceState.update(COMMIT_MODEL_STORAGE_KEY, model);
+    void this.context.workspaceState.update(COMMIT_MODEL_STORAGE_KEY, nextModel);
     this.panel.updateState({
       commitModel: this.state.model,
       commitCustomModel: this.state.customModel,
+      localModel: this.state.localModel,
       commitReasoning: this.state.reasoning,
       commitVerbosity: this.state.verbosity
     });
@@ -378,6 +393,14 @@ export class CommitController implements vscode.Disposable {
     const provider = this.state.provider || DEFAULT_PROVIDER;
     const suggestions = MODEL_SUGGESTIONS_BY_PROVIDER[provider] || [];
     const currentModel = this.state.model;
+    if (provider === 'local') {
+      const localModelId = resolveLocalModelId(currentModel || this.state.localModelId);
+      this.state.localModelId = localModelId;
+      this.state.model = localModelId;
+      this.state.customModel = localModelId;
+      void this.context.workspaceState.update(COMMIT_LOCAL_MODEL_STORAGE_KEY, localModelId);
+      return;
+    }
     const currentCustom = this.state.customModel;
     const isUnknown = currentModel && !suggestions.includes(currentModel);
     const isCustom = currentModel && currentModel === currentCustom && !suggestions.includes(currentModel);
@@ -390,9 +413,30 @@ export class CommitController implements vscode.Disposable {
 
   private async refreshLocalModelState(): Promise<void> {
     const config = vscode.workspace.getConfiguration('commitMaker');
-    const localModel = await inspectLocalModel(this.context, config);
+    const localModel = await inspectLocalModel(this.context, config, this.state.localModelId);
     this.state.localModel = localModel;
     this.panel.updateState({ localModel });
+  }
+
+  private async setLocalModel(modelId: string): Promise<void> {
+    if (this.currentModelDownloadAbortController || this.state.localModel?.status === 'loading') {
+      return;
+    }
+    const next = resolveLocalModelId(modelId);
+    this.state.localModelId = next;
+    void this.context.workspaceState.update(COMMIT_LOCAL_MODEL_STORAGE_KEY, next);
+    if (this.state.provider === 'local') {
+      this.state.model = next;
+      this.state.customModel = next;
+      void this.context.workspaceState.update(COMMIT_MODEL_STORAGE_KEY, next);
+    }
+    this.state.localModel = createDefaultLocalModelState(next);
+    this.panel.updateState({
+      localModel: this.state.localModel,
+      commitModel: this.state.model,
+      commitCustomModel: this.state.customModel
+    });
+    await this.refreshLocalModelState();
   }
 
   private async downloadLocalModel(): Promise<void> {
@@ -404,11 +448,11 @@ export class CommitController implements vscode.Disposable {
     this.currentModelDownloadAbortController = controller;
     let lastPanelUpdate = 0;
     try {
-      const pending = await inspectLocalModel(this.context, config);
+      const pending = await inspectLocalModel(this.context, config, this.state.localModelId);
       this.state.localModel = { ...pending, status: 'downloading', downloadedBytes: 0, error: undefined };
       this.panel.updateState({ localModel: this.state.localModel });
 
-      const localModel = await downloadLocalModel(this.context, config, controller.signal, progress => {
+      const localModel = await downloadLocalModel(this.context, config, this.state.localModelId, controller.signal, progress => {
         const now = Date.now();
         const totalBytes = progress.totalBytes ?? this.state.localModel?.totalBytes;
         const isComplete = Boolean(totalBytes && progress.downloadedBytes >= totalBytes);
@@ -438,7 +482,7 @@ export class CommitController implements vscode.Disposable {
     } catch (error) {
       const aborted = controller.signal.aborted;
       const detail = error instanceof Error ? error.message : String(error);
-      const localModel = await inspectLocalModel(this.context, config);
+      const localModel = await inspectLocalModel(this.context, config, this.state.localModelId);
       this.state.localModel = {
         ...localModel,
         status: aborted ? 'notDownloaded' : 'error',
@@ -464,13 +508,13 @@ export class CommitController implements vscode.Disposable {
     const config = vscode.workspace.getConfiguration('commitMaker');
     stopLocalLlmRuntime();
     try {
-      const localModel = await deleteLocalModel(this.context, config);
+      const localModel = await deleteLocalModel(this.context, config, this.state.localModelId);
       this.state.localModel = localModel;
       this.panel.updateState({ localModel });
       void vscode.window.showInformationMessage(this.strings.msgLocalModelDeleted);
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
-      const localModel = await inspectLocalModel(this.context, config);
+      const localModel = await inspectLocalModel(this.context, config, this.state.localModelId);
       this.state.localModel = { ...localModel, status: 'error', error: detail };
       this.panel.updateState({ localModel: this.state.localModel });
       void vscode.window.showErrorMessage(detail);
@@ -869,7 +913,7 @@ export class CommitController implements vscode.Disposable {
     const config = vscode.workspace.getConfiguration('commitMaker');
     let localModel = this.state.localModel;
     if (!localModel || localModel.status !== 'ready' || !localModel.path) {
-      localModel = await inspectLocalModel(this.context, config);
+      localModel = await inspectLocalModel(this.context, config, this.state.localModelId);
       this.state.localModel = localModel;
       this.panel.updateState({ localModel });
     }

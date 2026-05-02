@@ -20,5 +20,6 @@ export interface CommitState {
   verbosity: VerbositySetting;
   promptToast?: string;
   language: LanguageCode;
+  localModelId?: string;
   localModel?: LocalModelState;
 }

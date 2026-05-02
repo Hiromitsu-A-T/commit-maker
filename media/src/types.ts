@@ -31,7 +31,7 @@ export interface PanelElements {
   customModelRow: HTMLElement | null;
   customModel: HTMLInputElement | null;
   localModelPanel: HTMLElement | null;
-  localModelName: HTMLInputElement | null;
+  localModelName: HTMLSelectElement | null;
   localModelStatus: HTMLElement | null;
   localModelDownload: HTMLButtonElement | null;
   localModelCancel: HTMLButtonElement | null;
@@ -60,5 +60,5 @@ export interface PanelStateSnapshot {
   commitReasoning?: string;
   commitVerbosity?: string;
   apiKeys?: Record<string, { ready: boolean }>;
-  localModel?: { status: string; label: string; sizeLabel: string; downloadedBytes?: number; totalBytes?: number };
+  localModel?: { id?: string; status: string; label: string; sizeLabel: string; downloadedBytes?: number; totalBytes?: number };
 }
