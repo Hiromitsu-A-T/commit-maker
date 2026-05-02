@@ -14,17 +14,17 @@ export function renderPanelBody(strings: UiStrings): string {
 
     <section id="apiKeySection">
       <h3 class="mt0">${strings.apiKeySectionTitle}</h3>
-      <div id="apiKeyCloudPanel">
-        <div class="badge-row" id="apiKeyStatusRow"></div>
-        <div class="row mt6">
-          <div>
-            <div class="label-row space-between">
-              <label for="apiKeyProvider" class="no-margin">${strings.apiKeyProviderLabel}</label>
-              <button id="apiKeyIssue" class="secondary tiny" type="button">${strings.apiKeyIssueButton}</button>
-            </div>
-            <select id="apiKeyProvider"></select>
+      <div class="badge-row" id="apiKeyStatusRow"></div>
+      <div class="row mt6">
+        <div>
+          <div class="label-row space-between">
+            <label for="apiKeyProvider" class="no-margin">${strings.providerLabel}</label>
+            <button id="apiKeyIssue" class="secondary tiny" type="button">${strings.apiKeyIssueButton}</button>
           </div>
-          <div>
+          <select id="apiKeyProvider"></select>
+        </div>
+        <div>
+          <div id="apiKeyCloudPanel">
             <div class="api-inline label-row">
               <label for="apiKeyInput" class="no-margin">${strings.apiKeyLabel}</label>
               <span id="apiKeyPreview" class="pill hint"></span>
@@ -37,30 +37,25 @@ export function renderPanelBody(strings: UiStrings): string {
               <button id="apiKeyClear" class="secondary">${strings.apiKeyClearButton}</button>
             </div>
           </div>
-        </div>
-      </div>
-      <div id="localModelPanel" class="mt8 hidden">
-        <div class="subsection-title">${strings.localModelSectionTitle}</div>
-        <div class="badge-row" id="localModelStatusRow"></div>
-        <div class="row mt8">
-          <div>
-            <label for="localModelName">${strings.localModelLabel}</label>
-            <input id="localModelName" type="text" readonly />
+          <div id="localModelPanel" class="hidden">
+            <div class="api-inline label-row">
+              <label for="localModelName" class="no-margin">${strings.localModelLabel}</label>
+              <span id="localModelStatus" class="pill hint"></span>
+            </div>
+            <div class="api-inline">
+              <input id="localModelName" type="text" readonly />
+            </div>
+            <div class="buttons two-col">
+              <button id="localModelDownload" class="primary" type="button">${strings.localModelDownloadButton}</button>
+              <button id="localModelDelete" class="secondary" type="button">${strings.localModelDeleteButton}</button>
+            </div>
+            <div class="buttons two-col">
+              <button id="localModelCancel" class="secondary" type="button">${strings.localModelCancelButton}</button>
+              <button id="localModelTest" class="secondary" type="button">${strings.localModelTestButton}</button>
+            </div>
+            <div class="hint" id="localModelHint"></div>
           </div>
-          <div>
-            <label for="localModelStatus">${strings.localModelStatusLabel}</label>
-            <input id="localModelStatus" type="text" readonly />
-          </div>
         </div>
-        <div class="buttons two-col">
-          <button id="localModelDownload" class="primary" type="button">${strings.localModelDownloadButton}</button>
-          <button id="localModelDelete" class="secondary" type="button">${strings.localModelDeleteButton}</button>
-        </div>
-        <div class="buttons two-col">
-          <button id="localModelCancel" class="secondary" type="button">${strings.localModelCancelButton}</button>
-          <button id="localModelTest" class="secondary" type="button">${strings.localModelTestButton}</button>
-        </div>
-        <div class="hint" id="localModelHint"></div>
       </div>
     </section>
 

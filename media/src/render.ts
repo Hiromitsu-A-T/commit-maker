@@ -33,13 +33,41 @@ function renderApiKeyBadges(els: any, providerOptions: any[], state: any, string
   if (!els.apiKeyStatusRow) return;
   const t = strings || {};
   const badges = providerOptions.map(opt => {
+    if (opt.requiresApiKey === false) {
+      const model = state.localModel || {};
+      const status = getLocalModelStatus(model, t);
+      return {
+        text: opt.badge + ': ' + status.text,
+        className: status.className
+      };
+    }
     const ready = Boolean(state.apiKeys?.[opt.id]?.ready);
     return {
       text: opt.badge + ': ' + (ready ? t.apiKeySaved : t.apiKeyNotSaved),
-      className: ready ? '' : 'danger'
+      className: ready ? 'success' : 'danger'
     };
   });
   Dom.updateBadges(els.apiKeyStatusRow, badges);
+}
+
+function getLocalModelStatus(model: any, strings: any): { text: string; className?: string } {
+  const status = model?.status;
+  if (status === 'ready') {
+    return { text: strings.localModelStatusReady || 'Ready', className: 'success' };
+  }
+  if (status === 'downloading') {
+    const downloaded = Number(model.downloadedBytes || 0);
+    const total = Number(model.totalBytes || 0);
+    const percent = downloaded > 0 && total > 0 ? ` ${Math.floor((downloaded / total) * 100)}%` : '';
+    return { text: (strings.localModelStatusDownloading || 'Downloading') + percent, className: 'warn' };
+  }
+  if (status === 'loading') {
+    return { text: strings.localModelStatusLoading || 'Loading', className: 'warn' };
+  }
+  if (status === 'error') {
+    return { text: strings.localModelStatusError || 'Error', className: 'danger' };
+  }
+  return { text: strings.localModelStatusNotDownloaded || 'Not downloaded', className: 'danger' };
 }
 
 function renderReasoning(els: any, options: string[], state: any, allow: boolean): void {

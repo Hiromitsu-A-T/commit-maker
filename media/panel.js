@@ -74,7 +74,6 @@
       customModelRow: get('customModelRow'),
       customModel: get('customModel'),
       localModelPanel: get('localModelPanel'),
-      localModelStatusRow: get('localModelStatusRow'),
       localModelName: get('localModelName'),
       localModelStatus: get('localModelStatus'),
       localModelDownload: get('localModelDownload'),
@@ -505,17 +504,18 @@
   }
 
   function renderApiKeySection() {
-    const isLocal = isLocalProvider(state.commitProvider);
     show(els.apiKeySection, true, 'block');
-    show(els.apiKeyCloudPanel, !isLocal, 'block');
     if (!els.apiKeyProvider) return;
     const t = getStrings();
     els.apiKeyProvider.innerHTML = '';
-    const cloudProviderOptions = providerOptions.filter(opt => providerRequiresApiKey(opt.id));
-    const active = cloudProviderOptions.some(opt => opt.id === state.apiKeyProvider)
+    const active = providerOptions.some(opt => opt.id === state.apiKeyProvider)
       ? state.apiKeyProvider
-      : cloudProviderOptions[0]?.id;
-    for (const opt of cloudProviderOptions) {
+      : providerOptions[0]?.id;
+    const isLocal = isLocalProvider(active);
+    show(els.apiKeyCloudPanel, !isLocal, 'block');
+    show(els.localModelPanel, isLocal, 'block');
+    show(els.apiKeyIssue, !isLocal, 'inline-flex');
+    for (const opt of providerOptions) {
       const node = document.createElement('option');
       node.value = opt.id;
       node.textContent = opt.badge + ' — ' + opt.label;
@@ -543,7 +543,7 @@
   }
 
   function renderApiKeyBadges() {
-    Render.renderApiKeyBadges(els, providerOptions.filter(opt => providerRequiresApiKey(opt.id)), state, getStrings());
+    Render.renderApiKeyBadges(els, providerOptions, state, getStrings());
   }
 
   function renderProviders() {
@@ -643,7 +643,7 @@
   }
 
   function renderLocalModel() {
-    const visible = isLocalProvider(state.commitProvider);
+    const visible = isLocalProvider(state.apiKeyProvider);
     show(els.localModelPanel, visible, 'block');
     if (!visible) return;
     const t = getStrings();
@@ -653,7 +653,15 @@
       els.localModelName.value = model.label || state.commitModel || '';
     }
     if (els.localModelStatus) {
-      els.localModelStatus.value = statusLabel;
+      els.localModelStatus.textContent = statusLabel;
+      els.localModelStatus.className = 'pill hint';
+      if (model.status === 'ready') {
+        els.localModelStatus.style.color = '#b4f5c1';
+      } else if (model.status === 'error') {
+        els.localModelStatus.style.color = '#ffd1d1';
+      } else {
+        els.localModelStatus.style.color = '#b4b4b4';
+      }
     }
     if (els.localModelHint) {
       const downloaded = model.downloadedBytes || 0;
@@ -669,14 +677,6 @@
       } else {
         els.localModelHint.textContent = (t.localModelSizePrefix || '') + sizeText;
       }
-    }
-    if (els.localModelStatusRow) {
-      Dom.updateBadges(els.localModelStatusRow, [
-        {
-          text: statusLabel,
-          className: model.status === 'ready' ? 'success' : model.status === 'error' ? 'danger' : model.status === 'downloading' ? 'warn' : ''
-        }
-      ]);
     }
     const downloading = model.status === 'downloading';
     const busy = downloading || model.status === 'loading';

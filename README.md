@@ -104,8 +104,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 (Open **Commit Maker** from the Activity Bar)
 
 **2. APIキー / モデルを設定**  
-上部でクラウド provider の API キー保存、または Local のモデルダウンロードを行います。API キーは SecretStorage に暗号化保存されます。  
-(Use the top section to save a cloud provider API key or download the Local model. API keys are encrypted in SecretStorage.)
+上部のプロバイダーで Gemini / OpenAI / Claude / Local を選び、クラウド provider なら API キー保存、Local ならモデルダウンロードを行います。API キーは SecretStorage に暗号化保存されます。  
+(Choose Gemini / OpenAI / Claude / Local in the top provider selector, then save a cloud API key or download the Local model. API keys are encrypted in SecretStorage.)
 
 > 💡 **BYOK方式**: すべて自分のAPIキーを使用。利用料は各プロバイダーの課金体系に従います。  
 > (BYOK only: bring your own keys; usage is billed by each provider)

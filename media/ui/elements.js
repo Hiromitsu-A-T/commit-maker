@@ -33,7 +33,6 @@ export function queryElements() {
         customModelRow: get('customModelRow'),
         customModel: get('customModel'),
         localModelPanel: get('localModelPanel'),
-        localModelStatusRow: get('localModelStatusRow'),
         localModelName: get('localModelName'),
         localModelStatus: get('localModelStatus'),
         localModelDownload: get('localModelDownload'),
