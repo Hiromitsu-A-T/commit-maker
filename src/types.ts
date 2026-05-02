@@ -46,6 +46,7 @@ export interface LocalModelState {
   downloadedBytes?: number;
   totalBytes?: number;
   path?: string;
+  hasPartialDownload?: boolean;
   error?: string;
 }
 

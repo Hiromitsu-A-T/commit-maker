@@ -9,7 +9,7 @@ import {
   DEFAULT_LOCAL_MODEL_URL,
   LEGACY_DEFAULT_LOCAL_MODEL_ID
 } from '../constants';
-import { getLocalModelDefinition, getLocalModelOptions, inspectLocalModel, resolveLocalModelId } from './localModel';
+import { deleteLocalModel, getLocalModelDefinition, getLocalModelOptions, inspectLocalModel, resolveLocalModelId } from './localModel';
 
 function createConfig(values: Record<string, string | undefined> = {}) {
   return {
@@ -83,6 +83,18 @@ export async function runLocalModelTests(): Promise<void> {
   assert.strictEqual(inspected.status, 'ready');
   assert.strictEqual(inspected.path, legacyPath);
   await fs.promises.rm(tmpRoot, { recursive: true, force: true });
+
+  const partialRoot = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'commit-maker-local-model-partial-'));
+  const partialPath = path.join(partialRoot, 'models', DEFAULT_LOCAL_MODEL_ID, `${DEFAULT_LOCAL_MODEL_FILENAME}.download`);
+  await fs.promises.mkdir(path.dirname(partialPath), { recursive: true });
+  await fs.promises.writeFile(partialPath, 'partial');
+  const partial = await inspectLocalModel({ globalStorageUri: { fsPath: partialRoot } } as any, createConfig());
+  assert.strictEqual(partial.status, 'notDownloaded');
+  assert.strictEqual(partial.hasPartialDownload, true);
+  assert.strictEqual(partial.downloadedBytes, 7);
+  await deleteLocalModel({ globalStorageUri: { fsPath: partialRoot } } as any, createConfig(), DEFAULT_LOCAL_MODEL_ID);
+  assert.strictEqual(fs.existsSync(partialPath), false);
+  await fs.promises.rm(partialRoot, { recursive: true, force: true });
 
   console.log('localModel.test.ts passed');
 }

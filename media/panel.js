@@ -691,6 +691,8 @@
       if (model.status === 'downloading' && downloaded > 0) {
         const percent = total > 0 ? ' · ' + getDownloadPercent(downloaded, total) + '%' : '';
         els.localModelHint.textContent = (t.localModelSizePrefix || '') + formatBytes(downloaded) + ' / ' + (total ? formatBytes(total) : sizeText) + percent;
+      } else if (model.status === 'notDownloaded' && model.hasPartialDownload && downloaded > 0) {
+        els.localModelHint.textContent = (t.localModelSizePrefix || '') + formatBytes(downloaded) + ' / ' + (total ? formatBytes(total) : sizeText) + ' · ' + (t.localModelNeedDownload || '');
       } else if (model.status === 'notDownloaded') {
         els.localModelHint.textContent = (t.localModelSizePrefix || '') + sizeText + ' · ' + (t.localModelNeedDownload || '');
       } else if (model.error) {
@@ -704,7 +706,7 @@
       els.localModelDownload.disabled = busy || model.status === 'ready';
     }
     if (els.localModelCancel) els.localModelCancel.disabled = !downloading;
-    if (els.localModelDelete) els.localModelDelete.disabled = busy || model.status !== 'ready';
+    if (els.localModelDelete) els.localModelDelete.disabled = busy || (model.status !== 'ready' && !model.hasPartialDownload);
     if (els.localModelTest) els.localModelTest.disabled = busy || model.status !== 'ready';
   }
 

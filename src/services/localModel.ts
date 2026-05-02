@@ -89,6 +89,26 @@ export async function inspectLocalModel(
       // Missing file is the normal first-run state.
     }
   }
+  for (const candidatePath of getLocalModelPaths(context, model)) {
+    try {
+      const partialPath = `${candidatePath}.download`;
+      const stat = await fs.promises.stat(partialPath);
+      if (stat.isFile() && stat.size > 0) {
+        return {
+          id: model.id,
+          label: model.label,
+          status: 'notDownloaded',
+          sizeLabel: formatBytes(model.sizeBytes),
+          downloadedBytes: stat.size,
+          totalBytes: model.sizeBytes,
+          path: modelPath,
+          hasPartialDownload: true
+        };
+      }
+    } catch {
+      // Missing partial download is also normal.
+    }
+  }
   return {
     id: model.id,
     label: model.label,
