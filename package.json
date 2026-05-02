@@ -2,7 +2,7 @@
   "name": "commit-maker",
   "displayName": "Commit Maker – コミットメーカー",
   "description": "Git差分からコミットメッセージをAI生成。APIキー(BYOK)とローカルLLMに対応。LocalはAPI利用料なし、速度はPC性能に依存します。",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "publisher": "Hiromitsu",
   "license": "Apache-2.0",
   "repository": {
