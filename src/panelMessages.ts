@@ -19,6 +19,7 @@ export type WebviewInboundMessage =
   | { type: 'commitMaxPromptChanged'; value: { mode: MaxPromptMode; value: number | null } }
   | { type: 'commitReasoningChanged'; value: ReasoningEffort }
   | { type: 'commitVerbosityChanged'; value: VerbositySetting }
+  | { type: 'localModelChanged'; value: string }
   | { type: 'localModelDownload' }
   | { type: 'localModelCancelDownload' }
   | { type: 'localModelDelete' }

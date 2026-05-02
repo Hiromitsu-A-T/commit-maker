@@ -17,6 +17,7 @@ export async function runPanelBodyTests(): Promise<void> {
   assert.ok(cloudPanel > setupProvider, 'cloud API key panel should follow setup provider selector');
   assert.ok(localPanel > cloudPanel, 'local model panel should share the setup row with API key panel');
   assert.ok(localPanel < llmSection, 'local model panel must not be inside LLM settings');
+  assert.ok(html.includes('<select id="localModelName">'), 'local model should be selected with a dropdown');
   assert.ok(!html.includes('id="localModelStatusRow"'), 'local status should use the common provider badge row');
   assert.ok(!html.includes('class="subsection-title"'), 'local model panel should not use a separate nested heading');
 

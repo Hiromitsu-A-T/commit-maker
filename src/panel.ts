@@ -3,8 +3,6 @@ import {
   DEFAULT_PROVIDER,
   DEFAULT_REASONING_EFFORT,
   DEFAULT_VERBOSITY,
-  DEFAULT_LOCAL_MODEL_ID,
-  DEFAULT_LOCAL_MODEL_SIZE_BYTES,
   MODEL_SUGGESTIONS_BY_PROVIDER,
   REASONING_EFFORT_OPTIONS,
   VERBOSITY_OPTIONS,
@@ -21,7 +19,7 @@ import {
   VerbositySetting,
   PromptPreset,
   LanguageCode,
-  LocalModelState
+  LocalModelOption
 } from './types';
 import { WebviewInboundMessage, WebviewOutboundMessage, PanelState } from './panelMessages';
 import { sanitizeMessage } from './panelMessageGuard';
@@ -35,6 +33,7 @@ import { DEFAULT_INCLUDE_FLAGS, DEFAULT_PROMPT_LIMIT, getDefaultModelForProvider
 import { DEFAULT_LANGUAGE, STRINGS } from './i18n/strings';
 import { UiStrings } from './i18n/types';
 import { SUPPORTED_LANG_CODES } from './i18n/languages';
+import { createDefaultLocalModelState, getLocalModelOptions } from './services/localModel';
 
 interface RenderContext {
   cspSource: string;
@@ -53,6 +52,7 @@ interface RenderContext {
   scriptUri: vscode.Uri;
   strings: UiStrings;
   languageOptions: { code: LanguageCode; label: string }[];
+  localModelOptions: LocalModelOption[];
   allowedStateKeys: (keyof PanelState)[];
 }
 
@@ -83,16 +83,6 @@ const ALLOWED_STATE_KEYS: (keyof PanelState)[] = [
   'strings',
   'promptToast'
 ];
-
-function createDefaultLocalModelState(): LocalModelState {
-  return {
-    id: DEFAULT_LOCAL_MODEL_ID,
-    label: 'Commit Maker Local 4B',
-    status: 'notDownloaded',
-    sizeLabel: `${(DEFAULT_LOCAL_MODEL_SIZE_BYTES / 1024 / 1024 / 1024).toFixed(1)} GB`,
-    totalBytes: DEFAULT_LOCAL_MODEL_SIZE_BYTES
-  };
-}
 
 function createDefaultState(language: LanguageCode = DEFAULT_LANGUAGE): PanelState {
   const defaultModel = getDefaultModelForProvider(DEFAULT_PROVIDER);
@@ -154,6 +144,7 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
   private readonly onCommitReasoningEmitter = new vscode.EventEmitter<ReasoningEffort>();
   private readonly onCommitVerbosityEmitter = new vscode.EventEmitter<VerbositySetting>();
   private readonly onLocalModelDownloadEmitter = new vscode.EventEmitter<void>();
+  private readonly onLocalModelEmitter = new vscode.EventEmitter<string>();
   private readonly onLocalModelCancelDownloadEmitter = new vscode.EventEmitter<void>();
   private readonly onLocalModelDeleteEmitter = new vscode.EventEmitter<void>();
   private readonly onLocalModelTestEmitter = new vscode.EventEmitter<void>();
@@ -179,6 +170,7 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
   public readonly onDidChangeCommitReasoning = this.onCommitReasoningEmitter.event;
   public readonly onDidChangeCommitVerbosity = this.onCommitVerbosityEmitter.event;
   public readonly onDidRequestLocalModelDownload = this.onLocalModelDownloadEmitter.event;
+  public readonly onDidChangeLocalModel = this.onLocalModelEmitter.event;
   public readonly onDidRequestLocalModelCancelDownload = this.onLocalModelCancelDownloadEmitter.event;
   public readonly onDidRequestLocalModelDelete = this.onLocalModelDeleteEmitter.event;
   public readonly onDidRequestLocalModelTest = this.onLocalModelTestEmitter.event;
@@ -222,6 +214,8 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
       commitVerbosityChanged: message =>
         this.handleCommitVerbosityChanged((message as Extract<WebviewInboundMessage, { type: 'commitVerbosityChanged' }>).value),
       localModelDownload: () => this.handleLocalModelDownload(),
+      localModelChanged: message =>
+        this.handleLocalModelChanged((message as Extract<WebviewInboundMessage, { type: 'localModelChanged' }>).value),
       localModelCancelDownload: () => this.handleLocalModelCancelDownload(),
       localModelDelete: () => this.handleLocalModelDelete(),
       localModelTest: () => this.handleLocalModelTest(),
@@ -274,6 +268,7 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
     this.onCommitReasoningEmitter.dispose();
     this.onCommitVerbosityEmitter.dispose();
     this.onLocalModelDownloadEmitter.dispose();
+    this.onLocalModelEmitter.dispose();
     this.onLocalModelCancelDownloadEmitter.dispose();
     this.onLocalModelDeleteEmitter.dispose();
     this.onLocalModelTestEmitter.dispose();
@@ -396,6 +391,15 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
     this.onLocalModelDownloadEmitter.fire();
   }
 
+  private handleLocalModelChanged(value: string | undefined): void {
+    if (!value) return;
+    this.state.localModel = {
+      ...this.state.localModel,
+      id: value
+    };
+    this.onLocalModelEmitter.fire(value);
+  }
+
   private handleLocalModelCancelDownload(): void {
     this.onLocalModelCancelDownloadEmitter.fire();
   }
@@ -469,6 +473,7 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
       providerSupportsVerbosity: ctx.providerSupportsVerbosity,
       verbosityBlocklistPatterns: ctx.verbosityBlocklistPatterns,
       promptPresets: ctx.promptPresets,
+      localModelOptions: ctx.localModelOptions,
       allowedStateKeys: ctx.allowedStateKeys,
       defaultState: createDefaultState(this.state.language || DEFAULT_LANGUAGE)
     };
@@ -523,6 +528,7 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
         code: code as LanguageCode,
         label: STRINGS[code]?.languageName ?? code
       })),
+      localModelOptions: getLocalModelOptions(),
       allowedStateKeys: ALLOWED_STATE_KEYS
     };
   }

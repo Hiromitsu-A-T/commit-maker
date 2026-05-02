@@ -43,7 +43,7 @@ export function renderPanelBody(strings: UiStrings): string {
               <span id="localModelStatus" class="pill hint"></span>
             </div>
             <div class="api-inline">
-              <input id="localModelName" type="text" readonly />
+              <select id="localModelName"></select>
             </div>
             <div class="buttons two-col">
               <button id="localModelDownload" class="primary" type="button">${strings.localModelDownloadButton}</button>

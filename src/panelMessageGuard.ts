@@ -56,6 +56,7 @@ export function sanitizeMessage(message: unknown): WebviewInboundMessage | undef
     }
     case 'commitReasoningChanged':
     case 'commitVerbosityChanged':
+    case 'localModelChanged':
       return isString((candidate as any).value)
         ? { type: candidate.type, value: (candidate as any).value as any }
         : undefined;

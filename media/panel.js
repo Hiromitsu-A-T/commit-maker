@@ -18,6 +18,7 @@
   const providerSupportsReasoning = bootstrap.providerSupportsReasoning || {};
   const providerSupportsVerbosity = bootstrap.providerSupportsVerbosity || {};
   const verbosityBlocklistPatterns = bootstrap.verbosityBlocklistPatterns || [];
+  const localModelOptions = Array.isArray(bootstrap.localModelOptions) ? bootstrap.localModelOptions : [];
   const basePresets = Array.isArray(bootstrap.promptPresets) ? bootstrap.promptPresets : [];
   const defaultPreset = basePresets[0];
   let state = StateUtil.cloneState(bootstrap.defaultState);
@@ -331,6 +332,14 @@
     if (els.localModelDownload) {
       els.localModelDownload.addEventListener('click', () => send({ type: 'localModelDownload' }));
     }
+    if (els.localModelName) {
+      els.localModelName.addEventListener('change', ev => {
+        const value = String(ev.target.value || '').trim();
+        if (value) {
+          send({ type: 'localModelChanged', value });
+        }
+      });
+    }
     if (els.localModelCancel) {
       els.localModelCancel.addEventListener('click', () => send({ type: 'localModelCancelDownload' }));
     }
@@ -620,7 +629,7 @@
     for (const model of suggestions) {
       const opt = document.createElement('option');
       opt.value = model;
-      opt.textContent = model;
+      opt.textContent = localProvider ? getLocalModelLabel(model) : model;
       opt.selected = model === state.commitModel;
       els.model.appendChild(opt);
     }
@@ -649,8 +658,20 @@
     const t = getStrings();
     const model = state.localModel || {};
     const statusLabel = getLocalModelStatusLabel(model.status, t);
+    const downloading = model.status === 'downloading';
+    const busy = downloading || model.status === 'loading';
     if (els.localModelName) {
-      els.localModelName.value = model.label || state.commitModel || '';
+      const selected = model.id || state.commitModel || localModelOptions[0]?.id || '';
+      els.localModelName.innerHTML = '';
+      for (const opt of localModelOptions) {
+        const node = document.createElement('option');
+        node.value = opt.id;
+        node.textContent = opt.label || opt.id;
+        node.selected = opt.id === selected;
+        els.localModelName.appendChild(node);
+      }
+      els.localModelName.value = selected;
+      els.localModelName.disabled = busy;
     }
     if (els.localModelStatus) {
       els.localModelStatus.textContent = statusLabel;
@@ -678,8 +699,6 @@
         els.localModelHint.textContent = (t.localModelSizePrefix || '') + sizeText;
       }
     }
-    const downloading = model.status === 'downloading';
-    const busy = downloading || model.status === 'loading';
     if (els.localModelDownload) {
       els.localModelDownload.textContent = getLocalModelDownloadButtonLabel(model, t);
       els.localModelDownload.disabled = busy || model.status === 'ready';
@@ -702,6 +721,10 @@
       return (t.localModelStatusDownloading || 'Downloading') + ' ' + getDownloadPercent(downloaded, total) + '%';
     }
     return (t.localModelStatusDownloading || 'Downloading') + '...';
+  }
+
+  function getLocalModelLabel(modelId) {
+    return localModelOptions.find(item => item.id === modelId)?.label || modelId;
   }
 
   function getDownloadPercent(downloaded, total) {
