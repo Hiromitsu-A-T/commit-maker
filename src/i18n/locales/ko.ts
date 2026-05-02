@@ -7,7 +7,7 @@ const ko: UiStrings = {
   languageSectionTitle: '표시 언어',
   languageName: '한국어',
 
-  apiKeySectionTitle: 'API 키',
+  apiKeySectionTitle: 'API 키 / 모델',
   apiKeyProviderLabel: '저장할 제공자',
   apiKeyIssueButton: 'API 키 발급',
   apiKeyLabel: 'API 키',

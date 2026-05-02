@@ -7,7 +7,7 @@ const pt: UiStrings = {
   languageSectionTitle: 'Idioma de exibição',
   languageName: 'Português (Brasil)',
 
-  apiKeySectionTitle: 'Chave de API',
+  apiKeySectionTitle: 'Chave de API / modelo',
   apiKeyProviderLabel: 'Fornecedor para salvar',
   apiKeyIssueButton: 'Obter chave de API',
   apiKeyLabel: 'Chave de API',

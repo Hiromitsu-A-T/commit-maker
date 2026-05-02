@@ -3,6 +3,7 @@ export function queryElements() {
     return {
         language: get('language'),
         apiKeySection: get('apiKeySection'),
+        apiKeyCloudPanel: get('apiKeyCloudPanel'),
         apiKeyProvider: get('apiKeyProvider'),
         apiKeyInput: get('apiKeyInput'),
         apiKeyPreview: get('apiKeyPreview'),

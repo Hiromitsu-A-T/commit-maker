@@ -7,7 +7,7 @@ const uk: UiStrings = {
   languageSectionTitle: 'Мова інтерфейсу',
   languageName: 'Українська',
 
-  apiKeySectionTitle: 'API-ключ',
+  apiKeySectionTitle: 'API-ключ / модель',
   apiKeyProviderLabel: 'Постачальник для збереження',
   apiKeyIssueButton: 'Отримати API-ключ',
   apiKeyLabel: 'API-ключ',

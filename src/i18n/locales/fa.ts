@@ -7,7 +7,7 @@ const fa: UiStrings = {
   languageSectionTitle: 'زبان نمایش',
   languageName: 'فارسی',
 
-  apiKeySectionTitle: 'کلید API',
+  apiKeySectionTitle: 'کلید API / مدل',
   apiKeyProviderLabel: 'ارائه‌دهنده برای ذخیره',
   apiKeyIssueButton: 'دریافت کلید API',
   apiKeyLabel: 'کلید API',

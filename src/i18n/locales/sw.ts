@@ -7,7 +7,7 @@ const sw: UiStrings = {
   languageSectionTitle: 'Lugha ya onyesho',
   languageName: 'Kiswahili',
 
-  apiKeySectionTitle: 'Ufunguo wa API',
+  apiKeySectionTitle: 'Ufunguo wa API / modeli',
   apiKeyProviderLabel: 'Mtoa huduma wa kuhifadhi',
   apiKeyIssueButton: 'Pata ufunguo wa API',
   apiKeyLabel: 'Ufunguo wa API',

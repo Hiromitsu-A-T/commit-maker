@@ -7,7 +7,7 @@ const zh: UiStrings = {
   languageSectionTitle: '显示语言',
   languageName: '中文',
 
-  apiKeySectionTitle: 'API 密钥',
+  apiKeySectionTitle: 'API 密钥 / 模型',
   apiKeyProviderLabel: '保存到的提供方',
   apiKeyIssueButton: '获取 API 密钥',
   apiKeyLabel: 'API 密钥',

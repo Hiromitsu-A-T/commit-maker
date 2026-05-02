@@ -7,7 +7,7 @@ const zhTw: UiStrings = {
   languageSectionTitle: '顯示語言',
   languageName: '繁體中文',
 
-  apiKeySectionTitle: 'API 金鑰',
+  apiKeySectionTitle: 'API 金鑰 / 模型',
   apiKeyProviderLabel: '要儲存的提供者',
   apiKeyIssueButton: '取得 API 金鑰',
   apiKeyLabel: 'API 金鑰',

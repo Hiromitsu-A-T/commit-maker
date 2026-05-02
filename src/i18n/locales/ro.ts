@@ -7,7 +7,7 @@ const ro: UiStrings = {
   languageSectionTitle: 'Limba de afișare',
   languageName: 'Română',
 
-  apiKeySectionTitle: 'Cheie API',
+  apiKeySectionTitle: 'Cheie API / model',
   apiKeyProviderLabel: 'Furnizor pentru salvare',
   apiKeyIssueButton: 'Obține cheia API',
   apiKeyLabel: 'Cheie API',

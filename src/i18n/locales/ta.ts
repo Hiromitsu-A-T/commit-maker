@@ -7,7 +7,7 @@ const ta: UiStrings = {
   languageSectionTitle: 'காட்சியின் மொழி',
   languageName: 'தமிழ்',
 
-  apiKeySectionTitle: 'API விசை',
+  apiKeySectionTitle: 'API விசை / மாதிரி',
   apiKeyProviderLabel: 'சேமிக்க வேண்டிய வழங்குநர்',
   apiKeyIssueButton: 'API விசை பெற',
   apiKeyLabel: 'API விசை',

@@ -7,7 +7,7 @@ const tl: UiStrings = {
   languageSectionTitle: 'Wikang ipapakita',
   languageName: 'Filipino',
 
-  apiKeySectionTitle: 'API Key',
+  apiKeySectionTitle: 'API Key / Modelo',
   apiKeyProviderLabel: 'Provider na ise-save',
   apiKeyIssueButton: 'Kunin ang API key',
   apiKeyLabel: 'API Key',

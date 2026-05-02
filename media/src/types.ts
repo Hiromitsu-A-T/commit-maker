@@ -1,6 +1,7 @@
 export interface PanelElements {
   language: HTMLSelectElement | null;
   apiKeySection: HTMLElement | null;
+  apiKeyCloudPanel: HTMLElement | null;
   apiKeyProvider: HTMLSelectElement | null;
   apiKeyInput: HTMLInputElement | null;
   apiKeyPreview: HTMLElement | null;

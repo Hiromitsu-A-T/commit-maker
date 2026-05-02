@@ -7,7 +7,7 @@ const es: UiStrings = {
   languageSectionTitle: 'Idioma de visualización',
   languageName: 'Español',
 
-  apiKeySectionTitle: 'Clave API',
+  apiKeySectionTitle: 'Clave API / modelo',
   apiKeyProviderLabel: 'Proveedor donde guardar',
   apiKeyIssueButton: 'Obtener clave API',
   apiKeyLabel: 'Clave API',

@@ -7,7 +7,7 @@ const bn: UiStrings = {
   languageSectionTitle: 'প্রদর্শনের ভাষা',
   languageName: 'বাংলা',
 
-  apiKeySectionTitle: 'API কী',
+  apiKeySectionTitle: 'API কী / মডেল',
   apiKeyProviderLabel: 'সংরক্ষণের প্রদানকারী',
   apiKeyIssueButton: 'API কী নিন',
   apiKeyLabel: 'API কী',

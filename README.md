@@ -103,18 +103,18 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 アクティビティバーの **Commit Maker** アイコンをクリック  
 (Open **Commit Maker** from the Activity Bar)
 
-**2. APIキーを設定**  
-上部でプロバイダーを選択し、APIキーを保存（SecretStorage に暗号化保存）  
-(Choose a provider and save your API key — encrypted in SecretStorage)
+**2. APIキー / モデルを設定**  
+上部でクラウド provider の API キー保存、または Local のモデルダウンロードを行います。API キーは SecretStorage に暗号化保存されます。  
+(Use the top section to save a cloud provider API key or download the Local model. API keys are encrypted in SecretStorage.)
 
 > 💡 **BYOK方式**: すべて自分のAPIキーを使用。利用料は各プロバイダーの課金体系に従います。  
 > (BYOK only: bring your own keys; usage is billed by each provider)
 
-Local を選ぶ場合、API キーは不要です。初回の「モデルをダウンロード」で llama.cpp runtime と GGUF モデルを取得し、以後は PC 内で生成します。  
+Local を選ぶ場合、API キーは不要です。上部の「モデルをダウンロード」で llama.cpp runtime と GGUF モデルを取得し、以後は PC 内で生成します。  
 (For Local, no API key is required. The first "Download model" action fetches the llama.cpp runtime and GGUF model, then generation runs on your machine.)
 
-Local の GGUF モデルは約 2.3 GB です。不要になった場合はローカルモデル欄の「削除」からモデル本体を削除できます。  
-(The Local GGUF model is about 2.3 GB. You can remove the model file from the Local model section when you no longer need it.)
+Local の GGUF モデルは約 2.3 GB です。不要になった場合は上部のローカルモデル欄の「削除」からモデル本体を削除できます。  
+(The Local GGUF model is about 2.3 GB. You can remove the model file from the top Local model section when you no longer need it.)
 
 Local は大きな差分を拡張機能内でファイル別の構造化ダイジェストに圧縮し、Local LLM 呼び出しを少なくして生成します。  
 (Local compresses large diffs into a structured per-file digest inside the extension, reducing Local LLM calls for faster generation.)

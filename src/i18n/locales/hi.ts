@@ -7,7 +7,7 @@ const hi: UiStrings = {
   languageSectionTitle: 'प्रदर्शन भाषा',
   languageName: 'हिन्दी',
 
-  apiKeySectionTitle: 'API कुंजी',
+  apiKeySectionTitle: 'API कुंजी / मॉडल',
   apiKeyProviderLabel: 'किस प्रदाता पर सहेजें',
   apiKeyIssueButton: 'API कुंजी प्राप्त करें',
   apiKeyLabel: 'API कुंजी',
