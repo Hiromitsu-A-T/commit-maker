@@ -8,7 +8,6 @@ const ja: UiStrings = {
   languageName: '日本語',
 
   apiKeySectionTitle: 'API キー / モデル',
-  apiKeyProviderLabel: '保存先プロバイダー',
   apiKeyIssueButton: 'APIキー発行',
   apiKeyLabel: 'API キー',
   apiKeyPlaceholder: 'sk-... / AIza... / sk-ant-...',
@@ -26,9 +25,7 @@ const ja: UiStrings = {
   providerLabelOpenAi: 'OpenAI (GPT-5 系)',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelLocal: 'ローカル LLM',
-  localModelSectionTitle: 'ローカルモデル',
   localModelLabel: 'モデル',
-  localModelStatusLabel: '状態',
   localModelDownloadButton: 'モデルをダウンロード',
   localModelCancelButton: 'キャンセル',
   localModelDeleteButton: '削除',
