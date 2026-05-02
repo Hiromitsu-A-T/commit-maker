@@ -5,6 +5,7 @@ import { runLocalModelTests } from './services/localModel.test';
 import { runLocalRuntimeTests } from './services/localRuntime.test';
 import { runPromptPresetStorageTests } from './promptPresetStorage.test';
 import { runPanelMessageGuardTests } from './panelMessageGuard.test';
+import { runPanelBodyTests } from './panelBody.test';
 
 async function main() {
   await runDiffCollectorTests();
@@ -13,6 +14,7 @@ async function main() {
   await runLocalRuntimeTests();
   await runPromptPresetStorageTests();
   await runPanelMessageGuardTests();
+  await runPanelBodyTests();
   console.log('All tests completed');
 }
 

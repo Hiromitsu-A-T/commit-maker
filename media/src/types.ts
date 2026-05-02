@@ -31,9 +31,8 @@ export interface PanelElements {
   customModelRow: HTMLElement | null;
   customModel: HTMLInputElement | null;
   localModelPanel: HTMLElement | null;
-  localModelStatusRow: HTMLElement | null;
   localModelName: HTMLInputElement | null;
-  localModelStatus: HTMLInputElement | null;
+  localModelStatus: HTMLElement | null;
   localModelDownload: HTMLButtonElement | null;
   localModelCancel: HTMLButtonElement | null;
   localModelDelete: HTMLButtonElement | null;

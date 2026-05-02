@@ -34,13 +34,6 @@ section h3 {
   letter-spacing: 0.1px;
   overflow-wrap: anywhere;
 }
-.subsection-title {
-  margin: 10px 0 6px;
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
 .section-header {
   display: flex;
   align-items: center;
