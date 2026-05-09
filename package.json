@@ -1,7 +1,7 @@
 {
   "name": "commit-maker",
   "displayName": "Commit Maker – コミットメーカー",
-  "description": "Git差分からコミットメッセージをAI生成。APIキー(BYOK)とローカルLLMに対応。LocalはAPI利用料なし、速度はPC性能に依存します。",
+  "description": "Git差分からコミットメッセージをAI生成。BYOKとQwen3/Gemma 4などのローカルGGUFモデルに対応。API利用料なしでも使えます。",
   "version": "0.5.3",
   "publisher": "Hiromitsu",
   "license": "Apache-2.0",
@@ -35,6 +35,11 @@
     "llm",
     "local llm",
     "llama.cpp",
+    "gguf",
+    "qwen",
+    "qwen3",
+    "gemma",
+    "gemma 4",
     "byok",
     "openai",
     "gemini",
@@ -52,6 +57,8 @@
     "差分から生成",
     "Git 拡張",
     "ローカルLLM",
+    "クエン",
+    "ジェンマ",
     "SecretStorage"
   ],
   "galleryBanner": {
