@@ -92,7 +92,7 @@ export class CommitController implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
   private state: CommitState;
   private currentAbortController: AbortController | undefined;
-  private generationSeq = 0;
+  private activeGenerationId = 0;
   private currentModelDownloadAbortController: AbortController | undefined;
   private get strings() {
     return getStrings(this.state.language || DEFAULT_LANGUAGE);
@@ -609,7 +609,7 @@ export class CommitController implements vscode.Disposable {
   private startGeneration(): number {
     this.currentAbortController?.abort();
     this.currentAbortController = new AbortController();
-    const generationId = ++this.generationSeq;
+    const generationId = ++this.activeGenerationId;
     this.setStatus('loading', { result: undefined, lastError: undefined, progressMessage: undefined });
     return generationId;
   }
@@ -621,7 +621,7 @@ export class CommitController implements vscode.Disposable {
   }
 
   private isCurrentGeneration(generationId: number): boolean {
-    return generationId === this.generationSeq;
+    return generationId === this.activeGenerationId;
   }
 
   private handleGenerationSuccess(result: string): void {
@@ -748,7 +748,7 @@ export class CommitController implements vscode.Disposable {
     if (this.currentAbortController) {
       this.currentAbortController.abort();
     }
-    this.generationSeq += 1;
+    this.activeGenerationId += 1;
     this.currentAbortController = undefined;
     this.setStatus('error', { lastError: reason, progressMessage: undefined });
     await vscode.commands.executeCommand('setContext', 'commitMaker.commitGenerating', false);
