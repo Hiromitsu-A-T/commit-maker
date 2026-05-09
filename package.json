@@ -291,7 +291,7 @@
   },
   "devDependencies": {
     "@types/node": "^18.19.0",
-    "@types/vscode": "^1.94.0",
+    "@types/vscode": "^1.118.0",
     "@vscode/vsce": "^3.7.1",
     "ovsx": "^0.10.4",
     "ts-node": "^10.9.2",
