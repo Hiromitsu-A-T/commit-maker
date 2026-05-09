@@ -46,6 +46,7 @@ export const COMMIT_LOCAL_MODEL_STORAGE_KEY = 'commitMaker.localModelId';
 export const COMMIT_LANGUAGE_STORAGE_KEY = 'commitMaker.language';
 export const LEGACY_DEFAULT_LOCAL_MODEL_ID = 'commit-maker-local-qwen3-4b';
 export const DEFAULT_LOCAL_MODEL_ID = 'Qwen3-4B-Instruct-2507-Q4_K_M';
+export const GEMMA4_LOCAL_MODEL_ID = 'Gemma-4-E4B-it-Q4_K_M';
 export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
   {
     id: DEFAULT_LOCAL_MODEL_ID,
@@ -55,6 +56,7 @@ export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
     sha256: '1571ec5115bcfed4b4327fc27b5f44ea284806caf5331eef89326191c9b031d6',
     sizeBytes: 2_497_279_136,
     contextSize: 262_144,
+    generationProfile: 'deterministic',
     legacyIds: [LEGACY_DEFAULT_LOCAL_MODEL_ID]
   },
   {
@@ -64,7 +66,19 @@ export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
     url: 'https://huggingface.co/unsloth/Qwen3-4B-Thinking-2507-GGUF/resolve/main/Qwen3-4B-Thinking-2507-Q4_K_M.gguf',
     sha256: 'ddd52e18200baab281c5c46f70d544ce4d4fe4846eab1608f2fff48a64554212',
     sizeBytes: 2_497_281_152,
-    contextSize: 262_144
+    contextSize: 262_144,
+    generationProfile: 'deterministic'
+  },
+  {
+    id: GEMMA4_LOCAL_MODEL_ID,
+    label: 'Gemma 4 E4B IT Q4_K_M',
+    filename: 'gemma-4-E4B-it-Q4_K_M.gguf',
+    url: 'https://huggingface.co/ggml-org/gemma-4-E4B-it-GGUF/resolve/main/gemma-4-E4B-it-Q4_K_M.gguf',
+    sha256: '90ce98129eb3e8cc57e62433d500c97c624b1e3af1fcc85dd3b55ad7e0313e9f',
+    sizeBytes: 5_335_289_824,
+    contextSize: 32_768,
+    generationProfile: 'gemma4',
+    runtimeProfile: 'gemma4'
   }
 ];
 export const DEFAULT_LOCAL_MODEL = LOCAL_MODEL_DEFINITIONS[0];

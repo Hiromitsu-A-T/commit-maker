@@ -33,6 +33,7 @@ import {
   ProviderId,
   ReasoningEffort,
   VerbositySetting,
+  LocalModelGenerationSettings,
   isProviderId,
   isReasoningEffort,
   isVerbositySetting,
@@ -49,9 +50,11 @@ import {
   deleteLocalModel,
   downloadLocalModel,
   createDefaultLocalModelState,
+  getLocalModelDefinition,
   inspectLocalModel,
   resolveLocalModelId
 } from './services/localModel';
+import { resolveLocalGenerationSettings, resolveLocalRuntimeArgs } from './services/localModelProfiles';
 import { ensureLocalRuntime } from './services/localRuntime';
 import {
   applyPresetById,
@@ -558,6 +561,8 @@ export class CommitController implements vscode.Disposable {
         threads: runtime.threads,
         gpuLayers: runtime.gpuLayers,
         keepAliveMs: runtime.keepAliveMs,
+        generation: runtime.generation,
+        runtimeArgs: runtime.runtimeArgs,
         logger: runtime.logger
       });
       this.state.localModel = { ...prev, status: 'ready', error: undefined };
@@ -875,6 +880,8 @@ export class CommitController implements vscode.Disposable {
       threads: runtime.threads,
       gpuLayers: runtime.gpuLayers,
       keepAliveMs: runtime.keepAliveMs,
+      generation: runtime.generation,
+      runtimeArgs: runtime.runtimeArgs,
       logger: logger ?? runtime.logger
     });
   }
@@ -924,6 +931,8 @@ export class CommitController implements vscode.Disposable {
     threads: number;
     gpuLayers: number;
     keepAliveMs: number;
+    generation?: LocalModelGenerationSettings;
+    runtimeArgs: string[];
     logger?: (message: string) => void;
   }> {
     const config = vscode.workspace.getConfiguration('commitMaker');
@@ -936,6 +945,7 @@ export class CommitController implements vscode.Disposable {
     if (!localModel.path || localModel.status !== 'ready') {
       throw new Error(this.strings.msgLocalModelMissing);
     }
+    const localModelDefinition = getLocalModelDefinition(config, this.state.localModelId);
     const logger = this.createLocalLogger(config);
     const runtimePath = await ensureLocalRuntime(
       this.context,
@@ -953,6 +963,8 @@ export class CommitController implements vscode.Disposable {
       threads: config.get<number>('localThreads', 0),
       gpuLayers: config.get<number>('localGpuLayers', DEFAULT_LOCAL_GPU_LAYERS),
       keepAliveMs: config.get<number>('localKeepAliveMs', DEFAULT_LOCAL_KEEP_ALIVE_MS),
+      generation: resolveLocalGenerationSettings(localModelDefinition),
+      runtimeArgs: resolveLocalRuntimeArgs(localModelDefinition),
       logger
     };
   }

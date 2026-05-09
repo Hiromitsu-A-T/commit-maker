@@ -7,9 +7,11 @@ import {
   DEFAULT_LOCAL_MODEL_FILENAME,
   DEFAULT_LOCAL_MODEL_SHA256,
   DEFAULT_LOCAL_MODEL_URL,
+  GEMMA4_LOCAL_MODEL_ID,
   LEGACY_DEFAULT_LOCAL_MODEL_ID
 } from '../constants';
 import { deleteLocalModel, getLocalModelDefinition, getLocalModelOptions, inspectLocalModel, resolveLocalModelId } from './localModel';
+import { resolveLocalGenerationSettings, resolveLocalRuntimeArgs } from './localModelProfiles';
 
 function createConfig(values: Record<string, string | undefined> = {}) {
   return {
@@ -41,11 +43,30 @@ export async function runLocalModelTests(): Promise<void> {
   assert.strictEqual(defaults.label, 'Qwen3-4B-Instruct-2507 Q4_K_M');
   assert.strictEqual(defaults.url, DEFAULT_LOCAL_MODEL_URL);
   assert.strictEqual(defaults.sha256, DEFAULT_LOCAL_MODEL_SHA256);
+  assert.strictEqual(defaults.generationProfile, 'deterministic');
+  assert.strictEqual(resolveLocalGenerationSettings(defaults).temperature, 0);
 
   const thinking = getLocalModelDefinition(createConfig(), 'Qwen3-4B-Thinking-2507-Q4_K_M');
   assert.strictEqual(thinking.label, 'Qwen3-4B-Thinking-2507 Q4_K_M');
   assert.strictEqual(thinking.filename, 'Qwen3-4B-Thinking-2507-Q4_K_M.gguf');
   assert.strictEqual(thinking.sha256, 'ddd52e18200baab281c5c46f70d544ce4d4fe4846eab1608f2fff48a64554212');
+  assert.strictEqual(thinking.generationProfile, 'deterministic');
+  assert.strictEqual(resolveLocalGenerationSettings(thinking).temperature, 0);
+
+  const gemma = getLocalModelDefinition(createConfig(), GEMMA4_LOCAL_MODEL_ID);
+  assert.strictEqual(gemma.label, 'Gemma 4 E4B IT Q4_K_M');
+  assert.strictEqual(gemma.filename, 'gemma-4-E4B-it-Q4_K_M.gguf');
+  assert.strictEqual(gemma.sha256, '90ce98129eb3e8cc57e62433d500c97c624b1e3af1fcc85dd3b55ad7e0313e9f');
+  assert.strictEqual(gemma.sizeBytes, 5_335_289_824);
+  assert.strictEqual(gemma.generationProfile, 'gemma4');
+  assert.strictEqual(gemma.runtimeProfile, 'gemma4');
+  assert.deepStrictEqual(resolveLocalGenerationSettings(gemma), {
+    temperature: 0,
+    topP: 0.95,
+    topK: 64,
+    minP: 0
+  });
+  assert.deepStrictEqual(resolveLocalRuntimeArgs(gemma), []);
 
   const thinkingWithPackageDefault = getLocalModelDefinition(createConfigWithPackageDefault({
     localModelFilename: DEFAULT_LOCAL_MODEL_FILENAME
@@ -55,7 +76,8 @@ export async function runLocalModelTests(): Promise<void> {
   const options = getLocalModelOptions();
   assert.deepStrictEqual(options.map(option => option.id), [
     'Qwen3-4B-Instruct-2507-Q4_K_M',
-    'Qwen3-4B-Thinking-2507-Q4_K_M'
+    'Qwen3-4B-Thinking-2507-Q4_K_M',
+    GEMMA4_LOCAL_MODEL_ID
   ]);
   assert.strictEqual(resolveLocalModelId(LEGACY_DEFAULT_LOCAL_MODEL_ID), DEFAULT_LOCAL_MODEL_ID);
   assert.strictEqual(resolveLocalModelId('unknown'), DEFAULT_LOCAL_MODEL_ID);

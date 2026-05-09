@@ -91,6 +91,7 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 ## 開発メモ
 - Webview CSP は nonce 付き。スタイル/スクリプトは同梱のみ。
 - プロバイダー並びとデフォルト: 「Gemini → OpenAI → Claude → Local」。Local は API キー不要で、ユーザーが明示的にモデルをダウンロードした場合のみ利用する。llama.cpp runtime は未指定なら OS/CPU 別に自動取得し、SHA-256 検証後に globalStorage へ展開する。`commitMaker.localRuntimePath` は開発・検証用の上書き設定として扱う。
+- Local モデル固有の sampling / runtime 調整は `services/localModelProfiles.ts` の profile に集約し、モデル名で分岐しない。新規モデルは `LOCAL_MODEL_DEFINITIONS` で profile を選ぶ。
 - 差分取得は Git API 優先、フォールバックで `git diff` / `git status --porcelain`。
 - API キー未保存のクラウド provider は選択可能だが生成ボタンを無効化し、Reasoning/Verbosity を非表示。Local はモデル未ダウンロード時に生成ボタンを無効化。
 - Webview スクリプトはプレーン JS。`as` 型アサーションは禁止（ビルド後 JS でエラーを防ぐ）。

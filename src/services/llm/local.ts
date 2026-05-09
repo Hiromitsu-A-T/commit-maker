@@ -10,6 +10,7 @@ import {
   DEFAULT_MAX_OUTPUT_TOKENS
 } from '../../constants';
 import { getStrings, DEFAULT_LANGUAGE } from '../../i18n/strings';
+import { LocalModelGenerationSettings } from '../../types';
 import { createAbortController, postJsonWithBackoff } from './shared';
 import { findBundledRuntime } from '../localRuntime';
 
@@ -25,6 +26,8 @@ export interface LocalLlmCallParams {
   threads?: number;
   gpuLayers?: number;
   keepAliveMs?: number;
+  generation?: LocalModelGenerationSettings;
+  runtimeArgs?: string[];
   logger?: (message: string) => void;
 }
 
@@ -34,6 +37,7 @@ interface RuntimeKey {
   contextSize: number;
   threads: number;
   gpuLayers: number;
+  runtimeArgs: string[];
 }
 
 interface RuntimeState {
@@ -57,6 +61,8 @@ export async function callLocalLlm({
   threads = 0,
   gpuLayers = DEFAULT_LOCAL_GPU_LAYERS,
   keepAliveMs = DEFAULT_LOCAL_KEEP_ALIVE_MS,
+  generation,
+  runtimeArgs = [],
   logger
 }: LocalLlmCallParams): Promise<string> {
   const strings = getStrings(DEFAULT_LANGUAGE);
@@ -65,7 +71,7 @@ export async function callLocalLlm({
   }
 
   const binaryPath = resolveLlamaServerPath(extensionUri, runtimePath);
-  const key = { binaryPath, modelPath, contextSize, threads, gpuLayers };
+  const key = { binaryPath, modelPath, contextSize, threads, gpuLayers, runtimeArgs };
   const runtime = await ensureRuntime(key, logger);
 
   const { controller, dispose } = createAbortController(abortSignal, timeoutMs);
@@ -76,18 +82,7 @@ export async function callLocalLlm({
         label: 'Local',
         controller,
         headers: { 'Content-Type': 'application/json' },
-        body: {
-          model: 'local',
-          messages: [
-            {
-              role: 'system',
-              content: 'Return only the final commit message. Do not include explanations, markdown fences, or reasoning.'
-            },
-            { role: 'user', content: prompt }
-          ],
-          temperature: 0,
-          max_tokens: maxOutputTokens
-        },
+        body: buildChatCompletionBody(prompt, maxOutputTokens, generation),
         parse: raw => {
           const data = raw ? JSON.parse(raw) as any : {};
           const text = data?.choices?.[0]?.message?.content || data?.content || data?.response;
@@ -151,6 +146,7 @@ async function ensureRuntime(key: RuntimeKey, logger?: (message: string) => void
     '-ngl',
     String(key.gpuLayers)
   ];
+  args.push(...key.runtimeArgs);
   if (key.threads > 0) {
     args.push('-t', String(key.threads));
   }
@@ -248,14 +244,56 @@ function cleanupLocalOutput(value: string): string {
     .trim();
 }
 
+function buildChatCompletionBody(
+  prompt: string,
+  maxOutputTokens: number,
+  generation: LocalModelGenerationSettings | undefined
+): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    model: 'local',
+    messages: [
+      {
+        role: 'system',
+        content: 'Return only the final commit message. Do not include explanations, markdown fences, or reasoning.'
+      },
+      { role: 'user', content: prompt }
+    ],
+    temperature: generation?.temperature ?? 0,
+    max_tokens: maxOutputTokens
+  };
+  addNumber(body, 'top_p', generation?.topP);
+  addNumber(body, 'top_k', generation?.topK);
+  addNumber(body, 'min_p', generation?.minP);
+  addNumber(body, 'repeat_penalty', generation?.repeatPenalty);
+  addNumber(body, 'presence_penalty', generation?.presencePenalty);
+  if (generation?.reasoningFormat) {
+    body.reasoning_format = generation.reasoningFormat;
+  }
+  if (generation?.chatTemplateKwargs) {
+    body.chat_template_kwargs = generation.chatTemplateKwargs;
+  }
+  return body;
+}
+
+function addNumber(body: Record<string, unknown>, key: string, value: number | undefined): void {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    body[key] = value;
+  }
+}
+
 function sameRuntime(a: RuntimeKey, b: RuntimeKey): boolean {
   return (
     a.binaryPath === b.binaryPath &&
     a.modelPath === b.modelPath &&
     a.contextSize === b.contextSize &&
     a.threads === b.threads &&
-    a.gpuLayers === b.gpuLayers
+    a.gpuLayers === b.gpuLayers &&
+    sameStringList(a.runtimeArgs, b.runtimeArgs)
   );
+}
+
+function sameStringList(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((value, index) => value === b[index]);
 }
 
 function getFreePort(): Promise<number> {

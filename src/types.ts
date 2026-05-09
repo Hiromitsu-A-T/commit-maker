@@ -5,6 +5,8 @@ export type ReasoningEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high';
 export type VerbositySetting = 'low' | 'medium' | 'high';
 export type CommitStatus = 'idle' | 'loading' | 'ready' | 'error';
 export type MaxPromptMode = 'unlimited' | 'limited';
+export type LocalGenerationProfileId = 'deterministic' | 'gemma4';
+export type LocalRuntimeProfileId = 'default' | 'gemma4';
 
 export interface ProviderOption {
   id: ProviderId;
@@ -58,7 +60,28 @@ export interface LocalModelDefinition {
   sha256: string;
   sizeBytes: number;
   contextSize: number;
+  generationProfile?: LocalGenerationProfileId;
+  generation?: Partial<LocalModelGenerationSettings>;
+  runtimeProfile?: LocalRuntimeProfileId;
+  runtime?: Partial<LocalModelRuntimeSettings>;
   legacyIds?: string[];
+}
+
+export interface LocalModelGenerationSettings {
+  temperature?: number;
+  topP?: number;
+  topK?: number;
+  minP?: number;
+  repeatPenalty?: number;
+  presencePenalty?: number;
+  reasoningFormat?: string;
+  chatTemplateKwargs?: Record<string, unknown>;
+}
+
+export interface LocalModelRuntimeSettings {
+  reasoning?: 'off' | 'on';
+  cacheRamMb?: number;
+  ctxCheckpoints?: number;
 }
 
 export interface LocalModelOption {
