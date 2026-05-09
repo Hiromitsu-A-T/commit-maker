@@ -1,0 +1,83 @@
+name: Bug report / バグ報告
+description: Report a reproducible problem in Commit Maker.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem.
+        バグ報告ありがとうございます。
+
+        Do not include API keys, personal access tokens, private repository
+        diffs, or other secrets. Redact logs before sharing them publicly.
+
+        API キー、Personal Access Token、非公開リポジトリの差分、
+        その他の秘密情報は含めないでください。公開ログは必ず redaction してください。
+  - type: input
+    id: version
+    attributes:
+      label: Commit Maker version / Commit Maker のバージョン
+      placeholder: "0.6.0"
+    validations:
+      required: true
+  - type: input
+    id: vscode-version
+    attributes:
+      label: VS Code version / VS Code のバージョン
+      placeholder: "1.94.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider / プロバイダー
+      options:
+        - Gemini
+        - OpenAI
+        - Claude
+        - Local
+        - Not provider-specific / プロバイダー非依存
+    validations:
+      required: true
+  - type: textarea
+    id: current-behavior
+    attributes:
+      label: What happened? / 何が起きましたか？
+      description: Describe the observed behavior. / 実際に起きた挙動を書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: What did you expect? / 期待した挙動
+      description: Describe the expected behavior. / 本来どう動くべきかを書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps / 再現手順
+      description: List the smallest set of steps that reproduces the problem. / 最小の再現手順を書いてください。
+      placeholder: |
+        1. Open...
+        2. Select...
+        3. Click...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or screenshots / 関連ログ・スクリーンショット
+      description: Redact secrets, private diffs, and repository-specific data. / 秘密情報、非公開差分、固有情報は伏せてください。
+      render: text
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist / チェックリスト
+      options:
+        - label: I have removed secrets, API keys, tokens, and private diffs. / 秘密情報、API キー、トークン、非公開差分を除去しました。
+          required: true
+        - label: I have checked existing issues for duplicates. / 既存 Issue との重複を確認しました。
+          required: true

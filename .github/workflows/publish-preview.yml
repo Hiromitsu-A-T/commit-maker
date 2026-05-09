@@ -3,6 +3,9 @@ name: Publish Extension (Preview)
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   publish-preview:
     uses: ./.github/workflows/_publish-core.yml

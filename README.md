@@ -274,6 +274,15 @@ UIから切り替え可能（Switchable from UI）:
 - **拡張機能**: ログを外部送信しません  
   (Extension itself sends no external logs)
 
+### 貢献・サポート・セキュリティ / Contributing, Support, and Security
+- 貢献手順: [CONTRIBUTING.md](https://github.com/Hiromitsu-A-T/commit-maker/blob/main/CONTRIBUTING.md)
+- サポート: [SUPPORT.md](https://github.com/Hiromitsu-A-T/commit-maker/blob/main/SUPPORT.md)
+- 脆弱性報告: [SECURITY.md](https://github.com/Hiromitsu-A-T/commit-maker/blob/main/SECURITY.md)
+- 行動規範: [CODE_OF_CONDUCT.md](https://github.com/Hiromitsu-A-T/commit-maker/blob/main/CODE_OF_CONDUCT.md)
+
+(Please use the linked guidelines for contributions, support requests, private
+security reports, and project conduct.)
+
 ## [PR] 関連アプリ / Related App
 
 同じ作者が開発している音声メモアプリ **Quick Recorder** です。ご興味があればご覧ください。  

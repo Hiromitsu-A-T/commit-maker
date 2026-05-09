@@ -265,6 +265,9 @@
     }
   },
   "scripts": {
+    "clean:out": "node scripts/clean-out.js",
+    "check:commit-emails": "node scripts/check-commit-emails.js --all",
+    "precompile": "npm run clean:out",
     "compile": "tsc -p .",
     "watch": "tsc -w -p .",
     "test": "ts-node --project tsconfig.json src/testRunner.ts",

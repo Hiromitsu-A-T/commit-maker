@@ -1,0 +1,60 @@
+name: Feature request / 機能要望
+description: Suggest an improvement to Commit Maker.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement.
+        機能提案ありがとうございます。
+
+        Please describe the workflow problem first. Do not include private
+        repository diffs, secrets, API keys, or personal access tokens.
+
+        先に workflow 上の問題を書いてください。非公開差分、秘密情報、
+        API キー、Personal Access Token は含めないでください。
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / 解決したい問題
+      description: What workflow problem should this solve? / どの作業上の問題を解決したいですか？
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior / 期待する挙動
+      description: What should Commit Maker do differently? / Commit Maker にどう動いてほしいですか？
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area / 対象領域
+      options:
+        - Commit generation / コミット生成
+        - Prompt presets / プロンプトプリセット
+        - Gemini provider
+        - OpenAI provider
+        - Claude provider
+        - Local provider
+        - Localization / 多言語対応
+        - Documentation / ドキュメント
+        - Release workflow / リリースフロー
+        - Other / その他
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered / 検討した代替案
+      description: Optional. Describe workarounds or other approaches. / 任意。回避策や別案があれば書いてください。
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist / チェックリスト
+      options:
+        - label: I have checked existing issues for duplicates. / 既存 Issue との重複を確認しました。
+          required: true

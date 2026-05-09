@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability / 脆弱性報告
+    url: https://github.com/Hiromitsu-A-T/commit-maker/security/policy
+    about: Read the security policy before reporting privately. Public issues must not include vulnerability details.
+  - name: Support guidance / サポート案内
+    url: https://github.com/Hiromitsu-A-T/commit-maker/blob/main/SUPPORT.md
+    about: Read support guidance before sharing logs or reproduction details.

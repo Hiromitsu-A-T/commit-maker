@@ -8,6 +8,7 @@ vsix/
 coverage/
 .vscode-test/
 npm-debug.log*
+.local/
 
 # Generated NLS copies at repo root (localization for package.json)
 /package.nls.*.json

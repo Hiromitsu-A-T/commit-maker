@@ -3,8 +3,16 @@ node_modules/
 .git/
 .vscode/
 .github/
+.local/
+.githooks/
 AGENTS.md
 .env
+.env.*
+.gitignore
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+SECURITY.md
+SUPPORT.md
 vsix/
 *.vsix
 .DS_Store

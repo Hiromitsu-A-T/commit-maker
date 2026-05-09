@@ -17,6 +17,9 @@ on:
       OVSX_PAT:
         required: false
 
+permissions:
+  contents: read
+
 jobs:
   validate:
     name: Validate release metadata

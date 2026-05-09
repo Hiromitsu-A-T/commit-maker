@@ -1,0 +1,31 @@
+# This project is distributed as a VS Code extension, not as an npm package.
+# Keep accidental npm packages aligned with the VSIX privacy/exclusion rules.
+node_modules/
+.git/
+.vscode/
+.github/
+.local/
+.githooks/
+AGENTS.md
+.env
+.env.*
+vsix/
+*.vsix
+.DS_Store
+coverage/
+.vscode-test/
+npm-debug.log*
+package-lock.json
+**/*.map
+src/
+scripts/
+i18n/
+media/src/
+media/tsconfig.json
+tsconfig.json
+out/**/*.test.js*
+out/testRunner.js
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+SECURITY.md
+SUPPORT.md
