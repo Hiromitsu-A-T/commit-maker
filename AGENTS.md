@@ -18,8 +18,8 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 ## バージョニング
 - 形式: SemVer `MAJOR.MINOR.PATCH`
 - ルール: PATCH=バグ修正/Docs/CI、MINOR=後方互換の機能追加やUI改善、MAJOR=破壊的変更（設定キー削除など）。0.x では MINOR/PATCH を基本とし、スキップせず連番で上げる。
- - タグ: `v<version>`（例 `v0.1.4`）。`package.json` と一致させる。
-- Pre-release は VS Code Marketplace の仕様に合わせて semver の `-beta` 等を使わず、`vsce` / `ovsx` の `--pre-release` で公開する。安定版は偶数 MINOR、検証版は奇数 MINOR を基本にする（例: `0.2.x` stable → `0.3.x` preview → `0.4.x` stable）。
+- タグ: stable のみ `v<version>`（例 `v0.4.2`）を基本にし、`package.json` と一致させる。preview は原則タグを切らず、手動 workflow で公開する。
+- Pre-release は VS Code Marketplace の仕様に合わせて semver の `-beta` 等を使わず、`vsce` / `ovsx` の `--pre-release` で公開する。安定版は偶数 MINOR、検証版は奇数 MINOR を基本にする（例: `0.4.x` stable → `0.5.x` preview → `0.6.x` stable）。奇数 MINOR は欠番ではなく preview 系列として扱う。
 
 ### コミットメッセージルール（テンプレート）
 - 変更内容を 50 文字以内の要約タイトルで書く。命令形や主観は使わない。
@@ -30,17 +30,20 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 
 ## CI での自動配信
 - 基本方針: 公開は原則このワークフロー経由で行う（手動 CLI は緊急時のみ）。
-- 使うワークフロー: `.github/workflows/publish.yml`（トリガー: `workflow_dispatch` と `v*` タグ push）。Node 20 で実行。
-- `workflow_dispatch` の `channel=preview` は `vsce package/publish --pre-release` と `ovsx publish --pre-release` を使う。`v*` タグ push は stable 扱い。
-- 手順（迷ったらこの順で）
+- 使うワークフロー:
+  - stable: `.github/workflows/publish.yml`（トリガー: `v*` タグ push）
+  - preview: `.github/workflows/publish-preview.yml`（トリガー: `workflow_dispatch`）
+  - 共通処理: `.github/workflows/_publish-core.yml`（直接起動しない）
+- CI ガード: stable は偶数 MINOR かつ `v<version>` タグと `package.json` の一致が必須。preview は奇数 MINOR かつ `--pre-release` 固定で、タグ起動は禁止。
+- Stable 手順（迷ったらこの順で）
   1. `package.json` の version を上げる。
   2. 変更を commit する。
   3. `v<version>` でタグを切る（例 `v0.1.4`）。
-  4. `main` とタグを push する（これでワークフローが自動起動）。
-  5. Actions で `Publish Extension` が成功したら Marketplace / Open VSX へ同時反映される。
-- Preview 手順: `package.json` を奇数 MINOR（例 `0.3.0`）に上げ、commit/push 後に Actions から `Publish Extension` を `workflow_dispatch` で実行し、`channel=preview` を選ぶ。実機検証完了後、安定版は次の偶数 MINOR（例 `0.4.0`）で通常リリースする。
+  4. `main` とタグを push する（`Publish Extension (Stable)` が自動起動）。
+  5. Actions で `Publish Extension (Stable)` が成功したら Marketplace / Open VSX へ同時反映される。
+- Preview 手順: `package.json` を奇数 MINOR（例 `0.5.0`）に上げ、commit/push 後に Actions から `Publish Extension (Preview)` を `workflow_dispatch` で実行する。preview ではタグを切らない。実機検証完了後、安定版は次の偶数 MINOR（例 `0.6.0`）で通常リリースする。
 - 必要シークレット: `VSCE_PAT`, `OVSX_PAT`
-- 処理概要: runtime smoke（Ubuntu/macOS/Windows）→ `npm ci` → `npm run compile` → `npm test` → `vsce package --no-dependencies --no-rewrite-relative-links` → `vsce publish --packagePath ...` → `ovsx publish --skip-duplicate`。preview の場合は package/publish に `--pre-release` を付与する。完了後 `vsix/` に成果物を保存し、VSIX artifact もアップロードする。
+- 処理概要: version/channel 検証 → runtime smoke（Ubuntu/macOS/Windows）→ `npm ci` → `npm run compile` → `npm test` → `vsce package --no-dependencies --no-rewrite-relative-links` → `vsce publish --packagePath ... --skip-duplicate` → `ovsx publish --skip-duplicate`。preview の場合は package/publish に `--pre-release` を付与する。完了後 `vsix/` に成果物を保存し、VSIX artifact もアップロードする。
 
 ## 手動配布と整理
 - ビルド: `npm run compile`
@@ -83,7 +86,7 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 - `package.nls.*.json` のキー一致を確認し、`npm run clean:nls` 済み
 - `.env` やシークレットがリポジトリに含まれていない
 - `AGENTS.md` など公開不要物が VSIX に入っていない（`.vscodeignore` で確認）
-- ワークツリー clean、`v<version>` タグ付与・`main` とタグを push、`Publish Extension` ワークフロー成功
+- stable はワークツリー clean、`v<version>` タグ付与・`main` とタグを push、`Publish Extension (Stable)` 成功。preview は奇数 MINOR の commit を push し、`Publish Extension (Preview)` 成功
 
 ## 開発メモ
 - Webview CSP は nonce 付き。スタイル/スクリプトは同梱のみ。

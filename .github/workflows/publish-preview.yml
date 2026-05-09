@@ -1,0 +1,12 @@
+name: Publish Extension (Preview)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish-preview:
+    uses: ./.github/workflows/_publish-core.yml
+    with:
+      channel: preview
+      pre_release: true
+    secrets: inherit

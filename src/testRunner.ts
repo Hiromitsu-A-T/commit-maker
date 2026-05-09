@@ -1,5 +1,6 @@
 import './commitController.test';
 import { runDiffCollectorTests } from './services/diffCollector.test';
+import { runGeminiLlmTests } from './services/llm/gemini.test';
 import { runSharedLlmTests } from './services/llm/shared.test';
 import { runLocalModelTests } from './services/localModel.test';
 import { runLocalRuntimeTests } from './services/localRuntime.test';
@@ -9,6 +10,7 @@ import { runPanelBodyTests } from './panelBody.test';
 
 async function main() {
   await runDiffCollectorTests();
+  await runGeminiLlmTests();
   await runSharedLlmTests();
   await runLocalModelTests();
   await runLocalRuntimeTests();

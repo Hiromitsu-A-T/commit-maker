@@ -29,7 +29,7 @@ export async function callGemini({
     timeoutMs,
     logger,
     buildRequest: base => ({
-      url: buildGeminiEndpoint(base, model, apiKey),
+      url: buildGeminiEndpoint(base, model),
       headers: {
         'Content-Type': 'application/json',
         'x-goog-api-key': apiKey
@@ -54,14 +54,12 @@ export async function callGemini({
   });
 }
 
-function buildGeminiEndpoint(base: string, model: string, apiKey: string): string {
-  const normalized = base.replace(/\/$/, '');
-  const url = normalized.includes(GEMINI_GENERATE_SUFFIX)
-    ? normalized
-    : `${normalized}/${model}${GEMINI_GENERATE_SUFFIX}`;
-  const u = new URL(url);
-  if (!u.searchParams.has('key')) {
-    u.searchParams.set('key', apiKey);
-  }
+function buildGeminiEndpoint(base: string, model: string): string {
+  const u = new URL(base);
+  const path = u.pathname.replace(/\/$/, '');
+  u.pathname = path.endsWith(GEMINI_GENERATE_SUFFIX)
+    ? path
+    : `${path}/${model}${GEMINI_GENERATE_SUFFIX}`;
+  u.searchParams.delete('key');
   return u.toString();
 }
