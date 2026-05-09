@@ -92,6 +92,7 @@ export class CommitController implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
   private state: CommitState;
   private currentAbortController: AbortController | undefined;
+  private generationSeq = 0;
   private currentModelDownloadAbortController: AbortController | undefined;
   private get strings() {
     return getStrings(this.state.language || DEFAULT_LANGUAGE);
@@ -583,32 +584,44 @@ export class CommitController implements vscode.Disposable {
     progress?: (message: string) => void,
     repo?: GitRepository
   ): Promise<void> {
-    this.startGeneration();
-    const report = (message: string): void => this.reportGenerationProgress(message, progress);
+    const generationId = this.startGeneration();
+    const report = (message: string): void => this.reportGenerationProgress(generationId, message, progress);
     try {
       const targetRepo = repo ?? (await this.getRepositoryOrThrow());
+      if (!this.isCurrentGeneration(generationId)) return;
       report(this.strings.msgCommitGenerateFetchingDiff);
       const diff = await this.prepareDiff(targetRepo, includeUnstaged, includeUntracked, includeBinary);
+      if (!this.isCurrentGeneration(generationId)) return;
       report(this.strings.msgCommitGenerateCallingLlm);
       const result = this.state.provider === 'local'
         ? await this.generateLocalCommitMessage(diff, report)
         : await this.callLlm(this.buildPrompt(diff));
+      if (!this.isCurrentGeneration(generationId)) return;
       this.handleGenerationSuccess(result);
     } catch (error) {
+      if (!this.isCurrentGeneration(generationId)) return;
       this.handleGenerationError(error);
     } finally {
-      await this.finishGeneration();
+      await this.finishGeneration(generationId);
     }
   }
 
-  private startGeneration(): void {
+  private startGeneration(): number {
+    this.currentAbortController?.abort();
     this.currentAbortController = new AbortController();
+    const generationId = ++this.generationSeq;
     this.setStatus('loading', { result: undefined, lastError: undefined, progressMessage: undefined });
+    return generationId;
   }
 
-  private async finishGeneration(): Promise<void> {
+  private async finishGeneration(generationId: number): Promise<void> {
+    if (!this.isCurrentGeneration(generationId)) return;
     this.currentAbortController = undefined;
     await vscode.commands.executeCommand('setContext', 'commitMaker.commitGenerating', false);
+  }
+
+  private isCurrentGeneration(generationId: number): boolean {
+    return generationId === this.generationSeq;
   }
 
   private handleGenerationSuccess(result: string): void {
@@ -735,6 +748,8 @@ export class CommitController implements vscode.Disposable {
     if (this.currentAbortController) {
       this.currentAbortController.abort();
     }
+    this.generationSeq += 1;
+    this.currentAbortController = undefined;
     this.setStatus('error', { lastError: reason, progressMessage: undefined });
     await vscode.commands.executeCommand('setContext', 'commitMaker.commitGenerating', false);
   }
@@ -751,7 +766,8 @@ export class CommitController implements vscode.Disposable {
     void vscode.commands.executeCommand('setContext', 'commitMaker.commitGenerating', status === 'loading');
   }
 
-  private reportGenerationProgress(message: string, progress?: (message: string) => void): void {
+  private reportGenerationProgress(generationId: number, message: string, progress?: (message: string) => void): void {
+    if (!this.isCurrentGeneration(generationId)) return;
     progress?.(message);
     if (this.state.status !== 'loading') return;
     this.state.progressMessage = message;
