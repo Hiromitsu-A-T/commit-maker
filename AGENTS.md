@@ -68,7 +68,7 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 ## マーケットプレイス表示（README / 画像）
 - 画像は `https` で直接参照できる PNG/JPEG/GIF を使う。SVG は非推奨（許可されたバッジ提供元のみ）。`data:`/`http:` は不可。
 - 公開用 README ではリポジトリの raw URL など絶対 URL を使うと表示が安定。`vsce package --no-rewrite-relative-links` で相対リンクを維持する。
-- アイコンは `media/commit-maker.png`（128px 正方形、透過推奨）。
+- アイコンは `media/commit-maker.png`（512px 正方形、透過推奨）。
 
 ## テスト
 - 型チェック: `npm run compile`
