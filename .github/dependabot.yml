@@ -7,6 +7,21 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
+    groups:
+      publish-tooling:
+        patterns:
+          - "@vscode/vsce"
+          - "ovsx"
+    ignore:
+      # Keep the compile-time VS Code API surface aligned with engines.vscode.
+      - dependency-name: "@types/vscode"
+      # TypeScript and Node type major upgrades are reviewed intentionally.
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: github-actions
     directory: /
@@ -15,3 +30,14 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
+    ignore:
+      # Major action upgrades can affect release workflows; review manually.
+      - dependency-name: "actions/checkout"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "actions/setup-node"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "actions/upload-artifact"
+        update-types:
+          - "version-update:semver-major"
