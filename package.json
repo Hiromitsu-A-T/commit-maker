@@ -290,7 +290,7 @@
     "smoke:local:runtime": "ts-node --project tsconfig.json scripts/smoke-local-runtime.ts"
   },
   "devDependencies": {
-    "@types/node": "^18.19.0",
+    "@types/node": "^25.6.2",
     "@types/vscode": "^1.94.0",
     "@vscode/vsce": "^3.7.1",
     "ovsx": "^0.10.4",
