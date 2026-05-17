@@ -1,0 +1,211 @@
+name: Weekly Patch Publish
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 0 * * 1"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weekly-patch-publish
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Prepare weekly patch
+    runs-on: ubuntu-latest
+    outputs:
+      release_sha: ${{ steps.commit.outputs.release_sha }}
+      tag: ${{ steps.commit.outputs.tag }}
+      version: ${{ steps.commit.outputs.version }}
+      skip: ${{ steps.version-line.outputs.skip }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Check stable version line
+        id: version-line
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          MINOR=$(node -p "require('./package.json').version.split('.')[1]")
+          if (( MINOR % 2 != 0 )); then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Skipping weekly patch publish for preview version $VERSION."
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        if: steps.version-line.outputs.skip != 'true'
+        run: npm ci
+
+      - name: Prepare patch changes
+        if: steps.version-line.outputs.skip != 'true'
+        shell: bash
+        run: |
+          npm version patch --no-git-tag-version --no-commit-hooks
+          npm run update:badges
+
+      - name: Compile
+        if: steps.version-line.outputs.skip != 'true'
+        run: npm run compile
+
+      - name: Test
+        if: steps.version-line.outputs.skip != 'true'
+        run: npm test
+
+      - name: Check whitespace
+        if: steps.version-line.outputs.skip != 'true'
+        run: git diff --check
+
+      - name: Commit and push main
+        if: steps.version-line.outputs.skip != 'true'
+        id: commit
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v${VERSION}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json media/badges
+          git commit -m "chore: 週次パッチ ${VERSION} [skip ci]"
+          git push origin HEAD:main
+
+          echo "release_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  local-runtime-smoke:
+    name: Local runtime smoke (${{ matrix.os }})
+    needs: prepare
+    if: needs.prepare.outputs.skip != 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.release_sha }}
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run compile
+
+      - name: Smoke local runtime auto install
+        run: npm run smoke:local:runtime
+
+  publish:
+    name: Publish weekly patch
+    needs:
+      - prepare
+      - local-runtime-smoke
+    if: needs.prepare.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.release_sha }}
+          fetch-depth: 0
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build webview helpers
+        run: npm run build:media
+
+      - name: Build
+        run: npm run compile
+
+      - name: Test
+        run: npm test
+
+      - name: Package VSIX
+        shell: bash
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          npm run build:nls
+          trap 'npm run clean:nls' EXIT
+          npx vsce package --no-dependencies --no-rewrite-relative-links
+          mkdir -p vsix
+          mv "commit-maker-${VERSION}.vsix" vsix/
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: commit-maker-weekly-vsix
+          path: vsix/*.vsix
+
+      - name: Publish to VS Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        shell: bash
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          npx vsce publish --packagePath "vsix/commit-maker-${VERSION}.vsix" --skip-duplicate
+
+      - name: Ensure Open VSX namespace
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: npx ovsx create-namespace Hiromitsu || true
+
+      - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        shell: bash
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          npx ovsx publish "vsix/commit-maker-${VERSION}.vsix" --skip-duplicate
+
+      - name: Tag release
+        shell: bash
+        run: |
+          TAG="${{ needs.prepare.outputs.tag }}"
+          if git ls-remote --exit-code --tags origin "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Clean stray VSIX and enforce limit
+        if: always()
+        run: npm run clean:vsix

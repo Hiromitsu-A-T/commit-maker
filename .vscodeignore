@@ -25,6 +25,7 @@ src/
 scripts/
 i18n/
 media/src/
+media/badges/
 media/tsconfig.json
 tsconfig.json
 out/**/*.test.js*

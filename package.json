@@ -272,6 +272,7 @@
     "watch": "tsc -w -p .",
     "test": "ts-node --project tsconfig.json src/testRunner.ts",
     "dev:prep": "npm run build:nls && npm run compile",
+    "update:badges": "node scripts/update-badges.js",
     "build:nls": "node scripts/copy-package-nls.js",
     "clean:nls": "node scripts/clean-package-nls.js",
     "package": "npm run compile && npm run build:media && npm run build:nls && npx vsce package --no-dependencies --no-rewrite-relative-links && npm run clean:nls",

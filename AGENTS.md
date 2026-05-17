@@ -34,7 +34,10 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
   - stable: `.github/workflows/publish.yml`（トリガー: `v*` タグ push）
   - preview: `.github/workflows/publish-preview.yml`（トリガー: `workflow_dispatch`）
   - 共通処理: `.github/workflows/_publish-core.yml`（直接起動しない）
+  - 週次パッチ公開: `.github/workflows/weekly-patch-publish.yml`（毎週月曜 09:15 JST / 手動起動）
+  - バッジ統計更新: `.github/workflows/update-badges.yml`（日次 / 公開成功後 / 手動起動）
 - CI ガード: stable は偶数 MINOR かつ `v<version>` タグと `package.json` の一致が必須。preview は奇数 MINOR かつ `--pre-release` 固定で、タグ起動は禁止。
+- 週次パッチ公開は偶数 MINOR の stable 系列のみ実行し、PATCH version 更新、バッジ統計更新、`npm run compile`、`npm test`、local runtime smoke（Ubuntu/macOS/Windows）、Marketplace / Open VSX 公開、`v<version>` タグ作成まで自動実行する。GitHub Actions の `GITHUB_TOKEN` で push したタグは別 workflow を起動しないため、公開処理は同 workflow 内で完結させる。
 - Stable 手順（迷ったらこの順で）
   1. `package.json` の version を上げる。
   2. 変更を commit する。
