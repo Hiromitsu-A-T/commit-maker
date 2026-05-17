@@ -68,7 +68,7 @@ jobs:
 
       - name: Check whitespace
         if: steps.version-line.outputs.skip != 'true'
-        run: git diff --check
+        run: git diff --check -- . ':(exclude)package.json' ':(exclude)package-lock.json'
 
       - name: Commit and push main
         if: steps.version-line.outputs.skip != 'true'
