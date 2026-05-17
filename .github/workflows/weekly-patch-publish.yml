@@ -23,6 +23,7 @@ jobs:
     name: Prepare weekly patch
     runs-on: ubuntu-latest
     outputs:
+      base_sha: ${{ steps.commit.outputs.base_sha }}
       release_sha: ${{ steps.commit.outputs.release_sha }}
       tag: ${{ steps.commit.outputs.tag }}
       version: ${{ steps.commit.outputs.version }}
@@ -76,20 +77,24 @@ jobs:
         if: steps.version-line.outputs.skip != 'true'
         run: git diff --check -- . ':(exclude)package.json' ':(exclude)package-lock.json'
 
-      - name: Commit and push main
+      - name: Commit and push release branch
         if: steps.version-line.outputs.skip != 'true'
         id: commit
         shell: bash
         run: |
+          BASE_SHA=$(git rev-parse HEAD)
+          BRANCH="codex/weekly-patch-release"
           VERSION=$(node -p "require('./package.json').version")
           TAG="v${VERSION}"
 
+          git switch -c "$BRANCH"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add package.json package-lock.json media/badges
           git commit -m "chore: 週次パッチ ${VERSION} [skip ci]"
-          git push origin HEAD:main
+          git push --force-with-lease origin "$BRANCH"
 
+          echo "base_sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
           echo "release_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -161,6 +166,17 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Check main has not changed
+        shell: bash
+        run: |
+          git fetch origin main:refs/remotes/origin/main
+          CURRENT_MAIN=$(git rev-parse origin/main)
+          BASE_SHA="${{ needs.prepare.outputs.base_sha }}"
+          if [ "$CURRENT_MAIN" != "$BASE_SHA" ]; then
+            echo "::error::main moved from $BASE_SHA to $CURRENT_MAIN. Stop before publishing."
+            exit 1
+          fi
+
       - name: Package VSIX
         shell: bash
         run: |
@@ -198,19 +214,30 @@ jobs:
           VERSION="${{ needs.prepare.outputs.version }}"
           npx ovsx publish "vsix/commit-maker-${VERSION}.vsix" --skip-duplicate
 
-      - name: Tag release
+      - name: Push main and tag release
         shell: bash
         run: |
           TAG="${{ needs.prepare.outputs.tag }}"
+          BASE_SHA="${{ needs.prepare.outputs.base_sha }}"
+          git fetch origin main:refs/remotes/origin/main --tags
+          CURRENT_MAIN=$(git rev-parse origin/main)
+          if [ "$CURRENT_MAIN" != "$BASE_SHA" ]; then
+            echo "::error::main moved from $BASE_SHA to $CURRENT_MAIN after publishing."
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git push origin HEAD:main
+
           if git ls-remote --exit-code --tags origin "$TAG" >/dev/null 2>&1; then
             echo "Tag $TAG already exists."
             exit 0
           fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag "$TAG"
           git push origin "$TAG"
+          git push origin --delete codex/weekly-patch-release || true
 
       - name: Clean stray VSIX and enforce limit
         if: always()
