@@ -9,6 +9,7 @@ import {
   LOCAL_MODEL_DEFINITIONS
 } from '../constants';
 import { LocalModelDefinition, LocalModelOption, LocalModelState } from '../types';
+import { getExplicitUserConfigurationString } from '../configScope';
 
 export interface DownloadProgress {
   downloadedBytes: number;
@@ -197,6 +198,7 @@ async function downloadToFile(
   abortSignal: AbortSignal | undefined,
   onProgress: (progress: DownloadProgress) => void
 ): Promise<void> {
+  validateDownloadUrl(url);
   const res = await fetch(url, { signal: abortSignal });
   if (!res.ok || !res.body) {
     const detail = await res.text().catch(() => res.statusText);
@@ -274,13 +276,17 @@ function getCatalogModel(modelId: string | undefined): LocalModelDefinition {
 }
 
 function getConfiguredString(config: vscode.WorkspaceConfiguration, key: string): string | undefined {
-  const inspected = config.inspect<string>(key) as any;
-  return (
-    inspected?.workspaceFolderLanguageValue ??
-    inspected?.workspaceLanguageValue ??
-    inspected?.globalLanguageValue ??
-    inspected?.workspaceFolderValue ??
-    inspected?.workspaceValue ??
-    inspected?.globalValue
-  );
+  return getExplicitUserConfigurationString(config, key);
+}
+
+function validateDownloadUrl(value: string): void {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error('Local model URL is invalid.');
+  }
+  if (url.protocol !== 'https:') {
+    throw new Error('Local model URL must use HTTPS.');
+  }
 }

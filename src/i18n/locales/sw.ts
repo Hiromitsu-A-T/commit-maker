@@ -90,7 +90,7 @@ const sw: UiStrings = {
     '- Ongeza breaking changes na nambari za issue/PR mwilini inapohitajika',
     '- Hakuna maoni ya AI, kuomba radhi au taarifa za uhakika. Ukweli tu',
     '- Ongeza aina ya Conventional Commits kama kiambishi kwenye kichwa',
-    '- Toka kwa Kiswahili'
+    '- Andika kwa Kiswahili'
   ].join('\n'),
   defaultPresetLabel: 'Chaguo-msingi (imefungwa, inaweza kuhaririwa)',
   providerDescriptionGemini: 'Hupiga moja kwa moja Generative Language API (generateContent).',

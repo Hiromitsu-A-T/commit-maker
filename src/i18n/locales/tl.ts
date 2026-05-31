@@ -90,7 +90,7 @@ const tl: UiStrings = {
     '- Ilagay ang breaking changes at mga numero ng issue/PR sa body kung naaangkop',
     '- Walang opinyon ng AI, paghingi ng paumanhin, o confidence notes. Mga katotohanan lang',
     '- Ilagay ang Conventional Commit type sa unahan ng pamagat',
-    '- Output sa Filipino kung maaari'
+    '- Isulat sa Filipino'
   ].join('\n'),
   defaultPresetLabel: 'Default (nakalock, editable)',
   providerDescriptionGemini: 'Direktang tumatawag sa Generative Language API (generateContent).',

@@ -114,7 +114,7 @@ export async function postJsonWithBackoff(
           strings.msgHttpError
             .replace('{label}', label)
             .replace('{status}', String(res.status))
-            .replace('{text}', text || res.statusText)
+            .replace('{text}', sanitizeLlmErrorText(text || res.statusText))
         );
       }
       const raw = await res.text();
@@ -130,7 +130,7 @@ export async function postJsonWithBackoff(
         strings.logLlmRetry
           .replace('{label}', label)
           .replace('{delay}', String(delayMs))
-          .replace('{error}', String(error))
+          .replace('{error}', sanitizeLlmErrorText(String(error)))
       );
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
@@ -142,7 +142,15 @@ function isRetryable(error: unknown): boolean {
   if (error instanceof Error && 'name' in error && error.name === 'AbortError') {
     return false;
   }
-// Retry only transient network errors
+  // Retry only transient network errors
   const msg = String(error);
   return msg.includes('ECONNRESET') || msg.includes('ENOTFOUND') || msg.includes('ETIMEDOUT') || msg.includes('429');
+}
+
+export function sanitizeLlmErrorText(text: string): string {
+  const redacted = text
+    .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, 'Bearer [REDACTED]')
+    .replace(/\bsk-(?:proj-|ant-api\d*-)?[A-Za-z0-9_-]{8,}\b/g, '[REDACTED_API_KEY]')
+    .replace(/\bAIza[0-9A-Za-z_-]{20,}\b/g, '[REDACTED_API_KEY]');
+  return redacted.length > 1000 ? `${redacted.slice(0, 1000)}...` : redacted;
 }

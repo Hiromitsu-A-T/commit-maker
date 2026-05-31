@@ -1,4 +1,4 @@
-import { MODEL_SUGGESTIONS_BY_PROVIDER } from '../src/constants';
+import { MODEL_SUGGESTIONS_BY_PROVIDER, REASONING_EFFORT_OPTIONS, VERBOSITY_OPTIONS } from '../src/constants';
 import {
   getAllowedReasoningOptions,
   getAllowedVerbosityOptions
@@ -21,9 +21,9 @@ type Combo = {
 };
 
 function buildCombos(model: string): Combo[] {
-  const allowEff = getAllowedReasoningOptions(model);
-  const allowVerb = getAllowedVerbosityOptions(model);
-  if (!allowEff || allowEff.length === 0 || !allowVerb || allowVerb.length === 0) {
+  const allowEff = getAllowedReasoningOptions(model) ?? REASONING_EFFORT_OPTIONS;
+  const allowVerb = getAllowedVerbosityOptions(model) ?? VERBOSITY_OPTIONS;
+  if (allowEff.length === 0 || allowVerb.length === 0) {
     return [];
   }
   const combos: Combo[] = [];

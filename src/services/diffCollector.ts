@@ -7,6 +7,7 @@ import { getStrings, DEFAULT_LANGUAGE } from '../i18n/strings';
 
 const execFileAsync = promisify(execFile);
 const strings = getStrings(DEFAULT_LANGUAGE);
+const MAX_UNTRACKED_FILE_BYTES = 256 * 1024;
 
 export interface GitRepositoryLike {
   rootUri: { fsPath: string };
@@ -119,12 +120,34 @@ async function collectUntrackedFiles(
   }
   const parts: string[] = [];
   for (const rel of paths) {
-    const abs = path.join(repoPath, rel);
+    const abs = resolveInsideRoot(repoPath, rel);
+    if (!abs) {
+      logger?.appendLine(`Skipped untracked file outside repository: ${rel}`);
+      continue;
+    }
+    if (isSensitiveUntrackedPath(rel)) {
+      logger?.appendLine(`Skipped sensitive untracked file: ${rel}`);
+      continue;
+    }
     try {
-      const buf =
-        mockUntrackedFiles && mockUntrackedFiles[rel] !== undefined
-          ? mockUntrackedFiles[rel]
-          : await fs.promises.readFile(abs);
+      let buf: Buffer;
+      if (mockUntrackedFiles && mockUntrackedFiles[rel] !== undefined) {
+        buf = mockUntrackedFiles[rel];
+      } else {
+        const stat = await fs.promises.lstat(abs);
+        if (stat.isSymbolicLink()) {
+          logger?.appendLine(`Skipped untracked symlink: ${rel}`);
+          continue;
+        }
+        if (!stat.isFile()) {
+          continue;
+        }
+        if (stat.size > MAX_UNTRACKED_FILE_BYTES) {
+          logger?.appendLine(`Skipped large untracked file: ${rel}`);
+          continue;
+        }
+        buf = await fs.promises.readFile(abs);
+      }
       const isBinary = isBinaryBuffer(buf, rel);
       if (!includeBinary && isBinary) {
         logger?.appendLine(strings.msgUntrackedSkipBinary.replace('{path}', rel));
@@ -152,4 +175,33 @@ export function isBinaryBuffer(buf: Buffer, filename: string): boolean {
     '.db', '.sqlite', '.sqlite3', '.dex'
   ]);
   return binaryExts.has(ext);
+}
+
+function resolveInsideRoot(root: string, rel: string): string | undefined {
+  const resolvedRoot = path.resolve(root);
+  const resolved = path.resolve(resolvedRoot, rel);
+  const relative = path.relative(resolvedRoot, resolved);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    return undefined;
+  }
+  return resolved;
+}
+
+export function isSensitiveUntrackedPath(filename: string): boolean {
+  const lower = filename.toLowerCase();
+  const base = path.basename(lower);
+  const ext = path.extname(lower);
+  if (base === '.env' || base.startsWith('.env.')) {
+    return true;
+  }
+  if (base === '.npmrc' || base === '.pypirc' || base === '.netrc') {
+    return true;
+  }
+  if (base === 'credentials.json' || base === 'service-account.json' || base.includes('service-account')) {
+    return true;
+  }
+  if (base === 'id_rsa' || base === 'id_dsa' || base === 'id_ecdsa' || base === 'id_ed25519') {
+    return true;
+  }
+  return new Set(['.pem', '.key', '.p12', '.pfx', '.jks', '.keystore']).has(ext);
 }

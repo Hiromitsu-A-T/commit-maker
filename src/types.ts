@@ -1,12 +1,13 @@
 import { LanguageCode, isLanguageCode, SUPPORTED_LANG_CODES } from './i18n/languages';
 
 export type ProviderId = 'openai' | 'gemini' | 'claude' | 'local';
-export type ReasoningEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high';
+export type ReasoningEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
 export type VerbositySetting = 'low' | 'medium' | 'high';
 export type CommitStatus = 'idle' | 'loading' | 'ready' | 'error';
 export type MaxPromptMode = 'unlimited' | 'limited';
-export type LocalGenerationProfileId = 'deterministic' | 'gemma4';
-export type LocalRuntimeProfileId = 'default' | 'gemma4';
+export type LocalGenerationProfileId = 'deterministic' | 'gemma4' | 'lfm25';
+export type LocalRuntimeProfileId = 'default' | 'qwen3Thinking' | 'gemma4' | 'lfm25';
+export type LocalRuntimeVersionId = 'b8967' | 'b9441';
 
 export interface ProviderOption {
   id: ProviderId;
@@ -60,6 +61,7 @@ export interface LocalModelDefinition {
   sha256: string;
   sizeBytes: number;
   contextSize: number;
+  runtimeVersion?: LocalRuntimeVersionId;
   generationProfile?: LocalGenerationProfileId;
   generation?: Partial<LocalModelGenerationSettings>;
   runtimeProfile?: LocalRuntimeProfileId;
@@ -80,6 +82,7 @@ export interface LocalModelGenerationSettings {
 
 export interface LocalModelRuntimeSettings {
   reasoning?: 'off' | 'on';
+  reasoningBudget?: number;
   cacheRamMb?: number;
   ctxCheckpoints?: number;
 }
@@ -108,7 +111,8 @@ export function isReasoningEffort(value: unknown): value is ReasoningEffort {
     value === 'minimal' ||
     value === 'low' ||
     value === 'medium' ||
-    value === 'high'
+    value === 'high' ||
+    value === 'xhigh'
   );
 }
 

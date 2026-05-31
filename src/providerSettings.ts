@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ProviderId } from './types';
 import { DEFAULT_PROVIDER_ENDPOINTS, DEFAULT_PROVIDER_SECRETS } from './constants';
+import { getUserConfigurationString } from './configScope';
 
 const ENDPOINT_CONFIG_KEY: Record<ProviderId, string> = {
   openai: 'endpoint',
@@ -17,9 +18,11 @@ const API_KEY_CONFIG_KEY: Record<ProviderId, string> = {
 };
 
 export function getEndpoint(config: vscode.WorkspaceConfiguration, provider: ProviderId): string {
-  return config.get<string>(ENDPOINT_CONFIG_KEY[provider], DEFAULT_PROVIDER_ENDPOINTS[provider]);
+  return getUserConfigurationString(config, ENDPOINT_CONFIG_KEY[provider], DEFAULT_PROVIDER_ENDPOINTS[provider])
+    ?? DEFAULT_PROVIDER_ENDPOINTS[provider];
 }
 
 export function getApiKeySecretName(config: vscode.WorkspaceConfiguration, provider: ProviderId): string {
-  return config.get<string>(API_KEY_CONFIG_KEY[provider], DEFAULT_PROVIDER_SECRETS[provider]);
+  return getUserConfigurationString(config, API_KEY_CONFIG_KEY[provider], DEFAULT_PROVIDER_SECRETS[provider])
+    ?? DEFAULT_PROVIDER_SECRETS[provider];
 }

@@ -14,7 +14,12 @@ function shouldFail(msg: any) {
 export async function runPanelMessageGuardTests(): Promise<void> {
   shouldPass({ type: 'ready' });
   shouldPass({ type: 'commitPromptChanged', value: 'x' });
+  shouldPass({ type: 'commitProviderChanged', value: 'gemini' });
   shouldPass({ type: 'commitIncludeBinaryChanged', value: true });
+  shouldPass({ type: 'commitMaxPromptChanged', value: { mode: 'limited', value: 12000.8 } });
+  shouldPass({ type: 'commitReasoningChanged', value: 'medium' });
+  shouldPass({ type: 'commitVerbosityChanged', value: 'high' });
+  shouldPass({ type: 'languageChanged', value: 'ja' });
   shouldPass({ type: 'localModelChanged', value: 'Qwen3-4B-Instruct-2507-Q4_K_M' });
   shouldPass({ type: 'localModelDownload' });
   shouldPass({ type: 'localModelCancelDownload' });
@@ -23,6 +28,11 @@ export async function runPanelMessageGuardTests(): Promise<void> {
   shouldPass({ type: 'localModelRefresh' });
   shouldFail({});
   shouldFail({ type: 'commitPromptChanged', value: 1 });
+  shouldFail({ type: 'commitProviderChanged', value: 'command:evil' });
+  shouldFail({ type: 'commitMaxPromptChanged', value: { mode: 'limited', value: '12000' } });
+  shouldFail({ type: 'commitReasoningChanged', value: 'extreme' });
+  shouldFail({ type: 'commitVerbosityChanged', value: 'verbose' });
+  shouldFail({ type: 'languageChanged', value: 'xx' });
   shouldFail({ type: 'unknown' });
   console.log('panelMessageGuard.test.ts passed');
 }

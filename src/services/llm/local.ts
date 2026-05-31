@@ -14,6 +14,18 @@ import { LocalModelGenerationSettings } from '../../types';
 import { createAbortController, postJsonWithBackoff } from './shared';
 import { findBundledRuntime } from '../localRuntime';
 
+const LOCAL_SYSTEM_PROMPT = [
+  'Return only the final commit message.',
+  'Use exactly one line unless the user explicitly asks for a body.',
+  'For Conventional Commits, the required pattern is "<type>: <summary>". The first characters must be a valid ASCII type prefix such as feat:, fix:, chore:, docs:, refactor:, test:, ci:, build:, or perf:.',
+  'Use exactly one Conventional Commit type prefix, at the very beginning only.',
+  'The requested output language is mandatory; after the prefix, write natural-language text in that language even when the diff uses English identifiers.',
+  'For non-Latin requested languages, use the native script of that language for natural-language text.',
+  'Do not invent issue numbers, PR numbers, file names, or identifiers; include them only when they appear in the user instructions or diff.',
+  'Do not copy diff lines or code snippets into the answer.',
+  'Do not include explanations, markdown fences, reasoning, thinking text, or chat-template tags.'
+].join(' ');
+
 export interface LocalLlmCallParams {
   prompt: string;
   modelPath: string;
@@ -241,6 +253,8 @@ function cleanupLocalOutput(value: string): string {
     .replace(/```/g, '')
     .replace(/<\|channel\>thought[\s\S]*?<channel\|>/g, '')
     .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/<\|(?:startoftext|endoftext|im_start|im_end)\|>/g, '')
+    .replace(/^\s*(?:assistant|final)\s*[:：]\s*/i, '')
     .trim();
 }
 
@@ -254,7 +268,7 @@ function buildChatCompletionBody(
     messages: [
       {
         role: 'system',
-        content: 'Return only the final commit message. Do not include explanations, markdown fences, or reasoning.'
+        content: LOCAL_SYSTEM_PROMPT
       },
       { role: 'user', content: prompt }
     ],

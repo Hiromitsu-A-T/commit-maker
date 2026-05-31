@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import * as vscode from 'vscode';
 import {
   DEFAULT_PROVIDER,
@@ -234,7 +235,8 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
     this.view = webviewView;
     this.ready = false;
     webviewView.webview.options = {
-      enableScripts: true
+      enableScripts: true,
+      localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'media')]
     };
     this.attach(webviewView);
   }
@@ -433,9 +435,19 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
   }
 
   private handleOpenExternal(url: string | undefined): void {
-    if (url) {
-      vscode.env.openExternal(vscode.Uri.parse(url));
+    if (url && isAllowedExternalUrl(url, this.getAllowedExternalUrls())) {
+      void vscode.env.openExternal(vscode.Uri.parse(url));
     }
+  }
+
+  private getAllowedExternalUrls(): Set<string> {
+    const language = this.state.language || DEFAULT_LANGUAGE;
+    const strings = STRINGS[language] ?? STRINGS[DEFAULT_LANGUAGE];
+    return new Set(
+      Object.values(buildProviderIssueUrls(buildProviderCapabilities(strings)))
+        .map(normalizeExternalUrl)
+        .filter((value): value is string => Boolean(value))
+    );
   }
 
   private postState(): void {
@@ -535,10 +547,19 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
 }
 
 function getNonce(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < 16; i += 1) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  return crypto.randomBytes(16).toString('base64');
+}
+
+function normalizeExternalUrl(value: string): string | undefined {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' ? url.href : undefined;
+  } catch {
+    return undefined;
   }
-  return result;
+}
+
+function isAllowedExternalUrl(value: string, allowed: Set<string>): boolean {
+  const normalized = normalizeExternalUrl(value);
+  return Boolean(normalized && allowed.has(normalized));
 }

@@ -15,13 +15,23 @@ const GENERATION_PROFILES: Record<LocalGenerationProfileId, LocalModelGeneration
     topP: 0.95,
     topK: 64,
     minP: 0
+  },
+  lfm25: {
+    temperature: 0,
+    topK: 80,
+    repeatPenalty: 1.05
   }
 };
 
 const RUNTIME_PROFILES: Record<LocalRuntimeProfileId, LocalModelRuntimeSettings> = {
   default: {},
+  qwen3Thinking: {
+    reasoningBudget: 512
+  },
   // Keep Gemma runtime tweaks centralized; add args here only after smoke verification.
-  gemma4: {}
+  gemma4: {},
+  // LFM2.5 requires a newer llama.cpp runtime; version selection lives on the model definition.
+  lfm25: {}
 };
 
 export function resolveLocalGenerationSettings(model: LocalModelDefinition): LocalModelGenerationSettings {
@@ -35,6 +45,9 @@ export function resolveLocalRuntimeArgs(model: LocalModelDefinition): string[] {
   const args: string[] = [];
   if (settings.reasoning) {
     args.push('--reasoning', settings.reasoning);
+  }
+  if (typeof settings.reasoningBudget === 'number' && Number.isFinite(settings.reasoningBudget)) {
+    args.push('--reasoning-budget', String(settings.reasoningBudget));
   }
   if (typeof settings.cacheRamMb === 'number' && Number.isFinite(settings.cacheRamMb)) {
     args.push('--cache-ram', String(settings.cacheRamMb));

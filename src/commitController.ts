@@ -55,7 +55,7 @@ import {
   resolveLocalModelId
 } from './services/localModel';
 import { resolveLocalGenerationSettings, resolveLocalRuntimeArgs } from './services/localModelProfiles';
-import { ensureLocalRuntime } from './services/localRuntime';
+import { ensureLocalRuntime, resolveLocalRuntimeVersion } from './services/localRuntime';
 import {
   applyPresetById,
   deletePresetById,
@@ -69,6 +69,7 @@ import { loadPromptPresetsFromStorage, persistPromptPresets } from './promptPres
 import { toPanelState, withStatus } from './panelSync';
 import { CommitState } from './commitState';
 import { DEFAULT_LANGUAGE, getStrings } from './i18n/strings';
+import { getLanguagePromptName } from './i18n/languages';
 import {
   getAllowedReasoningOptions,
   getDefaultReasoningForModel,
@@ -488,14 +489,12 @@ export class CommitController implements vscode.Disposable {
       });
       this.state.localModel = { ...localModel, status: 'loading', error: undefined };
       this.panel.updateState({ localModel: this.state.localModel });
-      await ensureLocalRuntime(
-        this.context,
-        this.context.extensionUri,
-        config,
-        controller.signal,
-        undefined,
-        this.createLocalLogger(config)
-      );
+      const localModelDefinition = getLocalModelDefinition(config, this.state.localModelId);
+      await ensureLocalRuntime(this.context, this.context.extensionUri, config, {
+        runtimeVersion: resolveLocalRuntimeVersion(localModelDefinition),
+        abortSignal: controller.signal,
+        logger: this.createLocalLogger(config)
+      });
       this.state.localModel = localModel;
       this.panel.updateState({ localModel });
       void vscode.window.showInformationMessage(this.strings.msgLocalModelDownloadComplete);
@@ -778,7 +777,18 @@ export class CommitController implements vscode.Disposable {
     const guard = this.strings.promptGuard;
     const userInstructionLabel = this.strings.userInstructionLabel;
     const instruction = this.state.prompt || this.getDefaultPrompt();
-    return `${guard}\n\n${userInstructionLabel}\n${instruction}\n\n${this.strings.diffHeading}\n${diff}`;
+    const languageCode = this.state.language || DEFAULT_LANGUAGE;
+    const languagePromptName = getLanguagePromptName(languageCode);
+    const outputLanguageHint = [
+      `Default output language selected in Commit Maker: ${languageCode} / ${languagePromptName} / ${this.strings.languageName}.`,
+      'Do not answer in English unless the selected language is en or the user instructions below explicitly request English.',
+      'If Conventional Commits are requested, the required pattern is "<type>: <summary>". The first characters must be one of feat:, fix:, chore:, docs:, refactor:, test:, ci:, build:, or perf:.',
+      'Use exactly one type prefix at the very beginning, then write the rest in the requested language.',
+      'For non-Latin selected languages, use the native script for natural-language text.',
+      'Do not invent issue numbers, PR numbers, file names, or identifiers; include them only when they appear below.',
+      'If the user instructions below request a different output language, follow those instructions instead.'
+    ].join(' ');
+    return `${guard}\n\n${outputLanguageHint}\n\n${userInstructionLabel}\n${instruction}\n\n${this.strings.diffHeading}\n${diff}`;
   }
 
   private async generateLocalCommitMessage(diff: string, progress?: (message: string) => void): Promise<string> {
@@ -963,14 +973,11 @@ export class CommitController implements vscode.Disposable {
     }
     const localModelDefinition = getLocalModelDefinition(config, this.state.localModelId);
     const logger = this.createLocalLogger(config);
-    const runtimePath = await ensureLocalRuntime(
-      this.context,
-      this.context.extensionUri,
-      config,
-      this.currentAbortController?.signal,
-      undefined,
+    const runtimePath = await ensureLocalRuntime(this.context, this.context.extensionUri, config, {
+      runtimeVersion: resolveLocalRuntimeVersion(localModelDefinition),
+      abortSignal: this.currentAbortController?.signal,
       logger
-    );
+    });
     return {
       modelPath: localModel.path,
       runtimePath,

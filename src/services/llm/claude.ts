@@ -35,12 +35,7 @@ export async function callClaude({
         'x-api-key': apiKey,
         'anthropic-version': ANTHROPIC_API_VERSION
       },
-      body: {
-        model,
-        max_tokens: DEFAULT_CLAUDE_MAX_TOKENS,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0
-      }
+      body: buildClaudeBody(model, prompt)
     }),
     parse: raw => {
       const data = raw ? JSON.parse(raw) as any : {};
@@ -51,4 +46,20 @@ export async function callClaude({
       return text;
     }
   });
+}
+
+function buildClaudeBody(model: string, prompt: string): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    model,
+    max_tokens: DEFAULT_CLAUDE_MAX_TOKENS,
+    messages: [{ role: 'user', content: prompt }]
+  };
+  if (!isClaudeTemperatureDeprecated(model)) {
+    body.temperature = 0;
+  }
+  return body;
+}
+
+function isClaudeTemperatureDeprecated(model: string): boolean {
+  return model.trim().toLowerCase().startsWith('claude-opus-4-8');
 }

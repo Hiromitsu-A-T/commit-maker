@@ -1,4 +1,10 @@
 import { WebviewInboundMessage } from './panelMessages';
+import {
+  isLanguageCode,
+  isProviderId,
+  isReasoningEffort,
+  isVerbositySetting
+} from './types';
 
 type Validator<T> = (value: unknown) => value is T;
 
@@ -20,11 +26,11 @@ export function sanitizeMessage(message: unknown): WebviewInboundMessage | undef
       return { type: 'ready' };
     case 'apiKeyProviderChanged':
     case 'commitProviderChanged':
-      return isString((candidate as any).value)
+      return isProviderId((candidate as any).value)
         ? { type: candidate.type, value: (candidate as any).value }
         : undefined;
     case 'submitApiKey':
-      return isString((candidate as any).value) && isString((candidate as any).provider)
+      return isString((candidate as any).value) && isProviderId((candidate as any).provider)
         ? { type: 'submitApiKey', value: (candidate as any).value, provider: (candidate as any).provider }
         : undefined;
     case 'commitPromptChanged':
@@ -52,13 +58,25 @@ export function sanitizeMessage(message: unknown): WebviewInboundMessage | undef
     case 'commitMaxPromptChanged': {
       const value = (candidate as any).value;
       if (!value || (value.mode !== 'unlimited' && value.mode !== 'limited')) return undefined;
-      return { type: 'commitMaxPromptChanged', value: { mode: value.mode, value: value.value ?? null } };
+      if (value.mode === 'unlimited') {
+        return { type: 'commitMaxPromptChanged', value: { mode: 'unlimited', value: null } };
+      }
+      if (typeof value.value !== 'number' || !Number.isFinite(value.value) || value.value <= 0) {
+        return undefined;
+      }
+      return { type: 'commitMaxPromptChanged', value: { mode: 'limited', value: Math.floor(value.value) } };
     }
     case 'commitReasoningChanged':
+      return isReasoningEffort((candidate as any).value)
+        ? { type: candidate.type, value: (candidate as any).value }
+        : undefined;
     case 'commitVerbosityChanged':
+      return isVerbositySetting((candidate as any).value)
+        ? { type: candidate.type, value: (candidate as any).value }
+        : undefined;
     case 'localModelChanged':
       return isString((candidate as any).value)
-        ? { type: candidate.type, value: (candidate as any).value as any }
+        ? { type: candidate.type, value: (candidate as any).value }
         : undefined;
     case 'localModelDownload':
     case 'localModelCancelDownload':
@@ -82,7 +100,9 @@ export function sanitizeMessage(message: unknown): WebviewInboundMessage | undef
     case 'openExternal':
       return isString((candidate as any).url) ? { type: 'openExternal', url: (candidate as any).url } : undefined;
     case 'languageChanged':
-      return isString((candidate as any).value) ? { type: 'languageChanged', value: (candidate as any).value } : undefined;
+      return isLanguageCode((candidate as any).value)
+        ? { type: 'languageChanged', value: (candidate as any).value }
+        : undefined;
     default:
       return undefined;
   }

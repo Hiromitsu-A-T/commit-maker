@@ -84,13 +84,13 @@ const ur: UiStrings = {
   presetTitleOverwrite: 'منتخب پری سیٹ اوور رائٹ کریں',
 
   defaultCommitPrompt: [
-    'Write a title within 50 characters and, if needed, bullet body lines wrapped to 72 characters.',
-    '- Avoid imperative mood; briefly state the change (no opinions or guesses)',
-    '- Body lines start with "- "; include only when necessary, each within 72 characters',
-    '- Add breaking changes and issue/PR numbers to the body when applicable',
-    '- No AI opinions, apologies, or confidence notes. Facts only',
-    '- Prefix the title with a Conventional Commit type',
-    '- Output in English'
+    '50 حروف کے اندر عنوان لکھیں، اور ضرورت ہو تو 72 حروف تک بلٹ باڈی لائنیں لکھیں۔',
+    '- امریہ انداز سے گریز کریں؛ تبدیلی کو مختصر بیان کریں (رائے یا اندازہ نہیں)',
+    '- باڈی لائنیں "- " سے شروع ہوں؛ صرف ضرورت پر شامل کریں، ہر سطر 72 حروف تک',
+    '- اگر لاگو ہو تو breaking changes اور issue/PR نمبرز باڈی میں شامل کریں',
+    '- AI کی رائے، معذرت یا اعتماد کے نوٹس نہ دیں۔ صرف حقائق',
+    '- عنوان کے آغاز میں Conventional Commit type لگائیں',
+    '- اردو میں آؤٹ پٹ کریں'
   ].join('\n'),
   defaultPresetLabel: 'ڈیفالٹ (لاک، ایڈیٹ ایبل)',
   providerDescriptionGemini: 'Generative Language API (generateContent) کو براہِ راست کال کرتا ہے۔',

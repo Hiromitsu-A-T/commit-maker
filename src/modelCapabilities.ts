@@ -24,6 +24,10 @@ export function getVerbosityBlocklistPatterns(): string[] {
 }
 
 const ALLOWED_REASONING_BY_MODEL: Record<string, ReasoningEffort[]> = {
+  'gpt-5.5': ['none', 'low', 'medium', 'high', 'xhigh'],
+  'gpt-5.4': ['none', 'low', 'medium', 'high', 'xhigh'],
+  'gpt-5.4-mini': ['none', 'low', 'medium', 'high', 'xhigh'],
+  'gpt-5.4-nano': ['none', 'low', 'medium', 'high', 'xhigh'],
   'gpt-5.1': ['none', 'low', 'medium', 'high'],
   'gpt-5.1-codex': ['low', 'medium', 'high'],
   'gpt-5': ['minimal', 'low', 'medium', 'high'],

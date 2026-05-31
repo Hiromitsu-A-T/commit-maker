@@ -18,14 +18,10 @@ async function main(): Promise<void> {
   };
 
   try {
-    const runtimePath = await ensureLocalRuntime(
-      context as any,
-      extensionUri as any,
-      config as any,
-      undefined,
-      createProgressLogger(),
-      message => console.log(message)
-    );
+    const runtimePath = await ensureLocalRuntime(context as any, extensionUri as any, config as any, {
+      onProgress: createProgressLogger(),
+      logger: message => console.log(message)
+    });
     console.log(`Runtime path: ${runtimePath}`);
     const output = await runRuntimeVersion(runtimePath);
     if (!/version:\s*8967/.test(output)) {

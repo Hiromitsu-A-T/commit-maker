@@ -5,7 +5,8 @@ import {
   ProviderOption,
   ReasoningEffort,
   VerbositySetting,
-  LocalModelDefinition
+  LocalModelDefinition,
+  LocalRuntimeVersionId
 } from './types';
 import { DEFAULT_LANGUAGE, getStrings } from './i18n/strings';
 import { UiStrings } from './i18n/types';
@@ -47,6 +48,8 @@ export const COMMIT_LANGUAGE_STORAGE_KEY = 'commitMaker.language';
 export const LEGACY_DEFAULT_LOCAL_MODEL_ID = 'commit-maker-local-qwen3-4b';
 export const DEFAULT_LOCAL_MODEL_ID = 'Qwen3-4B-Instruct-2507-Q4_K_M';
 export const GEMMA4_LOCAL_MODEL_ID = 'Gemma-4-E4B-it-Q4_K_M';
+export const LFM25_LOCAL_MODEL_ID = 'LFM2.5-8B-A1B-Q4_K_M';
+export const DEFAULT_LOCAL_RUNTIME_VERSION: LocalRuntimeVersionId = 'b8967';
 export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
   {
     id: DEFAULT_LOCAL_MODEL_ID,
@@ -56,6 +59,7 @@ export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
     sha256: '1571ec5115bcfed4b4327fc27b5f44ea284806caf5331eef89326191c9b031d6',
     sizeBytes: 2_497_279_136,
     contextSize: 262_144,
+    runtimeVersion: DEFAULT_LOCAL_RUNTIME_VERSION,
     generationProfile: 'deterministic',
     legacyIds: [LEGACY_DEFAULT_LOCAL_MODEL_ID]
   },
@@ -67,7 +71,9 @@ export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
     sha256: 'ddd52e18200baab281c5c46f70d544ce4d4fe4846eab1608f2fff48a64554212',
     sizeBytes: 2_497_281_152,
     contextSize: 262_144,
-    generationProfile: 'deterministic'
+    runtimeVersion: DEFAULT_LOCAL_RUNTIME_VERSION,
+    generationProfile: 'deterministic',
+    runtimeProfile: 'qwen3Thinking'
   },
   {
     id: GEMMA4_LOCAL_MODEL_ID,
@@ -77,8 +83,21 @@ export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
     sha256: '90ce98129eb3e8cc57e62433d500c97c624b1e3af1fcc85dd3b55ad7e0313e9f',
     sizeBytes: 5_335_289_824,
     contextSize: 32_768,
+    runtimeVersion: DEFAULT_LOCAL_RUNTIME_VERSION,
     generationProfile: 'gemma4',
     runtimeProfile: 'gemma4'
+  },
+  {
+    id: LFM25_LOCAL_MODEL_ID,
+    label: 'LFM2.5-8B-A1B Q4_K_M',
+    filename: 'LFM2.5-8B-A1B-Q4_K_M.gguf',
+    url: 'https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-GGUF/resolve/main/LFM2.5-8B-A1B-Q4_K_M.gguf',
+    sha256: '4923ec14f06b968b74d663e5949867d2d9c3bf13a20b8be1a9f9af39989b2bb0',
+    sizeBytes: 5_155_564_768,
+    contextSize: 131_072,
+    runtimeVersion: 'b9441',
+    generationProfile: 'lfm25',
+    runtimeProfile: 'lfm25'
   }
 ];
 export const DEFAULT_LOCAL_MODEL = LOCAL_MODEL_DEFINITIONS[0];
@@ -89,9 +108,9 @@ export const DEFAULT_LOCAL_MODEL_SIZE_BYTES = DEFAULT_LOCAL_MODEL.sizeBytes;
 export const DEFAULT_LOCAL_CONTEXT_SIZE = 32768;
 export const DEFAULT_LOCAL_GPU_LAYERS = 99;
 export const DEFAULT_LOCAL_KEEP_ALIVE_MS = 300000;
-export const DEFAULT_LOCAL_MAX_OUTPUT_TOKENS = 2048;
+export const DEFAULT_LOCAL_MAX_OUTPUT_TOKENS = 4096;
 
-export const REASONING_EFFORT_OPTIONS: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high'];
+export const REASONING_EFFORT_OPTIONS: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
 export const DEFAULT_REASONING_EFFORT: ReasoningEffort = 'none';
 export const VERBOSITY_OPTIONS: VerbositySetting[] = ['low', 'medium', 'high'];
 export const DEFAULT_VERBOSITY: VerbositySetting = 'medium';
@@ -110,7 +129,14 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       description: strings.providerDescriptionGemini,
       apiKeyPlaceholder: 'AIza...',
       requiresApiKey: true,
-      models: ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'],
+      models: [
+        'gemini-2.5-flash-lite',
+        'gemini-3.1-flash-lite',
+        'gemini-3.5-flash',
+        'gemini-3-flash-preview',
+        'gemini-2.5-flash',
+        'gemini-2.5-pro'
+      ],
       defaultModel: 'gemini-2.5-flash-lite',
       issueUrl: 'https://aistudio.google.com/app/api-keys',
       defaultEndpoint: 'https://generativelanguage.googleapis.com/v1beta/models',
@@ -126,6 +152,10 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       apiKeyPlaceholder: 'sk-...',
       requiresApiKey: true,
       models: [
+        'gpt-5.4-nano',
+        'gpt-5.4-mini',
+        'gpt-5.4',
+        'gpt-5.5',
         'gpt-5-nano',
         'gpt-5-mini',
         'gpt-5',
@@ -136,7 +166,7 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
         'gpt-5.1-codex-mini'
         // 'gpt-5.1-chat-latest', 'gpt-5-chat-latest' は Responses 非対応のためデフォルト候補から除外
       ],
-      defaultModel: 'gpt-5-nano',
+      defaultModel: 'gpt-5.4-nano',
       issueUrl: 'https://platform.openai.com/api-keys',
       defaultEndpoint: 'https://api.openai.com/v1/responses',
       defaultSecret: 'commit-maker/api-key',
@@ -151,6 +181,9 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       apiKeyPlaceholder: 'sk-ant-...',
       requiresApiKey: true,
       models: [
+        'claude-haiku-4-5',
+        'claude-sonnet-4-6',
+        'claude-opus-4-8',
         'claude-haiku-4-5-20251001',
         'claude-sonnet-4-5-20250929',
         'claude-opus-4-5-20251101',
@@ -158,7 +191,7 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
         'claude-opus-4-20250514',
         'claude-sonnet-4-20250514'
       ],
-      defaultModel: 'claude-haiku-4-5-20251001',
+      defaultModel: 'claude-haiku-4-5',
       issueUrl: 'https://console.anthropic.com/settings/keys',
       defaultEndpoint: 'https://api.anthropic.com/v1/messages',
       defaultSecret: 'commit-maker/api-key/claude',

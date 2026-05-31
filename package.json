@@ -1,8 +1,8 @@
 {
   "name": "commit-maker",
   "displayName": "Commit Maker – コミットメーカー",
-  "description": "Git差分からコミットメッセージをAI生成。BYOKとQwen3/Gemma 4などのローカルGGUFモデルに対応。API利用料なしでも使えます。",
-  "version": "0.6.5",
+  "description": "Git差分からコミットメッセージをAI生成。BYOKとQwen3/Gemma 4/LFM2.5のローカルGGUFモデルに対応。",
+  "version": "0.6.6",
   "publisher": "Hiromitsu",
   "license": "Apache-2.0",
   "repository": {
@@ -40,6 +40,9 @@
     "qwen3",
     "gemma",
     "gemma 4",
+    "lfm",
+    "lfm2.5",
+    "liquid ai",
     "byok",
     "openai",
     "gemini",
@@ -67,6 +70,12 @@
   },
   "icon": "media/commit-maker.png",
   "main": "./out/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Git 差分を読み取り、外部 LLM またはローカル runtime へ渡すため、信頼済みワークスペースでのみ有効化します。"
+    }
+  },
   "contributes": {
     "commands": [
       {
@@ -123,21 +132,25 @@
         },
         "commitMaker.endpoint": {
           "type": "string",
+          "scope": "application",
           "default": "https://api.openai.com/v1/responses",
           "description": "OpenAI (Responses/Chat Completions) 用エンドポイント"
         },
         "commitMaker.endpointGemini": {
           "type": "string",
+          "scope": "application",
           "default": "https://generativelanguage.googleapis.com/v1beta/models",
           "description": "Google Gemini generateContent ベース URL"
         },
         "commitMaker.endpointClaude": {
           "type": "string",
+          "scope": "application",
           "default": "https://api.anthropic.com/v1/messages",
           "description": "Anthropic Claude messages API エンドポイント"
         },
         "commitMaker.endpointLocal": {
           "type": "string",
+          "scope": "application",
           "default": "http://127.0.0.1",
           "description": "Local provider 内部用エンドポイント（通常は変更不要）"
         },
@@ -150,9 +163,11 @@
           "type": "string",
           "enum": [
             "none",
+            "minimal",
             "low",
             "medium",
-            "high"
+            "high",
+            "xhigh"
           ],
           "default": "medium",
           "description": "OpenAI Responses API 用 reasoning.effort"
@@ -169,41 +184,49 @@
         },
         "commitMaker.apiKeySecret": {
           "type": "string",
+          "scope": "application",
           "default": "commit-maker/api-key",
           "description": "OpenAI 用 API キーを保存する SecretStorage のキー名"
         },
         "commitMaker.apiKeySecretGemini": {
           "type": "string",
+          "scope": "application",
           "default": "commit-maker/api-key/gemini",
           "description": "Gemini 用 API キーを保存する SecretStorage のキー名"
         },
         "commitMaker.apiKeySecretClaude": {
           "type": "string",
+          "scope": "application",
           "default": "commit-maker/api-key/claude",
           "description": "Claude 用 API キーを保存する SecretStorage のキー名"
         },
         "commitMaker.apiKeySecretLocal": {
           "type": "string",
+          "scope": "application",
           "default": "",
           "description": "Local provider は API キーを使用しません"
         },
         "commitMaker.localRuntimePath": {
           "type": "string",
+          "scope": "application",
           "default": "",
           "description": "自動取得 runtime を使わない場合の llama-server 実行ファイルパス"
         },
         "commitMaker.localModelUrl": {
           "type": "string",
+          "scope": "application",
           "default": "",
           "description": "空なら選択モデルを使用。指定時は Local provider の GGUF モデル URL を上書き"
         },
         "commitMaker.localModelFilename": {
           "type": "string",
+          "scope": "application",
           "default": "",
           "description": "空なら選択モデルを使用。指定時は Local provider の保存ファイル名を上書き"
         },
         "commitMaker.localModelSha256": {
           "type": "string",
+          "scope": "application",
           "default": "",
           "description": "空なら選択モデルを使用。指定時は Local provider の GGUF モデル検証用 SHA256 を上書き"
         },
@@ -288,6 +311,7 @@
     "smoke:gemini:matrix": "ts-node --transpile-only scripts/smoke-gemini-matrix.ts",
     "smoke:claude": "ts-node --transpile-only scripts/smoke-claude.ts",
     "smoke:claude:matrix": "ts-node --transpile-only scripts/smoke-claude-matrix.ts",
+    "smoke:cloud:minimal": "ts-node --transpile-only scripts/smoke-cloud-minimal.ts",
     "smoke:local:runtime": "ts-node --project tsconfig.json scripts/smoke-local-runtime.ts"
   },
   "devDependencies": {

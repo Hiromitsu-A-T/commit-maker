@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { callLlmJson } from './shared';
+import { callLlmJson, sanitizeLlmErrorText } from './shared';
 
 type FetchMock = typeof fetch;
 
@@ -96,9 +96,23 @@ async function testTimeoutAbort(): Promise<void> {
   });
 }
 
+async function testSanitizeLlmErrorText(): Promise<void> {
+  const text = [
+    'Bearer sk-proj-abcdefghijklmnopqrstuvwxyz123456',
+    'sk-ant-api03-abcdefghijklmnopqrstuvwxyz123456',
+    'AIzaabcdefghijklmnopqrstuvwxyz1234567890'
+  ].join('\n');
+  const sanitized = sanitizeLlmErrorText(text);
+  assert(!sanitized.includes('sk-proj-abcdefghijklmnopqrstuvwxyz123456'));
+  assert(!sanitized.includes('sk-ant-api03-abcdefghijklmnopqrstuvwxyz123456'));
+  assert(!sanitized.includes('AIzaabcdefghijklmnopqrstuvwxyz1234567890'));
+  assert(sanitized.includes('[REDACTED_API_KEY]'));
+}
+
 export async function runSharedLlmTests(): Promise<void> {
   await testSuccessNoRetry();
   await testRetryOn429();
   await testTimeoutAbort();
+  await testSanitizeLlmErrorText();
   console.log('shared.test.ts passed');
 }

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { CommitPanelProvider } from './panel';
 import { CommitController } from './commitController';
-import { ProviderId, LanguageCode, isLanguageCode } from './types';
+import { ProviderId, LanguageCode, isLanguageCode, isProviderId } from './types';
 import { getApiKeySecretName } from './providerSettings';
 import { buildProviderCapabilities, COMMIT_LANGUAGE_STORAGE_KEY } from './constants';
 import { getStrings, DEFAULT_LANGUAGE } from './i18n/strings';
@@ -61,6 +61,9 @@ async function saveApiKey(context: vscode.ExtensionContext): Promise<void> {
   }
   const config = vscode.workspace.getConfiguration('commitMaker');
   const secretKey = getApiKeySecretName(config, providerId);
+  if (!secretKey) {
+    return;
+  }
 
   const value = await vscode.window.showInputBox({
     prompt: strings.msgApiKeyInputPrompt.replace('{provider}', provider.label),
@@ -70,17 +73,24 @@ async function saveApiKey(context: vscode.ExtensionContext): Promise<void> {
   if (!value) {
     return;
   }
-  await context.secrets.store(secretKey ?? '', value);
+  await context.secrets.store(secretKey, value);
   void vscode.window.showInformationMessage(strings.msgApiKeySaved);
 }
 
 async function storeApiKey(context: vscode.ExtensionContext, provider: ProviderId, value: string): Promise<void> {
-  if (provider === 'local') {
+  if (!isProviderId(provider) || provider === 'local') {
     return;
   }
   const config = vscode.workspace.getConfiguration('commitMaker');
   const secretKey = getApiKeySecretName(config, provider);
-  await context.secrets.store(secretKey ?? '', value);
+  if (!secretKey) {
+    return;
+  }
+  if (!value) {
+    await context.secrets.delete(secretKey);
+    return;
+  }
+  await context.secrets.store(secretKey, value);
 }
 
 function maskKey(value: string | undefined): string | undefined {
