@@ -14,6 +14,9 @@ async function main(): Promise<void> {
     get(key: string): string | undefined {
       if (key === 'localRuntimePath') return undefined;
       return undefined;
+    },
+    inspect(): undefined {
+      return undefined;
     }
   };
 
