@@ -3,6 +3,7 @@ import {
   ProviderId,
   PromptPreset,
   ProviderOption,
+  CodexReasoningEffort,
   ReasoningEffort,
   VerbositySetting,
   LocalModelDefinition,
@@ -41,6 +42,7 @@ export const COMMIT_INCLUDE_UNSTAGED_STORAGE_KEY = 'commitMaker.commitIncludeUns
 export const COMMIT_INCLUDE_UNTRACKED_STORAGE_KEY = 'commitMaker.commitIncludeUntracked';
 export const COMMIT_INCLUDE_BINARY_STORAGE_KEY = 'commitMaker.commitIncludeBinary';
 export const COMMIT_REASONING_STORAGE_KEY = 'commitMaker.commitReasoning';
+export const COMMIT_CODEX_REASONING_STORAGE_KEY = 'commitMaker.commitCodexReasoning';
 export const COMMIT_VERBOSITY_STORAGE_KEY = 'commitMaker.commitVerbosity';
 export const COMMIT_MAX_PROMPT_CHARS_STORAGE_KEY = 'commitMaker.commitMaxPromptChars';
 export const COMMIT_LOCAL_MODEL_STORAGE_KEY = 'commitMaker.localModelId';
@@ -112,6 +114,8 @@ export const DEFAULT_LOCAL_MAX_OUTPUT_TOKENS = 4096;
 
 export const REASONING_EFFORT_OPTIONS: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
 export const DEFAULT_REASONING_EFFORT: ReasoningEffort = 'none';
+export const CODEX_REASONING_EFFORT_OPTIONS: CodexReasoningEffort[] = ['low', 'medium', 'high', 'xhigh'];
+export const DEFAULT_CODEX_REASONING_EFFORT: CodexReasoningEffort = 'low';
 export const VERBOSITY_OPTIONS: VerbositySetting[] = ['low', 'medium', 'high'];
 export const DEFAULT_VERBOSITY: VerbositySetting = 'medium';
 export const ANTHROPIC_API_VERSION = '2023-06-01';
@@ -129,6 +133,7 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       description: strings.providerDescriptionGemini,
       apiKeyPlaceholder: 'AIza...',
       requiresApiKey: true,
+      setupMode: 'apiKey',
       models: [
         'gemini-2.5-flash-lite',
         'gemini-3.1-flash-lite',
@@ -151,6 +156,7 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       description: strings.providerDescriptionOpenAi,
       apiKeyPlaceholder: 'sk-...',
       requiresApiKey: true,
+      setupMode: 'apiKey',
       models: [
         'gpt-5.4-nano',
         'gpt-5.4-mini',
@@ -180,6 +186,7 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       description: strings.providerDescriptionClaude,
       apiKeyPlaceholder: 'sk-ant-...',
       requiresApiKey: true,
+      setupMode: 'apiKey',
       models: [
         'claude-haiku-4-5',
         'claude-sonnet-4-6',
@@ -199,12 +206,34 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       supportsVerbosity: false
     },
     {
+      id: 'codex',
+      label: strings.providerLabelCodex ?? 'OpenAI Codex',
+      badge: 'Codex',
+      description: strings.providerDescriptionCodex ?? 'Uses Commit Maker dedicated Codex authentication through Codex CLI.',
+      apiKeyPlaceholder: '',
+      requiresApiKey: false,
+      setupMode: 'codexAuth',
+      models: [
+        'gpt-5.5',
+        'gpt-5.4-mini',
+        'gpt-5.4',
+        'gpt-5.3-codex-spark'
+      ],
+      defaultModel: 'gpt-5.5',
+      issueUrl: 'https://developers.openai.com/codex/auth',
+      defaultEndpoint: '',
+      defaultSecret: '',
+      supportsReasoning: true,
+      supportsVerbosity: false
+    },
+    {
       id: 'local',
       label: strings.providerLabelLocal,
       badge: 'Local',
       description: strings.providerDescriptionLocal,
       apiKeyPlaceholder: '',
       requiresApiKey: false,
+      setupMode: 'localModel',
       models: LOCAL_MODEL_DEFINITIONS.map(model => model.id),
       defaultModel: DEFAULT_LOCAL_MODEL_ID,
       issueUrl: 'https://huggingface.co/Edge-Quant/Qwen3-4B-Instruct-2507-Q4_K_M-GGUF',
@@ -220,13 +249,14 @@ export const PROVIDER_CAPABILITIES: ProviderCapability[] = buildProviderCapabili
 
 // 派生データ（既存 API 互換のまま残す）
 export function buildProviderOptions(capabilities: ProviderCapability[] = PROVIDER_CAPABILITIES): ProviderOption[] {
-  return capabilities.map(({ id, label, badge, description, apiKeyPlaceholder, requiresApiKey }) => ({
+  return capabilities.map(({ id, label, badge, description, apiKeyPlaceholder, requiresApiKey, setupMode }) => ({
     id,
     label,
     badge,
     description,
     apiKeyPlaceholder,
-    requiresApiKey
+    requiresApiKey,
+    setupMode
   }));
 }
 

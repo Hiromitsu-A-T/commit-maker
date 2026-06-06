@@ -5,6 +5,24 @@ import { ProviderId, LanguageCode, isLanguageCode, isProviderId } from './types'
 import { getApiKeySecretName } from './providerSettings';
 import { buildProviderCapabilities, COMMIT_LANGUAGE_STORAGE_KEY } from './constants';
 import { getStrings, DEFAULT_LANGUAGE } from './i18n/strings';
+import {
+  buildCodexLoginCommand,
+  buildCodexTerminalEnvironment,
+  ensureCodexHome,
+  getCodexCommand,
+  inspectCodexCli,
+  logoutCodexCli
+} from './services/codexCli';
+
+type ApiKeyPanelState = Record<ProviderId, { ready: boolean; preview?: string; length?: number }>;
+
+const CODEX_LOGIN_POLL_INTERVAL_MS = 3000;
+const CODEX_LOGIN_POLL_TIMEOUT_MS = 5 * 60 * 1000;
+
+let codexLoginPollTimer: ReturnType<typeof setInterval> | undefined;
+let codexLoginPollUntil = 0;
+let codexLoginPollRunning = false;
+let codexLoginFocusDisposable: vscode.Disposable | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
   const language = getLanguage(context);
@@ -35,13 +53,22 @@ export function activate(context: vscode.ExtensionContext): void {
   viewProvider.onDidChangeApiKeyProvider(async () => {
     await refreshApiKeyState(context, viewProvider);
   });
+  viewProvider.onDidRequestCodexLogin(async () => {
+    await openCodexLoginTerminal(context, viewProvider);
+  });
+  viewProvider.onDidRequestCodexLogout(async () => {
+    await logoutCodex(context, viewProvider);
+  });
+  viewProvider.onDidRequestCodexRefresh(async () => {
+    await refreshApiKeyState(context, viewProvider);
+  });
 
   // 初期状態で保存済みキーを反映
   void refreshApiKeyState(context, viewProvider);
 }
 
 export function deactivate(): void {
-  // no-op
+  stopCodexLoginAutoRefresh();
 }
 
 async function saveApiKey(context: vscode.ExtensionContext): Promise<void> {
@@ -56,7 +83,7 @@ async function saveApiKey(context: vscode.ExtensionContext): Promise<void> {
     return;
   }
   const providerId = provider.value as ProviderId;
-  if (providerId === 'local') {
+  if (providerId === 'local' || providerId === 'codex') {
     return;
   }
   const config = vscode.workspace.getConfiguration('commitMaker');
@@ -78,7 +105,7 @@ async function saveApiKey(context: vscode.ExtensionContext): Promise<void> {
 }
 
 async function storeApiKey(context: vscode.ExtensionContext, provider: ProviderId, value: string): Promise<void> {
-  if (!isProviderId(provider) || provider === 'local') {
+  if (!isProviderId(provider) || provider === 'local' || provider === 'codex') {
     return;
   }
   const config = vscode.workspace.getConfiguration('commitMaker');
@@ -99,18 +126,20 @@ function maskKey(value: string | undefined): string | undefined {
   return value.slice(0, 2) + '...' + value.slice(-4);
 }
 
-async function refreshApiKeyState(context: vscode.ExtensionContext, panel: CommitPanelProvider): Promise<void> {
+async function refreshApiKeyState(context: vscode.ExtensionContext, panel: CommitPanelProvider): Promise<ApiKeyPanelState> {
   const config = vscode.workspace.getConfiguration('commitMaker');
   const keys: Record<ProviderId, string | undefined> = {
     openai: getApiKeySecretName(config, 'openai'),
     gemini: getApiKeySecretName(config, 'gemini'),
     claude: getApiKeySecretName(config, 'claude'),
+    codex: undefined,
     local: undefined
   };
-  const apiKeys: Record<ProviderId, { ready: boolean; preview?: string; length?: number }> = {
+  const apiKeys: ApiKeyPanelState = {
     openai: { ready: false },
     gemini: { ready: false },
     claude: { ready: false },
+    codex: { ready: false },
     local: { ready: false }
   };
   for (const provider of Object.keys(keys) as ProviderId[]) {
@@ -127,7 +156,107 @@ async function refreshApiKeyState(context: vscode.ExtensionContext, panel: Commi
       };
     }
   }
+  try {
+    const codexHome = await ensureCodexHome(context);
+    const codexStatus = await inspectCodexCli(config, codexHome);
+    apiKeys.codex = {
+      ready: codexStatus.ready,
+      preview: codexStatus.preview,
+      length: codexStatus.preview?.length
+    };
+  } catch (error) {
+    apiKeys.codex = {
+      ready: false,
+      preview: 'not available',
+      length: undefined
+    };
+  }
   panel.updateState({ apiKeys });
+  return apiKeys;
+}
+
+async function openCodexLoginTerminal(context: vscode.ExtensionContext, panel: CommitPanelProvider): Promise<void> {
+  const strings = getStrings(getLanguage(context));
+  const config = vscode.workspace.getConfiguration('commitMaker');
+  try {
+    const codexHome = await ensureCodexHome(context);
+    const terminal = vscode.window.createTerminal({
+      name: 'Commit Maker Codex',
+      env: buildCodexTerminalEnvironment(codexHome)
+    });
+    terminal.show(true);
+    terminal.sendText(buildCodexLoginCommand(getCodexCommand(config)));
+    startCodexLoginAutoRefresh(context, panel);
+    void vscode.window.showInformationMessage(
+      strings.msgCodexLoginTerminalOpened ?? 'Codex login started in a dedicated Commit Maker terminal.'
+    );
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    void vscode.window.showErrorMessage(
+      (strings.msgCodexLoginFailed ?? 'Failed to start Codex login: {detail}').replace('{detail}', detail)
+    );
+  }
+}
+
+async function logoutCodex(context: vscode.ExtensionContext, panel: CommitPanelProvider): Promise<void> {
+  const strings = getStrings(getLanguage(context));
+  const config = vscode.workspace.getConfiguration('commitMaker');
+  try {
+    stopCodexLoginAutoRefresh();
+    const codexHome = await ensureCodexHome(context);
+    await logoutCodexCli(config, codexHome);
+    await refreshApiKeyState(context, panel);
+    void vscode.window.showInformationMessage(strings.msgCodexLogoutComplete ?? 'Signed out from Commit Maker Codex.');
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    void vscode.window.showErrorMessage(
+      (strings.msgCodexLogoutFailed ?? 'Failed to sign out from Codex: {detail}').replace('{detail}', detail)
+    );
+  }
+}
+
+function startCodexLoginAutoRefresh(context: vscode.ExtensionContext, panel: CommitPanelProvider): void {
+  stopCodexLoginAutoRefresh();
+  codexLoginPollUntil = Date.now() + CODEX_LOGIN_POLL_TIMEOUT_MS;
+  codexLoginFocusDisposable = vscode.window.onDidChangeWindowState(state => {
+    if (state.focused) {
+      void refreshCodexLoginUntilReady(context, panel);
+    }
+  });
+  codexLoginPollTimer = setInterval(() => {
+    void refreshCodexLoginUntilReady(context, panel);
+  }, CODEX_LOGIN_POLL_INTERVAL_MS);
+  void refreshCodexLoginUntilReady(context, panel);
+}
+
+function stopCodexLoginAutoRefresh(): void {
+  if (codexLoginPollTimer) {
+    clearInterval(codexLoginPollTimer);
+    codexLoginPollTimer = undefined;
+  }
+  codexLoginFocusDisposable?.dispose();
+  codexLoginFocusDisposable = undefined;
+  codexLoginPollRunning = false;
+  codexLoginPollUntil = 0;
+}
+
+async function refreshCodexLoginUntilReady(context: vscode.ExtensionContext, panel: CommitPanelProvider): Promise<void> {
+  if (codexLoginPollRunning) {
+    return;
+  }
+  if (!codexLoginPollUntil || Date.now() > codexLoginPollUntil) {
+    stopCodexLoginAutoRefresh();
+    return;
+  }
+  codexLoginPollRunning = true;
+  try {
+    const apiKeys = await refreshApiKeyState(context, panel);
+    if (apiKeys.codex?.ready) {
+      stopCodexLoginAutoRefresh();
+    }
+  } finally {
+    codexLoginPollRunning = false;
+  }
 }
 
 function getEnvVarNames(provider: ProviderId): string[] {

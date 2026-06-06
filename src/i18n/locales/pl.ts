@@ -19,11 +19,13 @@ const pl: UiStrings = {
   modelLabel: 'Model',
   customModelLabel: 'Nazwa własnego modelu',
   customModelPlaceholder: 'przyklad-modelu',
-  reasoningLabel: 'Reasoning Effort (tylko OpenAI)',
-  verbosityLabel: 'Verbosity (tylko OpenAI)',
+  reasoningLabel: 'Poziom rozumowania (tylko OpenAI)',
+  codexReasoningLabel: 'Poziom rozumowania Codex',
+  verbosityLabel: 'Poziom szczegółowości (tylko OpenAI)',
   providerLabelGemini: 'Google Gemini',
   providerLabelOpenAi: 'OpenAI (rodzina GPT-5)',
   providerLabelClaude: 'Anthropic Claude',
+  providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'Lokalny LLM',
   localModelLabel: 'Model lokalny',
   localModelDownloadButton: 'Pobierz model',
@@ -42,7 +44,7 @@ const pl: UiStrings = {
   presetNamePlaceholder: 'Nazwa preset',
   presetAddButton: 'Dodaj',
   presetDeleteButton: 'Usuń',
-  promptTextareaPlaceholder: 'np. Napisz tytuł do 50 znaków i punktowane ciało po angielsku.',
+  promptTextareaPlaceholder: 'np. Napisz tytuł do 50 znaków i punktowaną treść po polsku.',
   includeUnstagedLabel: 'Dołącz zmiany nieindeksowane',
   includeUntrackedLabel: 'Dołącz pliki nieśledzone',
   includeBinaryLabel: 'Dołącz pliki podejrzane o binarne',
@@ -96,11 +98,25 @@ const pl: UiStrings = {
   providerDescriptionGemini: 'Bezpośrednie wywołanie Generative Language API (generateContent).',
   providerDescriptionOpenAi: 'Używa zgodnych endpointów Responses / Chat Completions.',
   providerDescriptionClaude: 'Używa API Claude 3 messages.',
+  providerDescriptionCodex: 'Używa dedykowanego uwierzytelniania Codex CLI dla Commit Maker.',
   providerDescriptionLocal: 'Używa dołączonego runtime llama.cpp z lokalnym modelem GGUF.',
 
+  codexAuthLabel: 'Uwierzytelnianie Codex',
+  codexAuthReady: 'Codex zalogowany',
+  codexAuthReadyShort: 'zalogowano',
+  codexAuthMissing: 'Codex nie jest zalogowany lub nie jest zainstalowany',
+  codexAuthMissingShort: 'nie zalogowano',
+  codexAuthHint: 'Używa dedykowanego uwierzytelniania Codex dla Commit Maker, oddzielnego od zwykłego logowania Codex CLI.',
+  codexAuthLoginButton: 'Zaloguj',
+  codexAuthRefreshButton: 'Odśwież',
+  codexAuthLogoutButton: 'Wyloguj',
   msgApiKeySaved: 'Zapisano klucz API.',
   msgApiKeySavePick: 'Wybierz dostawcę do zapisania klucza API',
   msgApiKeyInputPrompt: 'Podaj klucz API dla {provider}',
+  msgCodexLoginTerminalOpened: 'Dedykowane logowanie Codex dla Commit Maker uruchomiono w terminalu. Status odświeży się automatycznie po zalogowaniu.',
+  msgCodexLoginFailed: 'Nie udało się rozpocząć logowania Codex: {detail}',
+  msgCodexLogoutComplete: 'Wylogowano z dedykowanego uwierzytelniania Codex dla Commit Maker.',
+  msgCodexLogoutFailed: 'Nie udało się wylogować z Codex: {detail}',
 
   msgCommitGenerateTitle: 'Generowanie commita (Commit Maker)',
   msgCommitGenerateFetchingDiff: 'Pobieranie diff…',
@@ -111,7 +127,7 @@ const pl: UiStrings = {
   msgCommitNotGenerated: 'Najpierw wygeneruj wiadomość commit.',
   msgRepoNotFound: 'Repozytorium Git nie znalezione.',
   msgCancelled: 'Anulowano przez użytkownika',
-  msgDiffEmpty: 'Brak diff. Sprawdź stage/zmiany.',
+  msgDiffEmpty: 'Brak różnic. Sprawdź zaindeksowane pliki lub zmiany.',
   msgUnsupportedProvider: 'Nieobsługiwany dostawca: {provider}',
   msgApiKeyMissing: 'Brak klucza API dla {provider}. Zapisz go w ustawieniach.',
   msgLlmEmptyOpenAi: 'Pusta odpowiedź OpenAI.',
@@ -141,15 +157,15 @@ const pl: UiStrings = {
   actionCreatedLabel: 'Utworzono',
   actionUpdatedLabel: 'Zaktualizowano',
   actionDeletedLabel: 'Usunięto',
-  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
-  userInstructionLabel: 'User instructions (verbatim):',
+  promptGuard: 'Dokładnie zastosuj format i instrukcje podane przez użytkownika.',
+  userInstructionLabel: 'Instrukcje użytkownika (dosłownie):',
 
 
 
   diffSectionStaged: '### Zaindeksowane',
   diffSectionUnstaged: '### Niezaindeksowane',
   diffSectionUntracked: '### Nieśledzone {path}',
-  diffHeading: '# Diff'
+  diffHeading: '# Różnice'
 };
 
 export default pl;

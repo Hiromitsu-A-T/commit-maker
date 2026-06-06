@@ -32,22 +32,49 @@ function renderStatus(els: any, state: any, strings: any): void {
 function renderApiKeyBadges(els: any, providerOptions: any[], state: any, strings: any): void {
   if (!els.apiKeyStatusRow) return;
   const t = strings || {};
+  const activeProvider = state.apiKeyProvider || state.commitProvider;
   const badges = providerOptions.map(opt => {
-    if (opt.requiresApiKey === false) {
+    const setupMode = opt.setupMode || (opt.id === 'local' ? 'localModel' : opt.requiresApiKey === false ? 'codexAuth' : 'apiKey');
+    if (setupMode === 'localModel') {
       const model = state.localModel || {};
       const status = getLocalModelStatus(model, t);
       return {
         text: opt.badge + ': ' + status.text,
-        className: status.className
+        className: getProviderBadgeClass(opt.id, activeProvider, status.className)
+      };
+    }
+    if (setupMode === 'codexAuth') {
+      const ready = Boolean(state.apiKeys?.[opt.id]?.ready);
+      return {
+        text: opt.badge + ': ' + getCodexBadgeText(ready, t),
+        className: getProviderBadgeClass(opt.id, activeProvider, ready ? 'success' : 'warn')
       };
     }
     const ready = Boolean(state.apiKeys?.[opt.id]?.ready);
     return {
       text: opt.badge + ': ' + (ready ? t.apiKeySaved : t.apiKeyNotSaved),
-      className: ready ? 'success' : 'danger'
+      className: getProviderBadgeClass(opt.id, activeProvider, ready ? 'success' : 'warn')
     };
   });
   Dom.updateBadges(els.apiKeyStatusRow, badges);
+}
+
+function getProviderBadgeClass(
+  providerId: string,
+  activeProvider: string | undefined,
+  statusClass: string | undefined
+): string | undefined {
+  if (statusClass === 'success' || statusClass === 'danger') {
+    return statusClass;
+  }
+  return providerId === activeProvider ? statusClass : undefined;
+}
+
+function getCodexBadgeText(ready: boolean, strings: any): string {
+  if (ready) {
+    return strings.codexAuthReadyShort || strings.codexAuthReady || 'Codex signed in';
+  }
+  return strings.codexAuthMissingShort || strings.codexAuthMissing || 'Codex not signed in';
 }
 
 function getLocalModelStatus(model: any, strings: any): { text: string; className?: string } {
@@ -67,7 +94,7 @@ function getLocalModelStatus(model: any, strings: any): { text: string; classNam
   if (status === 'error') {
     return { text: strings.localModelStatusError || 'Error', className: 'danger' };
   }
-  return { text: strings.localModelStatusNotDownloaded || 'Not downloaded', className: 'danger' };
+  return { text: strings.localModelStatusNotDownloaded || 'Not downloaded', className: 'warn' };
 }
 
 function renderReasoning(els: any, options: string[], state: any, allow: boolean): void {

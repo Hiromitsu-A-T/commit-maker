@@ -19,11 +19,13 @@ const fr: UiStrings = {
   modelLabel: 'Modèle',
   customModelLabel: 'Nom de modèle personnalisé',
   customModelPlaceholder: 'example-model',
-  reasoningLabel: 'Reasoning Effort (OpenAI uniquement)',
+  reasoningLabel: 'Niveau de raisonnement (OpenAI uniquement)',
+  codexReasoningLabel: 'Niveau de raisonnement Codex',
   verbosityLabel: 'Niveau de détail (OpenAI uniquement)',
   providerLabelGemini: 'Google Gemini',
   providerLabelOpenAi: 'OpenAI (famille GPT-5)',
   providerLabelClaude: 'Anthropic Claude',
+  providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'LLM local',
   localModelLabel: 'Modèle',
   localModelDownloadButton: 'Télécharger le modèle',
@@ -96,11 +98,25 @@ const fr: UiStrings = {
   providerDescriptionGemini: 'Appelle directement Generative Language API (generateContent).',
   providerDescriptionOpenAi: 'Utilise un endpoint compatible Responses API / Chat Completions.',
   providerDescriptionClaude: 'Utilise Claude 3 messages API.',
+  providerDescriptionCodex: 'Utilise l’authentification Codex CLI dédiée de Commit Maker.',
   providerDescriptionLocal: 'Utilise le runtime llama.cpp inclus avec un modèle GGUF local.',
 
+  codexAuthLabel: 'Authentification Codex',
+  codexAuthReady: 'Codex connecté',
+  codexAuthReadyShort: 'connecté',
+  codexAuthMissing: 'Codex non connecté ou non installé',
+  codexAuthMissingShort: 'non connecté',
+  codexAuthHint: 'Utilise l’authentification Codex dédiée de Commit Maker, séparée de votre connexion Codex CLI habituelle.',
+  codexAuthLoginButton: 'Se connecter',
+  codexAuthRefreshButton: 'Actualiser',
+  codexAuthLogoutButton: 'Se déconnecter',
   msgApiKeySaved: 'Clé API enregistrée.',
   msgApiKeySavePick: 'Choisissez le fournisseur où enregistrer la clé API',
   msgApiKeyInputPrompt: 'Entrez la clé API pour {provider}',
+  msgCodexLoginTerminalOpened: 'Connexion Codex dédiée de Commit Maker lancée dans le terminal. L’état s’actualise automatiquement après la connexion.',
+  msgCodexLoginFailed: 'Échec du lancement de la connexion Codex : {detail}',
+  msgCodexLogoutComplete: 'Déconnecté de l’authentification Codex dédiée de Commit Maker.',
+  msgCodexLogoutFailed: 'Échec de la déconnexion Codex : {detail}',
 
   msgCommitGenerateTitle: 'Génération de message de commit (Commit Maker)',
   msgCommitGenerateFetchingDiff: 'Récupération du diff…',
@@ -111,7 +127,7 @@ const fr: UiStrings = {
   msgCommitNotGenerated: 'Générez d’abord un message de commit.',
   msgRepoNotFound: 'Dépôt Git introuvable.',
   msgCancelled: 'Annulé par l’utilisateur',
-  msgDiffEmpty: 'Aucun diff. Vérifiez les fichiers indexés/modifiés.',
+  msgDiffEmpty: 'Aucune différence. Vérifiez les fichiers indexés ou modifiés.',
   msgUnsupportedProvider: 'Fournisseur non supporté : {provider}',
   msgApiKeyMissing: 'Clé API manquante pour {provider}. Enregistrez-la dans les paramètres.',
   msgLlmEmptyOpenAi: 'Réponse OpenAI vide.',
@@ -141,15 +157,15 @@ const fr: UiStrings = {
   actionCreatedLabel: 'Créé',
   actionUpdatedLabel: 'Mis à jour',
   actionDeletedLabel: 'Supprimé',
-  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
-  userInstructionLabel: 'User instructions (verbatim):',
+  promptGuard: 'Respectez exactement le format et les consignes demandés par l’utilisateur.',
+  userInstructionLabel: 'Consignes utilisateur (mot pour mot) :',
 
 
 
   diffSectionStaged: '### Indexés',
   diffSectionUnstaged: '### Non indexés',
   diffSectionUntracked: '### Non suivis {path}',
-  diffHeading: '# Diff'
+  diffHeading: '# Différences'
 };
 
 export default fr;

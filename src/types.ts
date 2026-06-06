@@ -1,7 +1,9 @@
 import { LanguageCode, isLanguageCode, SUPPORTED_LANG_CODES } from './i18n/languages';
 
-export type ProviderId = 'openai' | 'gemini' | 'claude' | 'local';
+export type ProviderId = 'openai' | 'gemini' | 'claude' | 'codex' | 'local';
+export type ProviderSetupMode = 'apiKey' | 'codexAuth' | 'localModel';
 export type ReasoningEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
+export type CodexReasoningEffort = 'low' | 'medium' | 'high' | 'xhigh';
 export type VerbositySetting = 'low' | 'medium' | 'high';
 export type CommitStatus = 'idle' | 'loading' | 'ready' | 'error';
 export type MaxPromptMode = 'unlimited' | 'limited';
@@ -16,6 +18,7 @@ export interface ProviderOption {
   description: string;
   apiKeyPlaceholder: string;
   requiresApiKey: boolean;
+  setupMode: ProviderSetupMode;
 }
 
 export interface ProviderCapability extends ProviderOption {
@@ -102,7 +105,7 @@ export interface PromptPreset {
 
 
 export function isProviderId(value: unknown): value is ProviderId {
-  return value === 'openai' || value === 'gemini' || value === 'claude' || value === 'local';
+  return value === 'openai' || value === 'gemini' || value === 'claude' || value === 'codex' || value === 'local';
 }
 
 export function isReasoningEffort(value: unknown): value is ReasoningEffort {
@@ -114,6 +117,10 @@ export function isReasoningEffort(value: unknown): value is ReasoningEffort {
     value === 'high' ||
     value === 'xhigh'
   );
+}
+
+export function isCodexReasoningEffort(value: unknown): value is CodexReasoningEffort {
+  return value === 'low' || value === 'medium' || value === 'high' || value === 'xhigh';
 }
 
 export function isVerbositySetting(value: unknown): value is VerbositySetting {

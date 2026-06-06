@@ -19,11 +19,13 @@ const ko: UiStrings = {
   modelLabel: '모델',
   customModelLabel: '커스텀 모델 이름',
   customModelPlaceholder: 'example-model',
-  reasoningLabel: 'Reasoning Effort (OpenAI 전용)',
+  reasoningLabel: '추론 강도 (OpenAI 전용)',
+  codexReasoningLabel: 'Codex 추론 강도',
   verbosityLabel: '답변 상세도 (OpenAI 전용)',
   providerLabelGemini: 'Google Gemini',
   providerLabelOpenAi: 'OpenAI (GPT-5 계열)',
   providerLabelClaude: 'Anthropic Claude',
+  providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: '로컬 LLM',
   localModelLabel: '모델',
   localModelDownloadButton: '모델 다운로드',
@@ -66,8 +68,8 @@ const ko: UiStrings = {
   statusLoading: 'LLM 생성 중…',
   statusReady: '완료',
   statusError: '오류',
-  badgeUnstagedOn: '스테이지 + 미스테이지',
-  badgeUnstagedOff: '스테이지만',
+  badgeUnstagedOn: '스테이지됨 + 스테이지되지 않음',
+  badgeUnstagedOff: '스테이지됨만',
 
   apiKeySaved: '저장됨',
   apiKeyNotSaved: '미저장',
@@ -96,11 +98,25 @@ const ko: UiStrings = {
   providerDescriptionGemini: 'Generative Language API (generateContent)를 직접 호출합니다.',
   providerDescriptionOpenAi: 'Responses API / Chat Completions 호환 엔드포인트를 사용합니다.',
   providerDescriptionClaude: 'Claude 3 messages API를 사용합니다.',
+  providerDescriptionCodex: 'Commit Maker 전용 Codex CLI 인증을 사용합니다.',
   providerDescriptionLocal: '동봉된 llama.cpp 런타임과 로컬 GGUF 모델을 사용합니다.',
 
+  codexAuthLabel: 'Codex 인증',
+  codexAuthReady: 'Codex 로그인됨',
+  codexAuthReadyShort: '로그인됨',
+  codexAuthMissing: 'Codex 미로그인 또는 미설치',
+  codexAuthMissingShort: '미로그인',
+  codexAuthHint: 'Commit Maker 전용 Codex 인증을 사용하며 일반 Codex CLI 로그인과 분리됩니다.',
+  codexAuthLoginButton: '로그인',
+  codexAuthRefreshButton: '새로고침',
+  codexAuthLogoutButton: '로그아웃',
   msgApiKeySaved: 'API 키를 저장했습니다.',
   msgApiKeySavePick: 'API 키를 저장할 제공자를 선택하세요',
   msgApiKeyInputPrompt: '{provider} API 키를 입력하세요',
+  msgCodexLoginTerminalOpened: '터미널에서 Commit Maker 전용 Codex 로그인을 시작했습니다. 로그인 후 상태가 자동으로 갱신됩니다.',
+  msgCodexLoginFailed: 'Codex 로그인 시작 실패: {detail}',
+  msgCodexLogoutComplete: 'Commit Maker 전용 Codex 인증에서 로그아웃했습니다.',
+  msgCodexLogoutFailed: 'Codex 로그아웃 실패: {detail}',
 
   msgCommitGenerateTitle: '커밋 메시지 생성 (Commit Maker)',
   msgCommitGenerateFetchingDiff: 'diff 가져오는 중…',
@@ -111,7 +127,7 @@ const ko: UiStrings = {
   msgCommitNotGenerated: '먼저 커밋 메시지를 생성하세요.',
   msgRepoNotFound: 'Git 저장소를 찾을 수 없습니다.',
   msgCancelled: '사용자가 취소했습니다',
-  msgDiffEmpty: 'diff가 없습니다. 스테이징/변경을 확인하세요.',
+  msgDiffEmpty: '차이가 없습니다. 스테이징된 파일이나 변경 사항을 확인하세요.',
   msgUnsupportedProvider: '지원하지 않는 제공자: {provider}',
   msgApiKeyMissing: '{provider} API 키가 설정되지 않았습니다. 설정에서 저장하세요.',
   msgLlmEmptyOpenAi: 'OpenAI 응답이 비어 있습니다.',
@@ -141,15 +157,15 @@ const ko: UiStrings = {
   actionCreatedLabel: '생성',
   actionUpdatedLabel: '업데이트',
   actionDeletedLabel: '삭제',
-  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
-  userInstructionLabel: 'User instructions (verbatim):',
+  promptGuard: '사용자가 요청한 형식과 지시를 정확히 따르세요.',
+  userInstructionLabel: '사용자 지시(원문):',
 
 
 
   diffSectionStaged: '### 스테이지됨',
-  diffSectionUnstaged: '### 미스테이지',
+  diffSectionUnstaged: '### 스테이지되지 않음',
   diffSectionUntracked: '### 미추적 {path}',
-  diffHeading: '# diff'
+  diffHeading: '# 차이'
 };
 
 export default ko;

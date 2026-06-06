@@ -24,4 +24,7 @@ export function runModelCapabilitiesTests(): void {
   assert.strictEqual(DEFAULT_MODEL_BY_PROVIDER.claude, 'claude-haiku-4-5');
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-sonnet-4-6'));
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-opus-4-8'));
+
+  assert.strictEqual(DEFAULT_MODEL_BY_PROVIDER.codex, 'gpt-5.5');
+  assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-5.4-mini'));
 }

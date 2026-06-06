@@ -19,11 +19,13 @@ const it: UiStrings = {
   modelLabel: 'Modello',
   customModelLabel: 'Nome modello personalizzato',
   customModelPlaceholder: 'modello-esempio',
-  reasoningLabel: 'Reasoning Effort (solo OpenAI)',
-  verbosityLabel: 'Verbosity (solo OpenAI)',
+  reasoningLabel: 'Livello di ragionamento (solo OpenAI)',
+  codexReasoningLabel: 'Livello di ragionamento Codex',
+  verbosityLabel: 'Livello di dettaglio (solo OpenAI)',
   providerLabelGemini: 'Google Gemini',
   providerLabelOpenAi: 'OpenAI (famiglia GPT-5)',
   providerLabelClaude: 'Anthropic Claude',
+  providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'LLM locale',
   localModelLabel: 'Modello',
   localModelDownloadButton: 'Scarica modello',
@@ -42,7 +44,7 @@ const it: UiStrings = {
   presetNamePlaceholder: 'Nome del preset',
   presetAddButton: 'Aggiungi',
   presetDeleteButton: 'Elimina',
-  promptTextareaPlaceholder: 'es. Scrivi un titolo entro 50 caratteri e un corpo puntato in inglese.',
+  promptTextareaPlaceholder: 'es. Scrivi un titolo entro 50 caratteri e un corpo puntato in italiano.',
   includeUnstagedLabel: 'Includi modifiche non indicizzate',
   includeUntrackedLabel: 'Includi file non tracciati',
   includeBinaryLabel: 'Includi file sospetti binari',
@@ -96,11 +98,25 @@ const it: UiStrings = {
   providerDescriptionGemini: 'Chiama direttamente l’API Generative Language (generateContent).',
   providerDescriptionOpenAi: 'Usa l’endpoint compatibile Responses / Chat Completions.',
   providerDescriptionClaude: 'Usa l’API Claude 3 messages.',
+  providerDescriptionCodex: 'Usa l’autenticazione Codex CLI dedicata di Commit Maker.',
   providerDescriptionLocal: 'Usa il runtime llama.cpp incluso con un modello GGUF locale.',
 
+  codexAuthLabel: 'Autenticazione Codex',
+  codexAuthReady: 'Codex connesso',
+  codexAuthReadyShort: 'connesso',
+  codexAuthMissing: 'Codex non connesso o non installato',
+  codexAuthMissingShort: 'non connesso',
+  codexAuthHint: 'Usa l’autenticazione Codex dedicata di Commit Maker, separata dal normale accesso Codex CLI.',
+  codexAuthLoginButton: 'Accedi',
+  codexAuthRefreshButton: 'Aggiorna',
+  codexAuthLogoutButton: 'Esci',
   msgApiKeySaved: 'Chiave API salvata.',
   msgApiKeySavePick: 'Seleziona il provider per salvare la chiave API',
   msgApiKeyInputPrompt: 'Inserisci la chiave API per {provider}',
+  msgCodexLoginTerminalOpened: 'Accesso Codex dedicato di Commit Maker avviato nel terminale. Lo stato si aggiorna automaticamente dopo l’accesso.',
+  msgCodexLoginFailed: 'Impossibile avviare l’accesso a Codex: {detail}',
+  msgCodexLogoutComplete: 'Uscito dall’autenticazione Codex dedicata di Commit Maker.',
+  msgCodexLogoutFailed: 'Impossibile uscire da Codex: {detail}',
 
   msgCommitGenerateTitle: 'Generazione commit (Commit Maker)',
   msgCommitGenerateFetchingDiff: 'Recupero diff…',
@@ -111,7 +127,7 @@ const it: UiStrings = {
   msgCommitNotGenerated: 'Genera prima un messaggio di commit.',
   msgRepoNotFound: 'Repository Git non trovato.',
   msgCancelled: 'Annullato dall’utente',
-  msgDiffEmpty: 'Nessun diff trovato. Controlla gli stati.',
+  msgDiffEmpty: 'Nessuna differenza trovata. Controlla i file indicizzati o le modifiche.',
   msgUnsupportedProvider: 'Provider non supportato: {provider}',
   msgApiKeyMissing: 'Chiave API per {provider} non impostata. Salvala nelle impostazioni.',
   msgLlmEmptyOpenAi: 'Risposta OpenAI vuota.',
@@ -141,15 +157,15 @@ const it: UiStrings = {
   actionCreatedLabel: 'Creato',
   actionUpdatedLabel: 'Aggiornato',
   actionDeletedLabel: 'Eliminato',
-  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
-  userInstructionLabel: 'User instructions (verbatim):',
+  promptGuard: 'Segui esattamente il formato e le istruzioni richiesti dall’utente.',
+  userInstructionLabel: 'Istruzioni dell’utente (testuali):',
 
 
 
   diffSectionStaged: '### Indicizzate',
   diffSectionUnstaged: '### Non indicizzate',
   diffSectionUntracked: '### Non tracciati {path}',
-  diffHeading: '# Diff'
+  diffHeading: '# Differenze'
 };
 
 export default it;

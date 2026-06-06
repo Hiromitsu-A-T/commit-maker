@@ -55,6 +55,20 @@ export function renderPanelBody(strings: UiStrings): string {
             </div>
             <div class="hint" id="localModelHint"></div>
           </div>
+          <div id="codexAuthPanel" class="hidden">
+            <div class="api-inline label-row">
+              <span class="no-margin">${strings.codexAuthLabel ?? 'Codex authentication'}</span>
+              <span id="codexAuthStatus" class="pill hint"></span>
+            </div>
+            <div class="buttons two-col">
+              <button id="codexAuthLogin" class="primary" type="button">${strings.codexAuthLoginButton ?? 'Sign in'}</button>
+              <button id="codexAuthRefresh" class="secondary" type="button">${strings.codexAuthRefreshButton ?? 'Refresh'}</button>
+            </div>
+            <div class="buttons single-half">
+              <button id="codexAuthLogout" class="secondary" type="button">${strings.codexAuthLogoutButton ?? 'Sign out'}</button>
+            </div>
+            <div class="hint" id="codexAuthHint">${strings.codexAuthHint ?? 'Uses Commit Maker dedicated Codex authentication.'}</div>
+          </div>
         </div>
       </div>
     </section>
@@ -75,9 +89,9 @@ export function renderPanelBody(strings: UiStrings): string {
         <label for="customModel">${strings.customModelLabel}</label>
         <input id="customModel" type="text" placeholder="${strings.customModelPlaceholder}" />
       </div>
-      <div class="row mt8">
+      <div id="advancedModelControls" class="row mt8">
         <div id="reasoningRow">
-          <label for="reasoning">${strings.reasoningLabel}</label>
+          <label id="reasoningLabel" for="reasoning">${strings.reasoningLabel}</label>
           <select id="reasoning"></select>
         </div>
         <div id="verbosityRow">

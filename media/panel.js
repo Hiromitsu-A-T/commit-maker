@@ -18,6 +18,7 @@
   const providerSupportsReasoning = bootstrap.providerSupportsReasoning || {};
   const providerSupportsVerbosity = bootstrap.providerSupportsVerbosity || {};
   const verbosityBlocklistPatterns = bootstrap.verbosityBlocklistPatterns || [];
+  const codexReasoningOptions = Array.isArray(bootstrap.codexReasoningOptions) ? bootstrap.codexReasoningOptions : ['low', 'medium', 'high', 'xhigh'];
   const localModelOptions = Array.isArray(bootstrap.localModelOptions) ? bootstrap.localModelOptions : [];
   const basePresets = Array.isArray(bootstrap.promptPresets) ? bootstrap.promptPresets : [];
   const defaultPreset = basePresets[0];
@@ -68,10 +69,8 @@
       presetDelete: get('presetDelete'),
       provider: get('provider'),
       providerRow: get('providerRow'),
-      providerHelp: get('providerHelp'),
       model: get('model'),
       modelGroup: get('modelGroup'),
-      modelHelp: get('modelHelp'),
       customModelRow: get('customModelRow'),
       customModel: get('customModel'),
       localModelPanel: get('localModelPanel'),
@@ -82,6 +81,13 @@
       localModelDelete: get('localModelDelete'),
       localModelTest: get('localModelTest'),
       localModelHint: get('localModelHint'),
+      codexAuthPanel: get('codexAuthPanel'),
+      codexAuthStatus: get('codexAuthStatus'),
+      codexAuthHint: get('codexAuthHint'),
+      codexAuthLogin: get('codexAuthLogin'),
+      codexAuthRefresh: get('codexAuthRefresh'),
+      codexAuthLogout: get('codexAuthLogout'),
+      reasoningLabel: get('reasoningLabel'),
       reasoning: get('reasoning'),
       verbosity: get('verbosity'),
       reasoningRow: get('reasoningRow'),
@@ -142,8 +148,15 @@
   }
 
   function providerRequiresApiKey(provider) {
+    return providerSetupMode(provider) === 'apiKey';
+  }
+
+  function providerSetupMode(provider) {
     const opt = providerOptions.find(item => item.id === provider);
-    return opt ? opt.requiresApiKey !== false : true;
+    if (!opt) return 'apiKey';
+    if (opt.setupMode) return opt.setupMode;
+    if (opt.id === 'local') return 'localModel';
+    return opt.requiresApiKey === false ? 'codexAuth' : 'apiKey';
   }
 
   function getSelectableProviders() {
@@ -155,7 +168,11 @@
   }
 
   function isLocalProvider(provider) {
-    return !providerRequiresApiKey(provider);
+    return providerSetupMode(provider) === 'localModel';
+  }
+
+  function isCodexProvider(provider) {
+    return providerSetupMode(provider) === 'codexAuth';
   }
 
   function isLocalModelReady() {
@@ -163,6 +180,8 @@
   }
 
   function isProviderConfigured(provider) {
+    if (isLocalProvider(provider)) return true;
+    if (isCodexProvider(provider)) return Boolean(state.apiKeys?.[provider]?.ready);
     return !providerRequiresApiKey(provider) || Boolean(state.apiKeys?.[provider]?.ready);
   }
 
@@ -198,6 +217,7 @@
           'commitMaxPromptChars',
           'commitMaxPromptMode',
           'commitReasoning',
+          'commitCodexReasoning',
           'commitVerbosity',
           'localModel',
           'strings',
@@ -349,11 +369,21 @@
     if (els.localModelTest) {
       els.localModelTest.addEventListener('click', () => send({ type: 'localModelTest' }));
     }
+    if (els.codexAuthLogin) {
+      els.codexAuthLogin.addEventListener('click', () => send({ type: 'codexLogin' }));
+    }
+    if (els.codexAuthRefresh) {
+      els.codexAuthRefresh.addEventListener('click', () => send({ type: 'codexRefresh' }));
+    }
+    if (els.codexAuthLogout) {
+      els.codexAuthLogout.addEventListener('click', () => send({ type: 'codexLogout' }));
+    }
     Events.onChange(els.reasoning, ev => {
       const value = String(ev.target.value);
-      const allowed = getAllowedReasoningOptions(getCurrentModelId());
+      const codexProvider = isCodexProvider(state.commitProvider);
+      const allowed = codexProvider ? codexReasoningOptions : getAllowedReasoningOptions(getCurrentModelId());
       if (allowed.includes(value)) {
-        send({ type: 'commitReasoningChanged', value });
+        send({ type: codexProvider ? 'commitCodexReasoningChanged' : 'commitReasoningChanged', value });
       }
     });
     Events.onChange(els.verbosity, ev => {
@@ -434,9 +464,10 @@
 
   function renderButtonsState() {
     const localBlocked = isLocalProvider(state.commitProvider) && !isLocalModelReady();
+    const codexBlocked = isCodexProvider(state.commitProvider) && !isProviderConfigured(state.commitProvider);
     const cloudBlocked = providerRequiresApiKey(state.commitProvider) && !isProviderConfigured(state.commitProvider);
     if (els.generate) {
-      els.generate.disabled = state.commitStatus === 'loading' || localBlocked || cloudBlocked;
+      els.generate.disabled = state.commitStatus === 'loading' || localBlocked || codexBlocked || cloudBlocked;
     }
     if (els.apply) {
       els.apply.disabled = state.commitStatus === 'loading' || !state.commitResult;
@@ -521,9 +552,11 @@
       ? state.apiKeyProvider
       : providerOptions[0]?.id;
     const isLocal = isLocalProvider(active);
-    show(els.apiKeyCloudPanel, !isLocal, 'block');
+    const isCodex = isCodexProvider(active);
+    show(els.apiKeyCloudPanel, providerRequiresApiKey(active), 'block');
     show(els.localModelPanel, isLocal, 'block');
-    show(els.apiKeyIssue, !isLocal, 'inline-flex');
+    show(els.codexAuthPanel, isCodex, 'block');
+    show(els.apiKeyIssue, providerRequiresApiKey(active), 'inline-flex');
     for (const opt of providerOptions) {
       const node = document.createElement('option');
       node.value = opt.id;
@@ -549,6 +582,25 @@
         els.apiKeyInput.value = '';
       }
     }
+    if (els.codexAuthStatus) {
+      els.codexAuthStatus.textContent = selectedState?.ready
+        ? (t.codexAuthReady || 'Codex signed in')
+        : (t.codexAuthMissing || 'Codex not signed in or not installed');
+      els.codexAuthStatus.style.color = selectedState?.ready ? '#b4f5c1' : '#ffd1d1';
+    }
+    if (els.codexAuthHint) {
+      const suffix = selectedState?.preview ? ' (' + selectedState.preview + ')' : '';
+      els.codexAuthHint.textContent = (t.codexAuthHint || 'Uses Commit Maker dedicated Codex authentication.') + suffix;
+    }
+    if (els.codexAuthLogin) {
+      els.codexAuthLogin.disabled = Boolean(selectedState?.ready);
+    }
+    if (els.codexAuthRefresh) {
+      els.codexAuthRefresh.disabled = false;
+    }
+    if (els.codexAuthLogout) {
+      els.codexAuthLogout.disabled = !selectedState?.ready;
+    }
   }
 
   function renderApiKeyBadges() {
@@ -569,9 +621,6 @@
       placeholder.selected = true;
       placeholder.disabled = true;
       els.provider.appendChild(placeholder);
-      if (els.providerHelp) {
-        els.providerHelp.textContent = '';
-      }
       return;
     }
 
@@ -590,9 +639,6 @@
       node.selected = opt.id === active;
       els.provider.appendChild(node);
     }
-    if (els.providerHelp) {
-      els.providerHelp.textContent = '';
-    }
   }
 
   function renderModels() {
@@ -604,24 +650,20 @@
     const hasProvider = Boolean(providerId) && getSelectableProviders().some(opt => opt.id === providerId);
     const providerConfigured = isProviderConfigured(providerId);
     const localProvider = isLocalProvider(providerId);
+    const codexProvider = isCodexProvider(providerId);
 
     if (!hasProvider || !providerConfigured) {
       const placeholder = document.createElement('option');
       placeholder.value = '';
       placeholder.textContent = localProvider
         ? (t.localModelNeedDownload || '')
+        : codexProvider
+          ? (t.codexAuthMissing || 'Codex not signed in or not installed')
         : (t.providerNeedKey || '');
       placeholder.selected = true;
       placeholder.disabled = true;
       els.model.appendChild(placeholder);
-      if (els.modelHelp) {
-        els.modelHelp.textContent = localProvider
-          ? (t.localModelNeedDownload || '')
-          : (t.modelNeedKey || '');
-      }
       show(els.customModelRow, false);
-      show(els.reasoningRow, false);
-      show(els.verbosityRow, false);
       return;
     }
 
@@ -645,9 +687,6 @@
     show(els.customModelRow, isCustom, 'block');
     if (isCustom && els.customModel) {
       els.customModel.value = state.commitCustomModel || state.commitModel || '';
-    }
-    if (els.modelHelp) {
-      els.modelHelp.textContent = '';
     }
   }
 
@@ -756,22 +795,30 @@
 
   function renderReasoning() {
     if (!els.reasoning) return;
-    const allowed = getAllowedReasoningOptions(getCurrentModelId());
-    const value = allowed.includes(state.commitReasoning) ? state.commitReasoning : allowed[0];
-    renderSelect(els.reasoning, allowed, value);
-    const visible = isProviderConfigured(state.commitProvider) && providerAllowsReasoning(state.commitProvider) && allowed.length > 0;
-    show(els.reasoningRow, visible, 'block');
-    setDisabled(els.reasoning, !visible);
+    const codexProvider = isCodexProvider(state.commitProvider);
+    const allowed = codexProvider ? codexReasoningOptions : getAllowedReasoningOptions(getCurrentModelId());
+    const enabled = isProviderConfigured(state.commitProvider) && providerAllowsReasoning(state.commitProvider) && allowed.length > 0;
+    const current = codexProvider ? state.commitCodexReasoning : state.commitReasoning;
+    const value = enabled && allowed.includes(current) ? current : allowed[0];
+    renderSelect(els.reasoning, enabled ? allowed : ['-'], enabled ? value : '-');
+    if (els.reasoningLabel) {
+      const t = getStrings();
+      els.reasoningLabel.textContent = codexProvider
+        ? (t.codexReasoningLabel || 'Codex Reasoning Effort')
+        : (t.reasoningLabel || 'Reasoning Effort');
+    }
+    show(els.reasoningRow, true, 'block');
+    setDisabled(els.reasoning, !enabled);
   }
 
   function renderVerbosity() {
     if (!els.verbosity) return;
     const allowed = getAllowedVerbosityOptions(getCurrentModelId());
-    const value = allowed.includes(state.commitVerbosity) ? state.commitVerbosity : allowed[0];
-    renderSelect(els.verbosity, allowed, value);
-    const visible = isProviderConfigured(state.commitProvider) && providerAllowsVerbosity(state.commitProvider, state.commitModel) && allowed.length > 0;
-    show(els.verbosityRow, visible, 'block');
-    setDisabled(els.verbosity, !visible);
+    const enabled = isProviderConfigured(state.commitProvider) && providerAllowsVerbosity(state.commitProvider, state.commitModel) && allowed.length > 0;
+    const value = enabled && allowed.includes(state.commitVerbosity) ? state.commitVerbosity : allowed[0];
+    renderSelect(els.verbosity, enabled ? allowed : ['-'], enabled ? value : '-');
+    show(els.verbosityRow, true, 'block');
+    setDisabled(els.verbosity, !enabled);
   }
 
   function renderResult() {

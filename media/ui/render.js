@@ -24,22 +24,43 @@ function renderApiKeyBadges(els, providerOptions, state, strings) {
     if (!els.apiKeyStatusRow)
         return;
     const t = strings || {};
+    const activeProvider = state.apiKeyProvider || state.commitProvider;
     const badges = providerOptions.map(opt => {
-        if (opt.requiresApiKey === false) {
+        const setupMode = opt.setupMode || (opt.id === 'local' ? 'localModel' : opt.requiresApiKey === false ? 'codexAuth' : 'apiKey');
+        if (setupMode === 'localModel') {
             const model = state.localModel || {};
             const status = getLocalModelStatus(model, t);
             return {
                 text: opt.badge + ': ' + status.text,
-                className: status.className
+                className: getProviderBadgeClass(opt.id, activeProvider, status.className)
+            };
+        }
+        if (setupMode === 'codexAuth') {
+            const ready = Boolean(state.apiKeys?.[opt.id]?.ready);
+            return {
+                text: opt.badge + ': ' + getCodexBadgeText(ready, t),
+                className: getProviderBadgeClass(opt.id, activeProvider, ready ? 'success' : 'warn')
             };
         }
         const ready = Boolean(state.apiKeys?.[opt.id]?.ready);
         return {
             text: opt.badge + ': ' + (ready ? t.apiKeySaved : t.apiKeyNotSaved),
-            className: ready ? 'success' : 'danger'
+            className: getProviderBadgeClass(opt.id, activeProvider, ready ? 'success' : 'warn')
         };
     });
     Dom.updateBadges(els.apiKeyStatusRow, badges);
+}
+function getProviderBadgeClass(providerId, activeProvider, statusClass) {
+    if (statusClass === 'success' || statusClass === 'danger') {
+        return statusClass;
+    }
+    return providerId === activeProvider ? statusClass : undefined;
+}
+function getCodexBadgeText(ready, strings) {
+    if (ready) {
+        return strings.codexAuthReadyShort || strings.codexAuthReady || 'Codex signed in';
+    }
+    return strings.codexAuthMissingShort || strings.codexAuthMissing || 'Codex not signed in';
 }
 function getLocalModelStatus(model, strings) {
     const status = model?.status;
@@ -58,7 +79,7 @@ function getLocalModelStatus(model, strings) {
     if (status === 'error') {
         return { text: strings.localModelStatusError || 'Error', className: 'danger' };
     }
-    return { text: strings.localModelStatusNotDownloaded || 'Not downloaded', className: 'danger' };
+    return { text: strings.localModelStatusNotDownloaded || 'Not downloaded', className: 'warn' };
 }
 function renderReasoning(els, options, state, allow) {
     Dom.renderSelect(els.reasoning, options, state.commitReasoning);

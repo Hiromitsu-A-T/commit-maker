@@ -7,6 +7,7 @@ const ENDPOINT_CONFIG_KEY: Record<ProviderId, string> = {
   openai: 'endpoint',
   claude: 'endpointClaude',
   gemini: 'endpointGemini',
+  codex: 'endpointCodex',
   local: 'endpointLocal'
 };
 
@@ -14,6 +15,7 @@ const API_KEY_CONFIG_KEY: Record<ProviderId, string> = {
   openai: 'apiKeySecret',
   claude: 'apiKeySecretClaude',
   gemini: 'apiKeySecretGemini',
+  codex: 'apiKeySecretCodex',
   local: 'apiKeySecretLocal'
 };
 

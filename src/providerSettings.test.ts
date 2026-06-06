@@ -36,6 +36,8 @@ export async function runProviderSettingsTests(): Promise<void> {
     }
   });
   assert.strictEqual(getApiKeySecretName(workspaceSecretOnly, 'claude'), DEFAULT_PROVIDER_SECRETS.claude);
+  assert.strictEqual(getApiKeySecretName(createConfig({}), 'codex'), '');
+  assert.strictEqual(getEndpoint(createConfig({}), 'codex'), '');
 
   console.log('providerSettings.test.ts passed');
 }

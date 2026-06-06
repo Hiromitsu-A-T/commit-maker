@@ -2,8 +2,10 @@ import * as crypto from 'crypto';
 import * as vscode from 'vscode';
 import {
   DEFAULT_PROVIDER,
+  DEFAULT_CODEX_REASONING_EFFORT,
   DEFAULT_REASONING_EFFORT,
   DEFAULT_VERBOSITY,
+  CODEX_REASONING_EFFORT_OPTIONS,
   MODEL_SUGGESTIONS_BY_PROVIDER,
   REASONING_EFFORT_OPTIONS,
   VERBOSITY_OPTIONS,
@@ -16,6 +18,7 @@ import {
 import {
   ProviderId,
   ProviderOption,
+  CodexReasoningEffort,
   ReasoningEffort,
   VerbositySetting,
   PromptPreset,
@@ -41,6 +44,7 @@ interface RenderContext {
   nonce: string;
   providerOptions: ProviderOption[];
   providerIssueUrls: Record<ProviderId, string>;
+  codexReasoningOptions: typeof CODEX_REASONING_EFFORT_OPTIONS;
   reasoningOptions: typeof REASONING_EFFORT_OPTIONS;
   reasoningOptionsByModel: Record<string, ReasoningEffort[]>;
   verbosityOptions: typeof VERBOSITY_OPTIONS;
@@ -79,6 +83,7 @@ const ALLOWED_STATE_KEYS: (keyof PanelState)[] = [
   'commitMaxPromptChars',
   'commitMaxPromptMode',
   'commitReasoning',
+  'commitCodexReasoning',
   'commitVerbosity',
   'localModel',
   'strings',
@@ -95,6 +100,7 @@ function createDefaultState(language: LanguageCode = DEFAULT_LANGUAGE): PanelSta
       openai: { ready: false },
       gemini: { ready: false },
       claude: { ready: false },
+      codex: { ready: false },
       local: { ready: false }
     },
     commitPrompt: getDefaultCommitPrompt(language),
@@ -115,6 +121,7 @@ function createDefaultState(language: LanguageCode = DEFAULT_LANGUAGE): PanelSta
     commitMaxPromptChars: DEFAULT_PROMPT_LIMIT.maxPromptChars,
     commitMaxPromptMode: DEFAULT_PROMPT_LIMIT.maxPromptMode,
     commitReasoning: DEFAULT_REASONING_EFFORT,
+    commitCodexReasoning: DEFAULT_CODEX_REASONING_EFFORT,
     commitVerbosity: DEFAULT_VERBOSITY,
     localModel: createDefaultLocalModelState(),
     strings: STRINGS[language] ?? STRINGS[DEFAULT_LANGUAGE],
@@ -143,6 +150,7 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
   private readonly onCommitIncludeBinaryEmitter = new vscode.EventEmitter<boolean>();
   private readonly onCommitMaxPromptEmitter = new vscode.EventEmitter<{ mode: 'unlimited' | 'limited'; value: number | null }>();
   private readonly onCommitReasoningEmitter = new vscode.EventEmitter<ReasoningEffort>();
+  private readonly onCommitCodexReasoningEmitter = new vscode.EventEmitter<CodexReasoningEffort>();
   private readonly onCommitVerbosityEmitter = new vscode.EventEmitter<VerbositySetting>();
   private readonly onLocalModelDownloadEmitter = new vscode.EventEmitter<void>();
   private readonly onLocalModelEmitter = new vscode.EventEmitter<string>();
@@ -150,6 +158,9 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
   private readonly onLocalModelDeleteEmitter = new vscode.EventEmitter<void>();
   private readonly onLocalModelTestEmitter = new vscode.EventEmitter<void>();
   private readonly onLocalModelRefreshEmitter = new vscode.EventEmitter<void>();
+  private readonly onCodexLoginEmitter = new vscode.EventEmitter<void>();
+  private readonly onCodexLogoutEmitter = new vscode.EventEmitter<void>();
+  private readonly onCodexRefreshEmitter = new vscode.EventEmitter<void>();
   private readonly onLanguageEmitter = new vscode.EventEmitter<LanguageCode>();
   private readonly onSavePromptPresetEmitter = new vscode.EventEmitter<{ title: string; body: string }>();
   private readonly onApplyPromptPresetEmitter = new vscode.EventEmitter<{ id: string }>();
@@ -169,6 +180,7 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
   public readonly onDidChangeCommitIncludeBinary = this.onCommitIncludeBinaryEmitter.event;
   public readonly onDidChangeCommitMaxPrompt = this.onCommitMaxPromptEmitter.event;
   public readonly onDidChangeCommitReasoning = this.onCommitReasoningEmitter.event;
+  public readonly onDidChangeCommitCodexReasoning = this.onCommitCodexReasoningEmitter.event;
   public readonly onDidChangeCommitVerbosity = this.onCommitVerbosityEmitter.event;
   public readonly onDidRequestLocalModelDownload = this.onLocalModelDownloadEmitter.event;
   public readonly onDidChangeLocalModel = this.onLocalModelEmitter.event;
@@ -176,6 +188,9 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
   public readonly onDidRequestLocalModelDelete = this.onLocalModelDeleteEmitter.event;
   public readonly onDidRequestLocalModelTest = this.onLocalModelTestEmitter.event;
   public readonly onDidRequestLocalModelRefresh = this.onLocalModelRefreshEmitter.event;
+  public readonly onDidRequestCodexLogin = this.onCodexLoginEmitter.event;
+  public readonly onDidRequestCodexLogout = this.onCodexLogoutEmitter.event;
+  public readonly onDidRequestCodexRefresh = this.onCodexRefreshEmitter.event;
   public readonly onDidChangeLanguage = this.onLanguageEmitter.event;
   public readonly onDidSavePromptPreset = this.onSavePromptPresetEmitter.event;
   public readonly onDidApplyPromptPreset = this.onApplyPromptPresetEmitter.event;
@@ -212,6 +227,8 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
         this.handleCommitMaxPromptChanged((message as Extract<WebviewInboundMessage, { type: 'commitMaxPromptChanged' }>).value),
       commitReasoningChanged: message =>
         this.handleCommitReasoningChanged((message as Extract<WebviewInboundMessage, { type: 'commitReasoningChanged' }>).value),
+      commitCodexReasoningChanged: message =>
+        this.handleCommitCodexReasoningChanged((message as Extract<WebviewInboundMessage, { type: 'commitCodexReasoningChanged' }>).value),
       commitVerbosityChanged: message =>
         this.handleCommitVerbosityChanged((message as Extract<WebviewInboundMessage, { type: 'commitVerbosityChanged' }>).value),
       localModelDownload: () => this.handleLocalModelDownload(),
@@ -221,6 +238,9 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
       localModelDelete: () => this.handleLocalModelDelete(),
       localModelTest: () => this.handleLocalModelTest(),
       localModelRefresh: () => this.handleLocalModelRefresh(),
+      codexLogin: () => this.handleCodexLogin(),
+      codexLogout: () => this.handleCodexLogout(),
+      codexRefresh: () => this.handleCodexRefresh(),
       languageChanged: message =>
         this.handleLanguageChanged((message as Extract<WebviewInboundMessage, { type: 'languageChanged' }>).value),
       commitGenerate: message =>
@@ -268,6 +288,7 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
     this.onCommitIncludeUntrackedEmitter.dispose();
     this.onCommitIncludeBinaryEmitter.dispose();
     this.onCommitReasoningEmitter.dispose();
+    this.onCommitCodexReasoningEmitter.dispose();
     this.onCommitVerbosityEmitter.dispose();
     this.onLocalModelDownloadEmitter.dispose();
     this.onLocalModelEmitter.dispose();
@@ -275,6 +296,9 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
     this.onLocalModelDeleteEmitter.dispose();
     this.onLocalModelTestEmitter.dispose();
     this.onLocalModelRefreshEmitter.dispose();
+    this.onCodexLoginEmitter.dispose();
+    this.onCodexLogoutEmitter.dispose();
+    this.onCodexRefreshEmitter.dispose();
     this.onLanguageEmitter.dispose();
   }
 
@@ -384,6 +408,11 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
     this.onCommitReasoningEmitter.fire(value);
   }
 
+  private handleCommitCodexReasoningChanged(value: CodexReasoningEffort): void {
+    this.state.commitCodexReasoning = value;
+    this.onCommitCodexReasoningEmitter.fire(value);
+  }
+
   private handleCommitVerbosityChanged(value: VerbositySetting): void {
     this.state.commitVerbosity = value;
     this.onCommitVerbosityEmitter.fire(value);
@@ -416,6 +445,18 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
 
   private handleLocalModelRefresh(): void {
     this.onLocalModelRefreshEmitter.fire();
+  }
+
+  private handleCodexLogin(): void {
+    this.onCodexLoginEmitter.fire();
+  }
+
+  private handleCodexLogout(): void {
+    this.onCodexLogoutEmitter.fire();
+  }
+
+  private handleCodexRefresh(): void {
+    this.onCodexRefreshEmitter.fire();
   }
 
   private handleLanguageChanged(value: LanguageCode): void {
@@ -476,6 +517,7 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
       strings: ctx.strings,
       languageOptions: ctx.languageOptions,
       providerOptions: ctx.providerOptions,
+      codexReasoningOptions: ctx.codexReasoningOptions,
       reasoningOptions: ctx.reasoningOptions,
       reasoningOptionsByModel: ctx.reasoningOptionsByModel,
       verbosityOptions: ctx.verbosityOptions,
@@ -525,6 +567,7 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
       nonce: getNonce(),
       providerOptions: buildProviderOptions(providerCapabilities),
       providerIssueUrls: buildProviderIssueUrls(providerCapabilities),
+      codexReasoningOptions: CODEX_REASONING_EFFORT_OPTIONS,
       reasoningOptions: REASONING_EFFORT_OPTIONS,
       reasoningOptionsByModel: getAllowedReasoningMap(),
       verbosityOptions: VERBOSITY_OPTIONS,

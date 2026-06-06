@@ -1,8 +1,8 @@
 {
   "name": "commit-maker",
   "displayName": "Commit Maker – コミットメーカー",
-  "description": "Git差分からコミットメッセージをAI生成。BYOKとQwen3/Gemma 4/LFM2.5のローカルGGUFモデルに対応。",
-  "version": "0.6.8",
+  "description": "Git差分からコミットメッセージをAI生成。BYOK、Codex、Qwen3/Gemma 4/LFM2.5のローカルGGUFモデルに対応。",
+  "version": "0.6.9",
   "publisher": "Hiromitsu",
   "license": "Apache-2.0",
   "repository": {
@@ -47,6 +47,8 @@
     "openai",
     "gemini",
     "claude",
+    "codex",
+    "chatgpt",
     "vscode",
     "コミット",
     "コミットメッセージ",
@@ -122,9 +124,10 @@
         "commitMaker.provider": {
           "type": "string",
           "enum": [
-            "openai",
             "gemini",
+            "openai",
             "claude",
+            "codex",
             "local"
           ],
           "default": "gemini",
@@ -154,6 +157,12 @@
           "default": "http://127.0.0.1",
           "description": "Local provider 内部用エンドポイント（通常は変更不要）"
         },
+        "commitMaker.codexCommand": {
+          "type": "string",
+          "scope": "application",
+          "default": "codex",
+          "description": "Codex provider が専用 CODEX_HOME で使用する Codex CLI コマンドまたは実行ファイルパス"
+        },
         "commitMaker.model": {
           "type": "string",
           "default": "gemini-2.5-flash-lite",
@@ -171,6 +180,17 @@
           ],
           "default": "medium",
           "description": "OpenAI Responses API 用 reasoning.effort"
+        },
+        "commitMaker.codexReasoningEffort": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "xhigh"
+          ],
+          "default": "low",
+          "description": "Codex provider 用 model_reasoning_effort"
         },
         "commitMaker.verbosity": {
           "type": "string",

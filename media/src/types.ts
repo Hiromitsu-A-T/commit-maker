@@ -24,10 +24,8 @@ export interface PanelElements {
   presetDelete: HTMLButtonElement | null;
   provider: HTMLSelectElement | null;
   providerRow: HTMLElement | null;
-  providerHelp: HTMLElement | null;
   model: HTMLSelectElement | null;
   modelGroup: HTMLElement | null;
-  modelHelp: HTMLElement | null;
   customModelRow: HTMLElement | null;
   customModel: HTMLInputElement | null;
   localModelPanel: HTMLElement | null;
@@ -38,6 +36,13 @@ export interface PanelElements {
   localModelDelete: HTMLButtonElement | null;
   localModelTest: HTMLButtonElement | null;
   localModelHint: HTMLElement | null;
+  codexAuthPanel: HTMLElement | null;
+  codexAuthStatus: HTMLElement | null;
+  codexAuthHint: HTMLElement | null;
+  codexAuthLogin: HTMLButtonElement | null;
+  codexAuthRefresh: HTMLButtonElement | null;
+  codexAuthLogout: HTMLButtonElement | null;
+  reasoningLabel: HTMLElement | null;
   reasoning: HTMLSelectElement | null;
   verbosity: HTMLSelectElement | null;
   reasoningRow: HTMLElement | null;
@@ -58,7 +63,9 @@ export interface PanelStateSnapshot {
   commitModel?: string;
   commitCustomModel?: string;
   commitReasoning?: string;
+  commitCodexReasoning?: string;
   commitVerbosity?: string;
+  apiKeyProvider?: string;
   apiKeys?: Record<string, { ready: boolean }>;
   localModel?: { id?: string; status: string; label: string; sizeLabel: string; downloadedBytes?: number; totalBytes?: number; hasPartialDownload?: boolean };
 }

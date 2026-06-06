@@ -1,4 +1,4 @@
-import { ProviderId, ReasoningEffort, VerbositySetting, PromptPreset, LanguageCode, LocalModelState } from './types';
+import { ProviderId, ReasoningEffort, CodexReasoningEffort, VerbositySetting, PromptPreset, LanguageCode, LocalModelState } from './types';
 
 export interface CommitState {
   prompt: string;
@@ -18,6 +18,7 @@ export interface CommitState {
   lastError?: string;
   progressMessage?: string;
   reasoning: ReasoningEffort;
+  codexReasoning: CodexReasoningEffort;
   verbosity: VerbositySetting;
   promptToast?: string;
   language: LanguageCode;

@@ -19,11 +19,13 @@ const ar: UiStrings = {
   modelLabel: 'النموذج',
   customModelLabel: 'اسم نموذج مخصص',
   customModelPlaceholder: 'example-model',
-  reasoningLabel: 'Reasoning Effort (OpenAI فقط)',
+  reasoningLabel: 'مستوى الاستدلال (OpenAI فقط)',
+  codexReasoningLabel: 'مستوى الاستدلال في Codex',
   verbosityLabel: 'درجة التفصيل (OpenAI فقط)',
   providerLabelGemini: 'Google Gemini',
   providerLabelOpenAi: 'OpenAI (عائلة GPT-5)',
   providerLabelClaude: 'Anthropic Claude',
+  providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'LLM محلي',
   localModelLabel: 'النموذج',
   localModelDownloadButton: 'تنزيل النموذج',
@@ -66,8 +68,8 @@ const ar: UiStrings = {
   statusLoading: 'توليد عبر LLM…',
   statusReady: 'تم',
   statusError: 'خطأ',
-  badgeUnstagedOn: 'Staged + Unstaged',
-  badgeUnstagedOff: 'Staged فقط',
+  badgeUnstagedOn: 'مُجهزة + غير مُجهزة',
+  badgeUnstagedOff: 'المُجهزة فقط',
 
   apiKeySaved: 'محفوظ',
   apiKeyNotSaved: 'غير محفوظ',
@@ -96,11 +98,25 @@ const ar: UiStrings = {
   providerDescriptionGemini: 'يتصل مباشرةً بـ Generative Language API (generateContent).',
   providerDescriptionOpenAi: 'يستخدم نقطة نهاية متوافقة مع Responses / Chat Completions.',
   providerDescriptionClaude: 'يستخدم Claude 3 messages API.',
+  providerDescriptionCodex: 'يستخدم مصادقة Codex CLI المخصصة لـ Commit Maker.',
   providerDescriptionLocal: 'يستخدم runtime llama.cpp المضمّن مع نموذج GGUF محلي.',
 
+  codexAuthLabel: 'مصادقة Codex',
+  codexAuthReady: 'تم تسجيل الدخول إلى Codex',
+  codexAuthReadyShort: 'تم تسجيل الدخول',
+  codexAuthMissing: 'لم يتم تسجيل الدخول إلى Codex أو أنه غير مثبت',
+  codexAuthMissingShort: 'غير مسجل الدخول',
+  codexAuthHint: 'يستخدم مصادقة Codex المخصصة لـ Commit Maker، منفصلة عن تسجيل الدخول المعتاد في Codex CLI.',
+  codexAuthLoginButton: 'تسجيل الدخول',
+  codexAuthRefreshButton: 'تحديث',
+  codexAuthLogoutButton: 'تسجيل الخروج',
   msgApiKeySaved: 'تم حفظ مفتاح API.',
   msgApiKeySavePick: 'اختر مزوداً لحفظ مفتاح API',
   msgApiKeyInputPrompt: 'أدخل مفتاح API لـ {provider}',
+  msgCodexLoginTerminalOpened: 'تم بدء تسجيل دخول Codex المخصص لـ Commit Maker في الطرفية. سيتم تحديث الحالة تلقائياً بعد تسجيل الدخول.',
+  msgCodexLoginFailed: 'فشل بدء تسجيل الدخول إلى Codex: {detail}',
+  msgCodexLogoutComplete: 'تم تسجيل الخروج من مصادقة Codex المخصصة لـ Commit Maker.',
+  msgCodexLogoutFailed: 'فشل تسجيل الخروج من Codex: {detail}',
 
   msgCommitGenerateTitle: 'توليد رسالة الالتزام (Commit Maker)',
   msgCommitGenerateFetchingDiff: 'جلب diff…',
@@ -111,7 +127,7 @@ const ar: UiStrings = {
   msgCommitNotGenerated: 'قم بتوليد رسالة الالتزام أولاً.',
   msgRepoNotFound: 'لم يُعثر على مستودع Git.',
   msgCancelled: 'ألغاه المستخدم',
-  msgDiffEmpty: 'لا يوجد diff. تحقق من staged/التغييرات.',
+  msgDiffEmpty: 'لا توجد فروقات. تحقق من الملفات المُجهزة أو التغييرات.',
   msgUnsupportedProvider: 'مزود غير مدعوم: {provider}',
   msgApiKeyMissing: 'مفتاح API لـ {provider} غير مضبوط. احفظه في الإعدادات.',
   msgLlmEmptyOpenAi: 'استجابة OpenAI فارغة.',
@@ -141,15 +157,15 @@ const ar: UiStrings = {
   actionCreatedLabel: 'تم الإنشاء',
   actionUpdatedLabel: 'تم التحديث',
   actionDeletedLabel: 'تم الحذف',
-  promptGuard: 'Follow the user\'s requested format and instructions exactly.',
-  userInstructionLabel: 'User instructions (verbatim):',
+  promptGuard: 'اتبع بدقة التنسيق والتعليمات التي طلبها المستخدم.',
+  userInstructionLabel: 'تعليمات المستخدم (نصاً):',
 
 
 
-  diffSectionStaged: '### Staged',
-  diffSectionUnstaged: '### Unstaged',
-  diffSectionUntracked: '### Untracked {path}',
-  diffHeading: '# Diff'
+  diffSectionStaged: '### مُجهزة',
+  diffSectionUnstaged: '### غير مُجهزة',
+  diffSectionUntracked: '### غير متعقبة {path}',
+  diffHeading: '# الفروقات'
 };
 
 export default ar;

@@ -1,6 +1,7 @@
 import { WebviewInboundMessage } from './panelMessages';
 import {
   isLanguageCode,
+  isCodexReasoningEffort,
   isProviderId,
   isReasoningEffort,
   isVerbositySetting
@@ -70,6 +71,10 @@ export function sanitizeMessage(message: unknown): WebviewInboundMessage | undef
       return isReasoningEffort((candidate as any).value)
         ? { type: candidate.type, value: (candidate as any).value }
         : undefined;
+    case 'commitCodexReasoningChanged':
+      return isCodexReasoningEffort((candidate as any).value)
+        ? { type: candidate.type, value: (candidate as any).value }
+        : undefined;
     case 'commitVerbosityChanged':
       return isVerbositySetting((candidate as any).value)
         ? { type: candidate.type, value: (candidate as any).value }
@@ -83,6 +88,9 @@ export function sanitizeMessage(message: unknown): WebviewInboundMessage | undef
     case 'localModelDelete':
     case 'localModelTest':
     case 'localModelRefresh':
+    case 'codexLogin':
+    case 'codexLogout':
+    case 'codexRefresh':
       return { type: candidate.type };
     case 'commitGenerate': {
       const value = (candidate as any).value || {};

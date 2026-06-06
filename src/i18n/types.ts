@@ -20,10 +20,12 @@ export interface UiStrings {
   customModelLabel: string;
   customModelPlaceholder: string;
   reasoningLabel: string;
+  codexReasoningLabel: string;
   verbosityLabel: string;
   providerLabelGemini: string;
   providerLabelOpenAi: string;
   providerLabelClaude: string;
+  providerLabelCodex: string;
   providerLabelLocal: string;
   localModelLabel: string;
   localModelDownloadButton: string;
@@ -87,11 +89,26 @@ export interface UiStrings {
   providerDescriptionGemini: string;
   providerDescriptionOpenAi: string;
   providerDescriptionClaude: string;
+  providerDescriptionCodex: string;
   providerDescriptionLocal: string;
+
+  codexAuthLabel: string;
+  codexAuthReady: string;
+  codexAuthReadyShort: string;
+  codexAuthMissing: string;
+  codexAuthMissingShort: string;
+  codexAuthHint: string;
+  codexAuthLoginButton: string;
+  codexAuthRefreshButton: string;
+  codexAuthLogoutButton: string;
 
   msgApiKeySaved: string;
   msgApiKeySavePick: string;
   msgApiKeyInputPrompt: string;
+  msgCodexLoginTerminalOpened: string;
+  msgCodexLoginFailed: string;
+  msgCodexLogoutComplete: string;
+  msgCodexLogoutFailed: string;
 
   msgCommitGenerateTitle: string;
   msgCommitGenerateFetchingDiff: string;

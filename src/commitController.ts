@@ -10,6 +10,8 @@ import {
   COMMIT_MAX_PROMPT_CHARS_STORAGE_KEY,
   COMMIT_PROMPT_STORAGE_KEY,
   COMMIT_PROVIDER_STORAGE_KEY,
+  COMMIT_CODEX_REASONING_STORAGE_KEY,
+  DEFAULT_CODEX_REASONING_EFFORT,
   DEFAULT_MAX_OUTPUT_TOKENS,
   DEFAULT_LOCAL_CONTEXT_SIZE,
   DEFAULT_LOCAL_GPU_LAYERS,
@@ -34,6 +36,7 @@ import {
   ReasoningEffort,
   VerbositySetting,
   LocalModelGenerationSettings,
+  isCodexReasoningEffort,
   isProviderId,
   isReasoningEffort,
   isVerbositySetting,
@@ -46,6 +49,7 @@ import { callOpenAi } from './services/llm/openai';
 import { callClaude } from './services/llm/claude';
 import { callGemini } from './services/llm/gemini';
 import { callLocalLlm, stopLocalLlmRuntime } from './services/llm/local';
+import { callCodex } from './services/llm/codex';
 import {
   deleteLocalModel,
   downloadLocalModel,
@@ -64,6 +68,7 @@ import {
   upsertPreset
 } from './promptPresets';
 import { getApiKeySecretName, getEndpoint } from './providerSettings';
+import { ensureCodexHome, getCodexCommand } from './services/codexCli';
 import { DEFAULT_INCLUDE_FLAGS, DEFAULT_PROMPT_LIMIT, getDefaultModelForProvider } from './defaults';
 import { loadPromptPresetsFromStorage, persistPromptPresets } from './promptPresetStorage';
 import { toPanelState, withStatus } from './panelSync';
@@ -223,6 +228,13 @@ export class CommitController implements vscode.Disposable {
           this.panel.updateState({ commitReasoning: value });
         }
       }),
+      this.panel.onDidChangeCommitCodexReasoning(value => {
+        if (isCodexReasoningEffort(value)) {
+          this.state.codexReasoning = value;
+          void this.context.workspaceState.update(COMMIT_CODEX_REASONING_STORAGE_KEY, value);
+          this.panel.updateState({ commitCodexReasoning: value });
+        }
+      }),
       this.panel.onDidChangeCommitVerbosity(value => {
         if (isVerbositySetting(value)) {
           this.state.verbosity = value;
@@ -284,7 +296,10 @@ export class CommitController implements vscode.Disposable {
     if (!promptFromGlobal && promptFromWorkspace) {
       void this.context.globalState.update(COMMIT_PROMPT_STORAGE_KEY, promptFromWorkspace);
     }
-    const provider = this.context.workspaceState.get<ProviderId>(COMMIT_PROVIDER_STORAGE_KEY, DEFAULT_PROVIDER);
+    const config = vscode.workspace.getConfiguration('commitMaker');
+    const configuredProvider = config.get<string>('provider', DEFAULT_PROVIDER);
+    const defaultProvider = isProviderId(configuredProvider) ? configuredProvider : DEFAULT_PROVIDER;
+    const provider = this.context.workspaceState.get<ProviderId>(COMMIT_PROVIDER_STORAGE_KEY, defaultProvider);
     const storedApiKeyProvider = this.context.globalState.get<string>(COMMIT_API_KEY_PROVIDER_STORAGE_KEY);
     const apiKeyProvider = isProviderId(storedApiKeyProvider) ? storedApiKeyProvider : provider;
     const storedModel = this.context.workspaceState.get<string>(COMMIT_MODEL_STORAGE_KEY);
@@ -311,6 +326,13 @@ export class CommitController implements vscode.Disposable {
       DEFAULT_PROMPT_LIMIT.maxPromptChars
     );
     const reasoning = this.context.workspaceState.get<ReasoningEffort>(COMMIT_REASONING_STORAGE_KEY, DEFAULT_REASONING_EFFORT);
+    const configuredCodexReasoning = config.get<string>('codexReasoningEffort', DEFAULT_CODEX_REASONING_EFFORT);
+    const storedCodexReasoning = this.context.workspaceState.get<string>(COMMIT_CODEX_REASONING_STORAGE_KEY);
+    const codexReasoning = isCodexReasoningEffort(storedCodexReasoning)
+      ? storedCodexReasoning
+      : isCodexReasoningEffort(configuredCodexReasoning)
+        ? configuredCodexReasoning
+        : DEFAULT_CODEX_REASONING_EFFORT;
     const verbosity = this.context.workspaceState.get<VerbositySetting>(COMMIT_VERBOSITY_STORAGE_KEY, DEFAULT_VERBOSITY);
     return {
       prompt,
@@ -324,6 +346,7 @@ export class CommitController implements vscode.Disposable {
       maxPromptMode: maxPromptChars ? 'limited' : DEFAULT_PROMPT_LIMIT.maxPromptMode,
       status: 'idle',
       reasoning,
+      codexReasoning,
       verbosity,
       promptPresets: presets,
       activePromptPresetId: activeId,
@@ -834,9 +857,10 @@ export class CommitController implements vscode.Disposable {
 
   private async callLlm(prompt: string): Promise<string> {
     const provider = this.state.provider;
+    const config = vscode.workspace.getConfiguration('commitMaker');
     const { endpoint, model, apiKey, timeout, maxOutputTokens } = await this.getProviderRuntimeConfig(provider);
     const abortSignal = this.currentAbortController?.signal;
-    const logEnabled = vscode.workspace.getConfiguration('commitMaker').get<boolean>('logLlm', false);
+    const logEnabled = config.get<boolean>('logLlm', false);
     const log = logEnabled ? (message: string): void => this.output.appendLine(message) : undefined;
 
     const dispatcher: Record<ProviderId, () => Promise<string>> = {
@@ -872,6 +896,17 @@ export class CommitController implements vscode.Disposable {
           model,
           apiKey,
           endpoint,
+          abortSignal,
+          timeoutMs: timeout,
+          logger: log
+        }),
+      codex: async () =>
+        callCodex({
+          prompt,
+          model,
+          codexCommand: getCodexCommand(config),
+          codexHome: await ensureCodexHome(this.context),
+          reasoning: this.state.codexReasoning || DEFAULT_CODEX_REASONING_EFFORT,
           abortSignal,
           timeoutMs: timeout,
           logger: log
@@ -918,7 +953,7 @@ export class CommitController implements vscode.Disposable {
     const config = vscode.workspace.getConfiguration('commitMaker');
     const endpoint = getEndpoint(config, provider);
     const model = this.state.model?.trim() || getDefaultModelForProvider(provider);
-    if (provider === 'local') {
+    if (provider === 'local' || provider === 'codex') {
       const timeout = config.get<number>('requestTimeoutMs', 300000);
       const maxOutputTokens = this.getConfiguredMaxOutputTokens(config, DEFAULT_LOCAL_MAX_OUTPUT_TOKENS);
       return { endpoint, model, apiKey: '', timeout, maxOutputTokens };
