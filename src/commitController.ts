@@ -43,7 +43,7 @@ import {
   PromptPreset,
   isLanguageCode
 } from './types';
-import { collectDiff } from './services/diffCollector';
+import { collectDiff, DEFAULT_DIFF_COLLECTION_LIMIT_CHARS } from './services/diffCollector';
 import { applyPromptLimit, buildLocalDiffDigest, getLocalPromptCharLimit } from './promptLimit';
 import { callOpenAi } from './services/llm/openai';
 import { callClaude } from './services/llm/claude';
@@ -82,6 +82,7 @@ import {
   getDefaultVerbosityForModel
 } from './modelCapabilities';
 import { buildProviderCapabilities } from './constants';
+import { getUserConfigurationValue } from './configScope';
 
 interface GitRepository {
   rootUri: vscode.Uri;
@@ -662,10 +663,17 @@ export class CommitController implements vscode.Disposable {
     includeUntracked: boolean,
     includeBinary: boolean
   ): Promise<string> {
+    const config = vscode.workspace.getConfiguration('commitMaker');
+    const maxCollectedChars = getUserConfigurationValue<number>(
+      config,
+      'diffCollectionLimitChars',
+      DEFAULT_DIFF_COLLECTION_LIMIT_CHARS
+    );
     let diff = await collectDiff(repo, {
       includeUnstaged,
       includeUntracked,
       includeBinary,
+      maxCollectedChars,
       logger: this.output
     });
     diff = applyPromptLimit(diff, this.state.maxPromptMode ?? 'unlimited', this.state.maxPromptChars);

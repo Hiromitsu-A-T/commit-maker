@@ -8,7 +8,7 @@ import {
 } from '../../modelCapabilities';
 import { DEFAULT_REASONING_EFFORT, DEFAULT_VERBOSITY, DEFAULT_MODEL_BY_PROVIDER } from '../../constants';
 import { ReasoningEffort, VerbositySetting } from '../../types';
-import { callLlmJson } from './shared';
+import { callLlmJson, validateHttps } from './shared';
 import { getStrings, DEFAULT_LANGUAGE } from '../../i18n/strings';
 
 export interface OpenAiCallParams {
@@ -66,6 +66,7 @@ export async function callOpenAi({
 }: OpenAiCallParams): Promise<string> {
   const strings = getStrings(DEFAULT_LANGUAGE);
 
+  validateHttps(endpoint, 'OpenAI endpoint');
   const resolvedModel = await ensureModelExists(model, apiKey, endpoint, logger);
   const effectiveReasoning = resolveReasoning(resolvedModel, reasoning);
   const effectiveVerbosity = resolveVerbosity(resolvedModel, verbosity);

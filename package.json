@@ -2,7 +2,7 @@
   "name": "commit-maker",
   "displayName": "Commit Maker – コミットメーカー",
   "description": "Git差分からコミットメッセージをAI生成。BYOK、Codex、Qwen3/Gemma 4/LFM2.5のローカルGGUFモデルに対応。",
-  "version": "0.6.9",
+  "version": "0.6.10",
   "publisher": "Hiromitsu",
   "license": "Apache-2.0",
   "repository": {
@@ -279,6 +279,13 @@
           "type": "number",
           "default": 8192,
           "description": "OpenAI /v1/responses へ送る max_output_tokens の上限"
+        },
+        "commitMaker.diffCollectionLimitChars": {
+          "type": "number",
+          "scope": "application",
+          "default": 33554432,
+          "minimum": 1000000,
+          "description": "差分収集段階の安全上限（文字数）。最終プロンプト上限とは別で、長コンテキストモデル向けに必要なら引き上げ可能"
         },
         "commitMaker.logLlm": {
           "type": "boolean",

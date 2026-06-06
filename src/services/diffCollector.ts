@@ -8,6 +8,7 @@ import { getStrings, DEFAULT_LANGUAGE } from '../i18n/strings';
 const execFileAsync = promisify(execFile);
 const strings = getStrings(DEFAULT_LANGUAGE);
 const MAX_UNTRACKED_FILE_BYTES = 256 * 1024;
+export const DEFAULT_DIFF_COLLECTION_LIMIT_CHARS = 32 * 1024 * 1024;
 
 export interface GitRepositoryLike {
   rootUri: { fsPath: string };
@@ -19,6 +20,7 @@ export interface DiffCollectOptions {
   includeUnstaged: boolean;
   includeUntracked: boolean;
   includeBinary: boolean;
+  maxCollectedChars?: number;
   logger?: { appendLine(message: string): void };
   /** テストや差し替え用の mock ステータス文字列（git status --porcelain 相当） */
   mockStatusOutput?: string;
@@ -28,17 +30,29 @@ export interface DiffCollectOptions {
 
 export async function collectDiff(
   repo: GitRepositoryLike,
-  { includeUnstaged, includeUntracked, includeBinary, logger, mockStatusOutput, mockUntrackedFiles }: DiffCollectOptions
+  {
+    includeUnstaged,
+    includeUntracked,
+    includeBinary,
+    maxCollectedChars,
+    logger,
+    mockStatusOutput,
+    mockUntrackedFiles
+  }: DiffCollectOptions
 ): Promise<string> {
   const strings = getStrings(DEFAULT_LANGUAGE);
   const parts: string[] = [];
+  const budget: DiffCollectionBudget = {
+    remaining: normalizeDiffCollectionLimit(maxCollectedChars),
+    truncated: false
+  };
 
   // Prefer VS Code Git API when available
   if (typeof repo.diffIndexWithHEAD === 'function') {
     try {
       const staged = await repo.diffIndexWithHEAD();
       if (staged?.trim()) {
-        parts.push(`${strings.diffSectionStaged}\n${staged.trim()}`);
+        appendCollectedPart(parts, `${strings.diffSectionStaged}\n${staged.trim()}`, budget, logger);
       }
     } catch (error) {
       logger?.appendLine(strings.msgGitDiffFailed.replace('{detail}', String(error)));
@@ -48,7 +62,7 @@ export async function collectDiff(
     try {
       const working = await repo.diffWithHEAD();
       if (working?.trim()) {
-        parts.push(`${strings.diffSectionUnstaged}\n${working.trim()}`);
+        appendCollectedPart(parts, `${strings.diffSectionUnstaged}\n${working.trim()}`, budget, logger);
       }
     } catch (error) {
       logger?.appendLine(strings.msgGitDiffFailed.replace('{detail}', String(error)));
@@ -60,19 +74,19 @@ export async function collectDiff(
     const repoPath = repo.rootUri.fsPath;
     const staged = await runGitDiff(['diff', '--cached'], repoPath, logger);
     if (staged.trim()) {
-      parts.push(`${strings.diffSectionStaged}\n${staged.trim()}`);
+      appendCollectedPart(parts, `${strings.diffSectionStaged}\n${staged.trim()}`, budget, logger);
     }
     if (includeUnstaged) {
       const unstaged = await runGitDiff(['diff'], repoPath, logger);
       if (unstaged.trim()) {
-        parts.push(`${strings.diffSectionUnstaged}\n${unstaged.trim()}`);
+        appendCollectedPart(parts, `${strings.diffSectionUnstaged}\n${unstaged.trim()}`, budget, logger);
       }
     }
   }
 
   // Include untracked files
-  if (includeUnstaged && includeUntracked) {
-    const untracked = await collectUntrackedFiles(repo, includeBinary, logger, mockStatusOutput, mockUntrackedFiles);
+  if (includeUnstaged && includeUntracked && budget.remaining > 0) {
+    const untracked = await collectUntrackedFiles(repo, includeBinary, logger, budget, mockStatusOutput, mockUntrackedFiles);
     if (untracked.trim()) {
       parts.push(untracked.trim());
     }
@@ -95,6 +109,7 @@ async function collectUntrackedFiles(
   repo: GitRepositoryLike,
   includeBinary: boolean,
   logger: { appendLine(message: string): void } | undefined,
+  budget: DiffCollectionBudget,
   mockStatusOutput?: string,
   mockUntrackedFiles?: Record<string, Buffer>
 ): Promise<string> {
@@ -120,6 +135,10 @@ async function collectUntrackedFiles(
   }
   const parts: string[] = [];
   for (const rel of paths) {
+    if (budget.remaining <= 0) {
+      markDiffTruncated(budget, logger);
+      break;
+    }
     const abs = resolveInsideRoot(repoPath, rel);
     if (!abs) {
       logger?.appendLine(`Skipped untracked file outside repository: ${rel}`);
@@ -154,12 +173,60 @@ async function collectUntrackedFiles(
         continue;
       }
       const content = buf.toString('utf8');
-      parts.push(strings.diffSectionUntracked.replace('{path}', rel) + '\n' + content.trim());
+      appendCollectedPart(
+        parts,
+        strings.diffSectionUntracked.replace('{path}', rel) + '\n' + content.trim(),
+        budget,
+        logger
+      );
     } catch (error) {
       logger?.appendLine(strings.msgUntrackedReadFailed.replace('{path}', rel).replace('{detail}', String(error)));
     }
   }
   return parts.join('\n\n');
+}
+
+interface DiffCollectionBudget {
+  remaining: number;
+  truncated: boolean;
+}
+
+function appendCollectedPart(
+  parts: string[],
+  part: string,
+  budget: DiffCollectionBudget,
+  logger?: { appendLine(message: string): void }
+): void {
+  if (!part) {
+    return;
+  }
+  if (budget.remaining <= 0) {
+    markDiffTruncated(budget, logger);
+    return;
+  }
+  if (part.length <= budget.remaining) {
+    parts.push(part);
+    budget.remaining -= part.length;
+    return;
+  }
+  const omitted = part.length - budget.remaining;
+  const marker = `\n\n[...${omitted} chars omitted by Commit Maker safety limit...]`;
+  parts.push(part.slice(0, budget.remaining) + marker);
+  budget.remaining = 0;
+  markDiffTruncated(budget, logger);
+}
+
+function markDiffTruncated(budget: DiffCollectionBudget, logger?: { appendLine(message: string): void }): void {
+  if (budget.truncated) return;
+  budget.truncated = true;
+  logger?.appendLine('Commit Maker diff safety limit reached; remaining diff content was omitted.');
+}
+
+function normalizeDiffCollectionLimit(value: number | undefined): number {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return Math.floor(value);
+  }
+  return DEFAULT_DIFF_COLLECTION_LIMIT_CHARS;
 }
 
 export function isBinaryBuffer(buf: Buffer, filename: string): boolean {

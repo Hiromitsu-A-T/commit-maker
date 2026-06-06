@@ -275,8 +275,8 @@ UIから切り替え可能（Switchable from UI）:
 - **Local provider**: llama.cpp の `llama-server` を使用。通常は OS/CPU に合う runtime を自動取得し、開発時のみ `commitMaker.localRuntimePath` で実行ファイルを上書き可能
 
 ### プライバシー / Privacy
-- **APIキー**: SecretStorageにのみ保存、外部送信なし  
-  (Stored only in SecretStorage, never sent externally)
+- **APIキー**: SecretStorageに保存し、生成時は選択したプロバイダーへの認証にのみ使用
+  (Stored in SecretStorage and used only to authenticate requests to the selected provider)
 - **差分データ**: 選択したLLMプロバイダーのみに送信  
   (Diffs sent only to your chosen LLM provider)
 - **拡張機能**: ログを外部送信しません  

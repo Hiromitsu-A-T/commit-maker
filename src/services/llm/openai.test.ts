@@ -77,8 +77,32 @@ async function testGpt54InvalidReasoningFallsBack(): Promise<void> {
   assert.strictEqual(bodies[0].temperature, 0);
 }
 
+async function testRejectsHttpEndpointBeforeModelFetch(): Promise<void> {
+  let fetchCalled = false;
+  await withMockFetch(async () => {
+    fetchCalled = true;
+    throw new Error('fetch should not be called');
+  }, async () => {
+    await assert.rejects(
+      () => callOpenAi({
+        prompt: 'ping',
+        model: 'gpt-5.4-nano',
+        apiKey: 'test-key',
+        endpoint: 'http://127.0.0.1:8080/v1/responses',
+        reasoning: 'none',
+        verbosity: 'medium',
+        maxOutputTokens: 8,
+        timeoutMs: 1000
+      }),
+      /https:\/\//
+    );
+  });
+  assert.strictEqual(fetchCalled, false, 'HTTP endpoints must be rejected before model preflight');
+}
+
 export async function runOpenAiLlmTests(): Promise<void> {
   await testGpt54ReasoningBody();
   await testGpt54InvalidReasoningFallsBack();
+  await testRejectsHttpEndpointBeforeModelFetch();
   console.log('openai.test.ts passed');
 }

@@ -14,4 +14,6 @@ jobs:
     with:
       channel: stable
       pre_release: false
-    secrets: inherit
+    secrets:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}

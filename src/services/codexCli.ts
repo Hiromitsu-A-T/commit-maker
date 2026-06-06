@@ -19,6 +19,30 @@ const CODEX_AUTH_ENV_VARS = [
   'CODEX_ACCESS_TOKEN',
   'OPENAI_API_KEY'
 ];
+const CODEX_ENV_ALLOWLIST = [
+  'APPDATA',
+  'ComSpec',
+  'HOME',
+  'LANG',
+  'LC_ALL',
+  'LC_CTYPE',
+  'LOCALAPPDATA',
+  'NODE_EXTRA_CA_CERTS',
+  'Path',
+  'PATH',
+  'PATHEXT',
+  'SSL_CERT_DIR',
+  'SSL_CERT_FILE',
+  'SystemRoot',
+  'TEMP',
+  'TMP',
+  'TMPDIR',
+  'USER',
+  'USERNAME',
+  'USERPROFILE',
+  'WINDIR'
+];
+const SECRET_ENV_PATTERN = /(?:^|_)(?:API[_-]?KEY|AUTH|BEARER|COOKIE|CREDENTIAL|PASSWORD|PRIVATE[_-]?KEY|SECRET|SESSION|TOKEN)(?:_|$)/i;
 
 export function getCodexCommand(config: vscode.WorkspaceConfiguration): string {
   const value = getUserConfigurationString(config, 'codexCommand', 'codex')?.trim();
@@ -37,9 +61,12 @@ export async function ensureCodexHome(context: vscode.ExtensionContext): Promise
 }
 
 export function buildCodexEnvironment(codexHome?: string): NodeJS.ProcessEnv {
-  const env: NodeJS.ProcessEnv = { ...process.env };
-  for (const key of CODEX_AUTH_ENV_VARS) {
-    delete env[key];
+  const env: NodeJS.ProcessEnv = {};
+  for (const key of CODEX_ENV_ALLOWLIST) {
+    const value = process.env[key];
+    if (value !== undefined && !isSensitiveEnvKey(key)) {
+      env[key] = value;
+    }
   }
   if (codexHome) {
     env.CODEX_HOME = codexHome;
@@ -49,13 +76,18 @@ export function buildCodexEnvironment(codexHome?: string): NodeJS.ProcessEnv {
 }
 
 export function buildCodexTerminalEnvironment(codexHome: string): Record<string, string | null> {
-  return {
-    CODEX_HOME: codexHome,
-    CODEX_SQLITE_HOME: codexHome,
-    CODEX_API_KEY: null,
-    CODEX_ACCESS_TOKEN: null,
-    OPENAI_API_KEY: null
-  };
+  const env: Record<string, string | null> = {};
+  for (const key of Object.keys(process.env)) {
+    if (isSensitiveEnvKey(key)) {
+      env[key] = null;
+    }
+  }
+  for (const key of CODEX_AUTH_ENV_VARS) {
+    env[key] = null;
+  }
+  env.CODEX_HOME = codexHome;
+  env.CODEX_SQLITE_HOME = codexHome;
+  return env;
 }
 
 export function buildCodexLoginCommand(command: string, platform = process.platform): string {
@@ -176,4 +208,8 @@ function quotePosix(value: string): string {
 
 function quotePowerShell(value: string): string {
   return `'${value.replace(/'/g, `''`)}'`;
+}
+
+function isSensitiveEnvKey(key: string): boolean {
+  return key.startsWith('COMMIT_MAKER_') || key.startsWith('CODEX_') || SECRET_ENV_PATTERN.test(key);
 }

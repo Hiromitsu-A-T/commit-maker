@@ -73,6 +73,63 @@ async function testUntrackedSkipsSensitiveAndLargeFiles() {
   }
 }
 
+async function testCollectDiffAppliesTotalSafetyLimit() {
+  const limit = 64 * 1024;
+  const largeRepo = {
+    ...mockRepo,
+    diffIndexWithHEAD: async () => 'x'.repeat(limit + 2048),
+    diffWithHEAD: async () => 'work-diff'
+  };
+  const messages: string[] = [];
+  const diff = await collectDiff(largeRepo, {
+    includeUnstaged: true,
+    includeUntracked: false,
+    includeBinary: true,
+    maxCollectedChars: limit,
+    logger: { appendLine: message => messages.push(message) }
+  });
+  assert(diff.includes('omitted by Commit Maker safety limit'), 'large API diffs should be truncated');
+  assert(!diff.includes('work-diff'), 'later sections should not be appended after the safety limit');
+  assert(messages.some(message => message.includes('diff safety limit')), 'truncation should be logged');
+}
+
+async function testDefaultAllowsLongContextDiff() {
+  const largeRepo = {
+    ...mockRepo,
+    diffIndexWithHEAD: async () => 'x'.repeat(2 * 1024 * 1024),
+    diffWithHEAD: async () => 'work-diff'
+  };
+  const diff = await collectDiff(largeRepo, {
+    includeUnstaged: true,
+    includeUntracked: false,
+    includeBinary: true
+  });
+  assert(!diff.includes('omitted by Commit Maker safety limit'), 'default limit should allow multi-MiB diffs');
+  assert(diff.includes('work-diff'), 'default limit should still include later sections for multi-MiB diffs');
+}
+
+async function testUntrackedAppliesTotalSafetyLimit() {
+  const limit = 1024 * 1024;
+  const files: Record<string, Buffer> = {};
+  const status: string[] = [];
+  for (let i = 0; i < 8; i += 1) {
+    const name = `untracked/file-${i}.txt`;
+    status.push(`?? ${name}`);
+    files[name] = Buffer.alloc(200 * 1024, String(i));
+  }
+  const repo = { ...mockRepo, rootUri: { fsPath: '/tmp/mock-untracked-limit' } };
+  const diff = await collectDiff(repo, {
+    includeUnstaged: true,
+    includeUntracked: true,
+    includeBinary: true,
+    maxCollectedChars: limit,
+    mockStatusOutput: `${status.join('\n')}\n`,
+    mockUntrackedFiles: files
+  });
+  assert(diff.includes('omitted by Commit Maker safety limit'), 'untracked aggregate should be truncated');
+  assert(diff.length < limit + 10000, 'output should stay close to the configured safety limit');
+}
+
 async function testUntrackedSkipsPathEscapeAndSymlink() {
   const tmpRoot = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'commit-maker-diff-root-'));
   const outside = path.join(os.tmpdir(), `commit-maker-outside-${Date.now()}.txt`);
@@ -106,6 +163,9 @@ export async function runDiffCollectorTests() {
   await testCollectDiffStagedOnly();
   await testUntrackedSkipWhenDisabledBinary();
   await testUntrackedSkipsSensitiveAndLargeFiles();
+  await testCollectDiffAppliesTotalSafetyLimit();
+  await testDefaultAllowsLongContextDiff();
+  await testUntrackedAppliesTotalSafetyLimit();
   await testUntrackedSkipsPathEscapeAndSymlink();
   await testBinaryHeuristic();
   console.log('diffCollector.test.ts passed');
