@@ -344,8 +344,8 @@
   "devDependencies": {
     "@types/node": "^18.19.0",
     "@types/vscode": "1.94.0",
-    "@vscode/vsce": "^3.9.1",
-    "ovsx": "^0.10.12",
+    "@vscode/vsce": "^3.9.2",
+    "ovsx": "^1.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3"
   }
