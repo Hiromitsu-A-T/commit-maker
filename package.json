@@ -2,7 +2,7 @@
   "name": "commit-maker",
   "displayName": "Commit Maker – コミットメーカー",
   "description": "Git差分からコミットメッセージをAI生成。BYOK、Codex、Qwen3/Gemma 4/LFM2.5のローカルGGUFモデルに対応。",
-  "version": "0.6.12",
+  "version": "0.6.13",
   "publisher": "Hiromitsu",
   "license": "Apache-2.0",
   "repository": {
