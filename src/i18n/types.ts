@@ -39,6 +39,10 @@ export interface UiStrings {
   localModelStatusError: string;
   localModelSizePrefix: string;
   localModelNeedDownload: string;
+  localModelRecommendedBadge: string;
+  localModelRecommendedHint: string;
+  localModelLowMemoryBadge: string;
+  localModelLowMemoryHint: string;
 
   promptSectionTitle: string;
   presetNamePlaceholder: string;

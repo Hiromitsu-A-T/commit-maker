@@ -39,6 +39,10 @@ const fr: UiStrings = {
   localModelStatusError: 'Erreur',
   localModelSizePrefix: 'Taille : ',
   localModelNeedDownload: 'Téléchargez d’abord le modèle local.',
+  localModelRecommendedBadge: 'Recommandé',
+  localModelRecommendedHint: 'Meilleur équilibre entre suivi des instructions et performances locales. Recommandé pour un usage normal.',
+  localModelLowMemoryBadge: 'Mémoire réduite',
+  localModelLowMemoryHint: 'Utilise moins de mémoire, mais la précision peut baisser sur les diffs longs ou complexes et les prompts personnalisés détaillés.',
 
   promptSectionTitle: 'Prompt et options',
   presetNamePlaceholder: 'Nom du preset',

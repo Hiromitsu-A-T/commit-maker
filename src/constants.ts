@@ -65,6 +65,7 @@ export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
     runtimeVersion: 'b9441',
     generationProfile: 'deterministic',
     runtimeProfile: 'qwen35',
+    uiProfile: 'recommended',
     legacyIds: [
       LEGACY_DEFAULT_LOCAL_MODEL_ID,
       'Qwen3-4B-Instruct-2507-Q4_K_M',
@@ -73,7 +74,7 @@ export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
   },
   {
     id: QWEN35_2B_LOCAL_MODEL_ID,
-    label: 'Qwen3.5-2B Q4_K_M (Low-memory)',
+    label: 'Qwen3.5-2B Q4_K_M',
     filename: 'Qwen3.5-2B-Q4_K_M.gguf',
     url: 'https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/f6d5376be1edb4d416d56da11e5397a961aca8ae/Qwen3.5-2B-Q4_K_M.gguf',
     sha256: 'aaf42c8b7c3cab2bf3d69c355048d4a0ee9973d48f16c731c0520ee914699223',
@@ -81,7 +82,8 @@ export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
     contextSize: 262_144,
     runtimeVersion: 'b9441',
     generationProfile: 'deterministic',
-    runtimeProfile: 'qwen35'
+    runtimeProfile: 'qwen35',
+    uiProfile: 'lowMemory'
   },
   {
     id: GEMMA4_LOCAL_MODEL_ID,

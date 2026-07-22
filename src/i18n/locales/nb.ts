@@ -39,6 +39,10 @@ const nb: UiStrings = {
   localModelStatusError: 'Feil',
   localModelSizePrefix: 'Størrelse: ',
   localModelNeedDownload: 'Last ned den lokale modellen først.',
+  localModelRecommendedBadge: 'Anbefalt',
+  localModelRecommendedHint: 'Best balanse mellom instruksjonsfølging og lokal ytelse. Anbefalt for normal bruk.',
+  localModelLowMemoryBadge: 'Lite minne',
+  localModelLowMemoryHint: 'Bruker mindre minne, men nøyaktigheten kan falle ved lange eller komplekse differ og detaljerte egendefinerte ledetekster.',
 
   promptSectionTitle: 'Prompt og alternativer',
   presetNamePlaceholder: 'Navn på forhåndsinnstilling',

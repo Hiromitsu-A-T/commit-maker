@@ -39,6 +39,10 @@ const id: UiStrings = {
   localModelStatusError: 'Kesalahan',
   localModelSizePrefix: 'Ukuran: ',
   localModelNeedDownload: 'Unduh model lokal terlebih dahulu.',
+  localModelRecommendedBadge: 'Direkomendasikan',
+  localModelRecommendedHint: 'Keseimbangan terbaik antara kepatuhan instruksi dan performa lokal. Direkomendasikan untuk penggunaan normal.',
+  localModelLowMemoryBadge: 'Memori rendah',
+  localModelLowMemoryHint: 'Menggunakan lebih sedikit memori, tetapi akurasi dapat menurun pada diff panjang atau rumit dan prompt kustom terperinci.',
 
   promptSectionTitle: 'Prompt & opsi',
   presetNamePlaceholder: 'Nama preset',

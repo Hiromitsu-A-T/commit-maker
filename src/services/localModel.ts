@@ -22,7 +22,8 @@ export function getLocalModelOptions(): LocalModelOption[] {
   return LOCAL_MODELS.map(model => ({
     id: model.id,
     label: model.label,
-    sizeLabel: formatBytes(model.sizeBytes)
+    sizeLabel: formatBytes(model.sizeBytes),
+    uiProfile: model.uiProfile
   }));
 }
 

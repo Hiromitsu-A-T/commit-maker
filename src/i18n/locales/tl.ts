@@ -39,6 +39,10 @@ const tl: UiStrings = {
   localModelStatusError: 'May error',
   localModelSizePrefix: 'Laki: ',
   localModelNeedDownload: 'I-download muna ang lokal na modelo.',
+  localModelRecommendedBadge: 'Inirerekomenda',
+  localModelRecommendedHint: 'Pinakamagandang balanse ng pagsunod sa tagubilin at lokal na performance. Inirerekomenda para sa karaniwang paggamit.',
+  localModelLowMemoryBadge: 'Mababang memory',
+  localModelLowMemoryHint: 'Mas kaunting memory ang ginagamit, ngunit maaaring bumaba ang katumpakan sa mahaba o komplikadong diff at detalyadong custom prompt.',
 
   promptSectionTitle: 'Prompt at mga opsyon',
   presetNamePlaceholder: 'Pangalan ng preset',

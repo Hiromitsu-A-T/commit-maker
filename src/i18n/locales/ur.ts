@@ -39,6 +39,10 @@ const ur: UiStrings = {
   localModelStatusError: 'خرابی',
   localModelSizePrefix: 'سائز: ',
   localModelNeedDownload: 'پہلے مقامی ماڈل ڈاؤن لوڈ کریں۔',
+  localModelRecommendedBadge: 'تجویز کردہ',
+  localModelRecommendedHint: 'ہدایات کی پیروی اور مقامی کارکردگی کے درمیان بہترین توازن۔ عام استعمال کے لیے تجویز کردہ۔',
+  localModelLowMemoryBadge: 'کم میموری',
+  localModelLowMemoryHint: 'کم میموری استعمال کرتا ہے، لیکن طویل یا پیچیدہ diff اور تفصیلی حسبِ ضرورت پرامپٹس پر درستگی کم ہو سکتی ہے۔',
 
   promptSectionTitle: 'پرامپٹ اور اختیارات',
   presetNamePlaceholder: 'پری سیٹ نام',

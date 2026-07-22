@@ -39,6 +39,10 @@ const th: UiStrings = {
   localModelStatusError: 'ข้อผิดพลาด',
   localModelSizePrefix: 'ขนาด: ',
   localModelNeedDownload: 'ดาวน์โหลดโมเดลภายในเครื่องก่อน',
+  localModelRecommendedBadge: 'แนะนำ',
+  localModelRecommendedHint: 'สมดุลดีที่สุดระหว่างการทำตามคำสั่งและประสิทธิภาพภายในเครื่อง เหมาะสำหรับการใช้งานทั่วไป',
+  localModelLowMemoryBadge: 'หน่วยความจำน้อย',
+  localModelLowMemoryHint: 'ใช้หน่วยความจำน้อยกว่า แต่ความแม่นยำอาจลดลงเมื่อ diff ยาวหรือซับซ้อนและใช้พรอมต์กำหนดเองที่ละเอียด',
 
   promptSectionTitle: 'พรอมต์และตัวเลือก',
   presetNamePlaceholder: 'ชื่อพรีเซ็ต',

@@ -39,6 +39,10 @@ const hi: UiStrings = {
   localModelStatusError: 'त्रुटि',
   localModelSizePrefix: 'आकार: ',
   localModelNeedDownload: 'पहले स्थानीय मॉडल डाउनलोड करें।',
+  localModelRecommendedBadge: 'अनुशंसित',
+  localModelRecommendedHint: 'निर्देश पालन और स्थानीय प्रदर्शन का सर्वोत्तम संतुलन। सामान्य उपयोग के लिए अनुशंसित।',
+  localModelLowMemoryBadge: 'कम मेमोरी',
+  localModelLowMemoryHint: 'कम मेमोरी उपयोग करता है, लेकिन लंबे या जटिल diff और विस्तृत कस्टम प्रॉम्प्ट पर सटीकता घट सकती है।',
 
   promptSectionTitle: 'प्रॉम्प्ट और विकल्प',
   presetNamePlaceholder: 'प्रिसेट नाम',

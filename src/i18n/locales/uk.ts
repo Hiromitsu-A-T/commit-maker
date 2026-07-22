@@ -39,6 +39,10 @@ const uk: UiStrings = {
   localModelStatusError: 'Помилка',
   localModelSizePrefix: 'Розмір: ',
   localModelNeedDownload: 'Спочатку завантажте локальну модель.',
+  localModelRecommendedBadge: 'Рекомендовано',
+  localModelRecommendedHint: 'Найкращий баланс дотримання інструкцій і локальної продуктивності. Рекомендовано для звичайного використання.',
+  localModelLowMemoryBadge: 'Мало пам’яті',
+  localModelLowMemoryHint: 'Використовує менше пам’яті, але точність може знижуватися на довгих або складних diff і детальних власних промптах.',
 
   promptSectionTitle: 'Підказка та опції',
   presetNamePlaceholder: 'Назва пресету',

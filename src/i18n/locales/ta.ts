@@ -39,6 +39,10 @@ const ta: UiStrings = {
   localModelStatusError: 'பிழை',
   localModelSizePrefix: 'அளவு: ',
   localModelNeedDownload: 'முதலில் உள்ளூர் மாதிரியைப் பதிவிறக்கவும்.',
+  localModelRecommendedBadge: 'பரிந்துரைக்கப்படுகிறது',
+  localModelRecommendedHint: 'வழிமுறைகளைப் பின்பற்றுதல் மற்றும் உள்ளூர் செயல்திறன் இடையே சிறந்த சமநிலை. வழக்கமான பயன்பாட்டிற்குப் பரிந்துரைக்கப்படுகிறது.',
+  localModelLowMemoryBadge: 'குறைந்த நினைவகம்',
+  localModelLowMemoryHint: 'குறைந்த நினைவகத்தைப் பயன்படுத்தும்; ஆனால் நீண்ட அல்லது சிக்கலான diff மற்றும் விரிவான தனிப்பயன் prompt-களில் துல்லியம் குறையலாம்.',
 
   promptSectionTitle: 'ப்ராம்ட் & விருப்பங்கள்',
   presetNamePlaceholder: 'பிரிசெட் பெயர்',

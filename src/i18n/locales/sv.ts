@@ -39,6 +39,10 @@ const sv: UiStrings = {
   localModelStatusError: 'Fel',
   localModelSizePrefix: 'Storlek: ',
   localModelNeedDownload: 'Hämta den lokala modellen först.',
+  localModelRecommendedBadge: 'Rekommenderad',
+  localModelRecommendedHint: 'Bäst balans mellan instruktionsföljning och lokal prestanda. Rekommenderas för normal användning.',
+  localModelLowMemoryBadge: 'Lite minne',
+  localModelLowMemoryHint: 'Använder mindre minne, men noggrannheten kan sjunka för långa eller komplexa diffar och detaljerade anpassade prompter.',
 
   promptSectionTitle: 'Prompt och alternativ',
   presetNamePlaceholder: 'Preset-namn',

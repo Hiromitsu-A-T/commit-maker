@@ -39,6 +39,10 @@ const ru: UiStrings = {
   localModelStatusError: 'Ошибка',
   localModelSizePrefix: 'Размер: ',
   localModelNeedDownload: 'Сначала скачайте локальную модель.',
+  localModelRecommendedBadge: 'Рекомендуется',
+  localModelRecommendedHint: 'Лучший баланс следования инструкциям и локальной производительности. Рекомендуется для обычного использования.',
+  localModelLowMemoryBadge: 'Мало памяти',
+  localModelLowMemoryHint: 'Использует меньше памяти, но точность может снижаться на длинных или сложных diff и подробных пользовательских промптах.',
 
   promptSectionTitle: 'Промпт и опции',
   presetNamePlaceholder: 'Имя пресета',

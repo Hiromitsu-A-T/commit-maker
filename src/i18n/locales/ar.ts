@@ -39,6 +39,10 @@ const ar: UiStrings = {
   localModelStatusError: 'خطأ',
   localModelSizePrefix: 'الحجم: ',
   localModelNeedDownload: 'نزّل النموذج المحلي أولاً.',
+  localModelRecommendedBadge: 'موصى به',
+  localModelRecommendedHint: 'أفضل توازن بين اتباع التعليمات والأداء المحلي. موصى به للاستخدام العادي.',
+  localModelLowMemoryBadge: 'ذاكرة منخفضة',
+  localModelLowMemoryHint: 'يستخدم ذاكرة أقل، لكن قد تنخفض الدقة مع الفروق الطويلة أو المعقدة والمطالبات المخصصة التفصيلية.',
 
   promptSectionTitle: 'المطالبة والخيارات',
   presetNamePlaceholder: 'اسم الإعداد المسبق',

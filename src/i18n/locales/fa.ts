@@ -39,6 +39,10 @@ const fa: UiStrings = {
   localModelStatusError: 'خطا',
   localModelSizePrefix: 'حجم: ',
   localModelNeedDownload: 'ابتدا مدل محلی را دانلود کنید.',
+  localModelRecommendedBadge: 'پیشنهادی',
+  localModelRecommendedHint: 'بهترین تعادل بین پیروی از دستورها و عملکرد محلی. برای استفاده معمول پیشنهاد می‌شود.',
+  localModelLowMemoryBadge: 'حافظه کم',
+  localModelLowMemoryHint: 'حافظه کمتری مصرف می‌کند، اما دقت در diffهای طولانی یا پیچیده و پرامپت‌های سفارشی دقیق ممکن است کاهش یابد.',
 
   promptSectionTitle: 'پرومپت و گزینه‌ها',
   presetNamePlaceholder: 'نام پیش‌تنظیم',

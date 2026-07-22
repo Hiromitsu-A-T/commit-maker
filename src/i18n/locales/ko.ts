@@ -39,6 +39,10 @@ const ko: UiStrings = {
   localModelStatusError: '오류',
   localModelSizePrefix: '크기: ',
   localModelNeedDownload: '먼저 로컬 모델을 다운로드하세요.',
+  localModelRecommendedBadge: '권장',
+  localModelRecommendedHint: '지시 준수와 로컬 성능의 균형이 가장 좋으며 일반적인 사용에 권장됩니다.',
+  localModelLowMemoryBadge: '저메모리',
+  localModelLowMemoryHint: '메모리를 적게 사용하지만 길거나 복잡한 diff와 세부적인 사용자 프롬프트에서는 정확도가 낮아질 수 있습니다.',
 
   promptSectionTitle: '프롬프트 및 옵션',
   presetNamePlaceholder: '프리셋 이름',

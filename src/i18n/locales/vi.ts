@@ -39,6 +39,10 @@ const vi: UiStrings = {
   localModelStatusError: 'Lỗi',
   localModelSizePrefix: 'Kích thước: ',
   localModelNeedDownload: 'Trước tiên hãy tải mô hình cục bộ.',
+  localModelRecommendedBadge: 'Khuyên dùng',
+  localModelRecommendedHint: 'Cân bằng tốt nhất giữa tuân theo chỉ dẫn và hiệu năng cục bộ. Khuyên dùng cho nhu cầu thông thường.',
+  localModelLowMemoryBadge: 'Ít bộ nhớ',
+  localModelLowMemoryHint: 'Dùng ít bộ nhớ hơn, nhưng độ chính xác có thể giảm với diff dài hoặc phức tạp và prompt tùy chỉnh chi tiết.',
 
   promptSectionTitle: 'Prompt và tùy chọn',
   presetNamePlaceholder: 'Tên preset',

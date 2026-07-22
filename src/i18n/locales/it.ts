@@ -39,6 +39,10 @@ const it: UiStrings = {
   localModelStatusError: 'Errore',
   localModelSizePrefix: 'Dimensione: ',
   localModelNeedDownload: 'Scarica prima il modello locale.',
+  localModelRecommendedBadge: 'Consigliato',
+  localModelRecommendedHint: 'Il miglior equilibrio tra rispetto delle istruzioni e prestazioni locali. Consigliato per l’uso normale.',
+  localModelLowMemoryBadge: 'Memoria ridotta',
+  localModelLowMemoryHint: 'Usa meno memoria, ma la precisione può diminuire con diff lunghi o complessi e prompt personalizzati dettagliati.',
 
   promptSectionTitle: 'Prompt e opzioni',
   presetNamePlaceholder: 'Nome del preset',

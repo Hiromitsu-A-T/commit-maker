@@ -39,6 +39,10 @@ const zhTw: UiStrings = {
   localModelStatusError: '錯誤',
   localModelSizePrefix: '大小：',
   localModelNeedDownload: '請先下載本機模型。',
+  localModelRecommendedBadge: '推薦',
+  localModelRecommendedHint: '指令遵循能力與本機效能的平衡最佳，建議一般使用時選擇。',
+  localModelLowMemoryBadge: '低記憶體',
+  localModelLowMemoryHint: '使用較少記憶體，但處理冗長或複雜的差異及詳細自訂提示時，準確度可能下降。',
 
   promptSectionTitle: '提示與選項',
   presetNamePlaceholder: '預設名稱',

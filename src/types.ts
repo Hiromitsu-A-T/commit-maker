@@ -10,6 +10,7 @@ export type MaxPromptMode = 'unlimited' | 'limited';
 export type LocalGenerationProfileId = 'deterministic' | 'gemma4' | 'lfm25';
 export type LocalRuntimeProfileId = 'default' | 'qwen35' | 'gemma4' | 'lfm25';
 export type LocalRuntimeVersionId = 'b8967' | 'b9441';
+export type LocalModelUiProfile = 'recommended' | 'lowMemory';
 
 export interface ProviderOption {
   id: ProviderId;
@@ -69,6 +70,7 @@ export interface LocalModelDefinition {
   generation?: Partial<LocalModelGenerationSettings>;
   runtimeProfile?: LocalRuntimeProfileId;
   runtime?: Partial<LocalModelRuntimeSettings>;
+  uiProfile?: LocalModelUiProfile;
   legacyIds?: string[];
 }
 
@@ -94,6 +96,7 @@ export interface LocalModelOption {
   id: string;
   label: string;
   sizeLabel: string;
+  uiProfile?: LocalModelUiProfile;
 }
 
 export interface PromptPreset {

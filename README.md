@@ -129,7 +129,11 @@ Local は API 利用料なしで使えますが、クラウド API より生成�
 (Local can run without cloud API charges, but it may be slower than cloud APIs. Speed depends on your CPU/GPU, memory, and diff size.)
 
 Local の GGUF モデルは 1 件あたり約 1.2 GB〜5.4 GB です。不要になった場合は上部のローカルモデル欄の「削除」から選択中モデルの本体を削除できます。
-(Each Local GGUF model is about 2.5 GB to 5.4 GB. You can remove the selected model file from the top Local model section when you no longer need it.)
+(Each Local GGUF model is about 1.2 GB to 5.4 GB. You can remove the selected model file from the top Local model section when you no longer need it.)
+
+`Qwen3.5-4B Q4_K_M` は指示追従とローカル性能のバランスを重視した推奨モデルです。`Qwen3.5-2B Q4_K_M` は低メモリ環境向けですが、長い・複雑な差分や細かなカスタムプロンプトでは精度が低下することがあります。モデル選択によってユーザーが設定したプロンプト内容が変更されることはありません。
+
+`Qwen3.5-4B Q4_K_M` is the recommended model for balancing instruction following and local performance. `Qwen3.5-2B Q4_K_M` targets low-memory devices, but accuracy may drop on long or complex diffs and detailed custom prompts. Selecting a model does not modify the prompt configured by the user.
 
 Local は大きな差分を拡張機能内でファイル別の構造化ダイジェストに圧縮し、Local LLM 呼び出しを少なくして生成します。  
 (Local compresses large diffs into a structured per-file digest inside the extension, reducing Local LLM calls for faster generation.)
@@ -171,8 +175,8 @@ SCM ビューのタイトルバーにある **杖アイコン** から、パネ�
 ### モデルとプロンプト長 / Model & Prompt Length
 - **モデル選択**: 推奨モデルをプルダウンから選択、または独自モデル名を入力  
   (Choose recommended models or enter custom model names)
-- **Local モデル選択**: `Qwen3.5-4B Q4_K_M` / `Qwen3.5-2B Q4_K_M (Low-memory)` / `Gemma 4 E4B IT Q4_K_M` / `LFM2.5-8B-A1B Q4_K_M` から選択
-  (Local model choices: `Qwen3.5-4B Q4_K_M` / `Qwen3.5-2B Q4_K_M (Low-memory)` / `Gemma 4 E4B IT Q4_K_M` / `LFM2.5-8B-A1B Q4_K_M`)
+- **Local モデル選択**: `Qwen3.5-4B Q4_K_M`（推奨）/ `Qwen3.5-2B Q4_K_M`（低メモリ・精度控えめ）/ `Gemma 4 E4B IT Q4_K_M` / `LFM2.5-8B-A1B Q4_K_M` から選択
+  (Local model choices: `Qwen3.5-4B Q4_K_M` (recommended) / `Qwen3.5-2B Q4_K_M` (low memory, lower accuracy) / `Gemma 4 E4B IT Q4_K_M` / `LFM2.5-8B-A1B Q4_K_M`)
 - **プロンプト長制限**: 無制限 / 任意の文字数で設定可能  
   (Unlimited or custom character limit)
 - **省略方法**: 上限超過時は先頭20% + 末尾80%を残し、中央を省略  

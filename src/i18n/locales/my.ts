@@ -39,6 +39,10 @@ const my: UiStrings = {
   localModelStatusError: 'အမှား',
   localModelSizePrefix: 'အရွယ်အစား: ',
   localModelNeedDownload: 'ပထမဆုံး စက်တွင်း မော်ဒယ်ကို ဒေါင်းလုဒ်လုပ်ပါ။',
+  localModelRecommendedBadge: 'အကြံပြုထားသည်',
+  localModelRecommendedHint: 'ညွှန်ကြားချက်လိုက်နာမှုနှင့် စက်တွင်းစွမ်းဆောင်ရည် အကောင်းဆုံးမျှတမှုရှိပြီး ပုံမှန်အသုံးပြုရန် အကြံပြုထားသည်။',
+  localModelLowMemoryBadge: 'မမ်မိုရီနည်း',
+  localModelLowMemoryHint: 'မမ်မိုရီသုံးစွဲမှုနည်းသော်လည်း ရှည်လျားသည့် သို့မဟုတ် ရှုပ်ထွေးသည့် diff များနှင့် အသေးစိတ် စိတ်ကြိုက် prompt များတွင် တိကျမှုလျော့နိုင်သည်။',
 
   promptSectionTitle: 'Prompt နှင့် ရွေးစရာများ',
   presetNamePlaceholder: 'Preset နာမည်',

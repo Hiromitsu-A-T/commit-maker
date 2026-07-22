@@ -39,6 +39,10 @@ const he: UiStrings = {
   localModelStatusError: 'שגיאה',
   localModelSizePrefix: 'גודל: ',
   localModelNeedDownload: 'יש להוריד תחילה את המודל המקומי.',
+  localModelRecommendedBadge: 'מומלץ',
+  localModelRecommendedHint: 'האיזון הטוב ביותר בין ציות להוראות לביצועים מקומיים. מומלץ לשימוש רגיל.',
+  localModelLowMemoryBadge: 'זיכרון נמוך',
+  localModelLowMemoryHint: 'משתמש בפחות זיכרון, אך הדיוק עלול לרדת בהבדלים ארוכים או מורכבים ובהנחיות מותאמות מפורטות.',
 
   promptSectionTitle: 'פרומפט ואפשרויות',
   presetNamePlaceholder: 'שם פריסט',

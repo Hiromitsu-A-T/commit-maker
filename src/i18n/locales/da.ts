@@ -39,6 +39,10 @@ const da: UiStrings = {
   localModelStatusError: 'Fejl',
   localModelSizePrefix: 'Størrelse: ',
   localModelNeedDownload: 'Hent den lokale model først.',
+  localModelRecommendedBadge: 'Anbefalet',
+  localModelRecommendedHint: 'Bedste balance mellem instruktionsfølgning og lokal ydeevne. Anbefales til normal brug.',
+  localModelLowMemoryBadge: 'Lavt hukommelsesforbrug',
+  localModelLowMemoryHint: 'Bruger mindre hukommelse, men præcisionen kan falde ved lange eller komplekse diffs og detaljerede brugerprompter.',
 
   promptSectionTitle: 'Prompt og valgmuligheder',
   presetNamePlaceholder: 'Preset-navn',

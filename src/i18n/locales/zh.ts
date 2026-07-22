@@ -39,6 +39,10 @@ const zh: UiStrings = {
   localModelStatusError: '错误',
   localModelSizePrefix: '大小：',
   localModelNeedDownload: '请先下载本地模型。',
+  localModelRecommendedBadge: '推荐',
+  localModelRecommendedHint: '指令遵循能力与本地性能的平衡最佳，建议一般使用时选择。',
+  localModelLowMemoryBadge: '低内存',
+  localModelLowMemoryHint: '占用更少内存，但处理冗长或复杂的差异及详细自定义提示时，准确率可能下降。',
 
   promptSectionTitle: '提示词与选项',
   presetNamePlaceholder: '预设名称',

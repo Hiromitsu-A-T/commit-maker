@@ -39,6 +39,10 @@ const ro: UiStrings = {
   localModelStatusError: 'Eroare',
   localModelSizePrefix: 'Dimensiune: ',
   localModelNeedDownload: 'Descarcă mai întâi modelul local.',
+  localModelRecommendedBadge: 'Recomandat',
+  localModelRecommendedHint: 'Cel mai bun echilibru între respectarea instrucțiunilor și performanța locală. Recomandat pentru utilizare normală.',
+  localModelLowMemoryBadge: 'Memorie redusă',
+  localModelLowMemoryHint: 'Folosește mai puțină memorie, dar precizia poate scădea la diff-uri lungi sau complexe și prompturi personalizate detaliate.',
 
   promptSectionTitle: 'Prompt și opțiuni',
   presetNamePlaceholder: 'Nume preset',

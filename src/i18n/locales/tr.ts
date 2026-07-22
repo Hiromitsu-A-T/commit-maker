@@ -39,6 +39,10 @@ const tr: UiStrings = {
   localModelStatusError: 'Hata',
   localModelSizePrefix: 'Boyut: ',
   localModelNeedDownload: 'Önce yerel modeli indirin.',
+  localModelRecommendedBadge: 'Önerilen',
+  localModelRecommendedHint: 'Talimatlara uyum ve yerel performans arasında en iyi denge. Normal kullanım için önerilir.',
+  localModelLowMemoryBadge: 'Düşük bellek',
+  localModelLowMemoryHint: 'Daha az bellek kullanır; ancak uzun veya karmaşık diff’lerde ve ayrıntılı özel istemlerde doğruluk düşebilir.',
 
   promptSectionTitle: 'Prompt ve seçenekler',
   presetNamePlaceholder: 'Preset adı',

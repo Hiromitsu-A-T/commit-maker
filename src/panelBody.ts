@@ -45,6 +45,10 @@ export function renderPanelBody(strings: UiStrings): string {
             <div class="api-inline">
               <select id="localModelName"></select>
             </div>
+            <div id="localModelGuidance" class="model-guidance hidden" role="note" aria-live="polite">
+              <span id="localModelGuidanceBadge" class="pill"></span>
+              <span id="localModelGuidanceText"></span>
+            </div>
             <div class="buttons two-col">
               <button id="localModelDownload" class="primary" type="button">${strings.localModelDownloadButton}</button>
               <button id="localModelDelete" class="secondary" type="button">${strings.localModelDeleteButton}</button>

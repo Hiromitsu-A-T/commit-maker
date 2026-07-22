@@ -62,11 +62,12 @@ export async function runLocalModelTests(): Promise<void> {
   assert.strictEqual(defaults.runtimeVersion, 'b9441');
   assert.strictEqual(defaults.generationProfile, 'deterministic');
   assert.strictEqual(defaults.runtimeProfile, 'qwen35');
+  assert.strictEqual(defaults.uiProfile, 'recommended');
   assert.strictEqual(resolveLocalGenerationSettings(defaults).temperature, 0);
   assert.deepStrictEqual(resolveLocalRuntimeArgs(defaults), ['--reasoning', 'off']);
 
   const lowMemory = getLocalModelDefinition(createConfig(), QWEN35_2B_LOCAL_MODEL_ID);
-  assert.strictEqual(lowMemory.label, 'Qwen3.5-2B Q4_K_M (Low-memory)');
+  assert.strictEqual(lowMemory.label, 'Qwen3.5-2B Q4_K_M');
   assert.strictEqual(lowMemory.filename, 'Qwen3.5-2B-Q4_K_M.gguf');
   assert.strictEqual(lowMemory.sha256, 'aaf42c8b7c3cab2bf3d69c355048d4a0ee9973d48f16c731c0520ee914699223');
   assert.strictEqual(lowMemory.sizeBytes, 1_280_835_840);
@@ -74,6 +75,7 @@ export async function runLocalModelTests(): Promise<void> {
   assert.strictEqual(lowMemory.runtimeVersion, 'b9441');
   assert.strictEqual(lowMemory.generationProfile, 'deterministic');
   assert.strictEqual(lowMemory.runtimeProfile, 'qwen35');
+  assert.strictEqual(lowMemory.uiProfile, 'lowMemory');
   assert.strictEqual(resolveLocalGenerationSettings(lowMemory).temperature, 0);
   assert.deepStrictEqual(resolveLocalRuntimeArgs(lowMemory), ['--reasoning', 'off']);
 
@@ -121,6 +123,9 @@ export async function runLocalModelTests(): Promise<void> {
     GEMMA4_LOCAL_MODEL_ID,
     LFM25_LOCAL_MODEL_ID
   ]);
+  assert.strictEqual(options[0].uiProfile, 'recommended');
+  assert.strictEqual(options[1].uiProfile, 'lowMemory');
+  assert.strictEqual(options[2].uiProfile, undefined);
   assert.strictEqual(resolveLocalModelId(LEGACY_DEFAULT_LOCAL_MODEL_ID), DEFAULT_LOCAL_MODEL_ID);
   assert.strictEqual(resolveLocalModelId('Qwen3-4B-Instruct-2507-Q4_K_M'), DEFAULT_LOCAL_MODEL_ID);
   assert.strictEqual(resolveLocalModelId('Qwen3-4B-Thinking-2507-Q4_K_M'), DEFAULT_LOCAL_MODEL_ID);

@@ -39,6 +39,10 @@ const nl: UiStrings = {
   localModelStatusError: 'Fout',
   localModelSizePrefix: 'Grootte: ',
   localModelNeedDownload: 'Download eerst het lokale model.',
+  localModelRecommendedBadge: 'Aanbevolen',
+  localModelRecommendedHint: 'Beste balans tussen het volgen van instructies en lokale prestaties. Aanbevolen voor normaal gebruik.',
+  localModelLowMemoryBadge: 'Weinig geheugen',
+  localModelLowMemoryHint: 'Gebruikt minder geheugen, maar kan minder nauwkeurig zijn bij lange of complexe diffs en gedetailleerde aangepaste prompts.',
 
   promptSectionTitle: 'Prompt en opties',
   presetNamePlaceholder: 'Presetnaam',

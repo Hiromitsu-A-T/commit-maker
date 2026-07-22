@@ -76,6 +76,9 @@
       localModelPanel: get('localModelPanel'),
       localModelName: get('localModelName'),
       localModelStatus: get('localModelStatus'),
+      localModelGuidance: get('localModelGuidance'),
+      localModelGuidanceBadge: get('localModelGuidanceBadge'),
+      localModelGuidanceText: get('localModelGuidanceText'),
       localModelDownload: get('localModelDownload'),
       localModelCancel: get('localModelCancel'),
       localModelDelete: get('localModelDelete'),
@@ -356,6 +359,7 @@
       els.localModelName.addEventListener('change', ev => {
         const value = String(ev.target.value || '').trim();
         if (value) {
+          renderLocalModelGuidance(value, getStrings());
           send({ type: 'localModelChanged', value });
         }
       });
@@ -671,7 +675,7 @@
     for (const model of suggestions) {
       const opt = document.createElement('option');
       opt.value = model;
-      opt.textContent = localProvider ? getLocalModelLabel(model) : model;
+      opt.textContent = localProvider ? getLocalModelLabel(model, t) : model;
       opt.selected = model === state.commitModel;
       els.model.appendChild(opt);
     }
@@ -699,19 +703,20 @@
     const statusLabel = getLocalModelStatusLabel(model.status, t);
     const downloading = model.status === 'downloading';
     const busy = downloading || model.status === 'loading';
+    const selected = model.id || state.commitModel || localModelOptions[0]?.id || '';
     if (els.localModelName) {
-      const selected = model.id || state.commitModel || localModelOptions[0]?.id || '';
       els.localModelName.innerHTML = '';
       for (const opt of localModelOptions) {
         const node = document.createElement('option');
         node.value = opt.id;
-        node.textContent = opt.label || opt.id;
+        node.textContent = getLocalModelOptionLabel(opt, t);
         node.selected = opt.id === selected;
         els.localModelName.appendChild(node);
       }
       els.localModelName.value = selected;
       els.localModelName.disabled = busy;
     }
+    renderLocalModelGuidance(els.localModelName?.value || selected, t);
     if (els.localModelStatus) {
       els.localModelStatus.textContent = statusLabel;
       els.localModelStatus.className = 'pill hint';
@@ -764,8 +769,39 @@
     return (t.localModelStatusDownloading || 'Downloading') + '...';
   }
 
-  function getLocalModelLabel(modelId) {
-    return localModelOptions.find(item => item.id === modelId)?.label || modelId;
+  function getLocalModelLabel(modelId, t) {
+    const option = localModelOptions.find(item => item.id === modelId);
+    return option ? getLocalModelOptionLabel(option, t) : modelId;
+  }
+
+  function getLocalModelOptionLabel(option, t) {
+    const label = option?.label || option?.id || '';
+    if (option?.uiProfile === 'recommended') {
+      return label + ' — ' + (t.localModelRecommendedBadge || 'Recommended');
+    }
+    if (option?.uiProfile === 'lowMemory') {
+      return label + ' — ' + (t.localModelLowMemoryBadge || 'Low memory');
+    }
+    return label;
+  }
+
+  function renderLocalModelGuidance(modelId, t) {
+    const option = localModelOptions.find(item => item.id === modelId);
+    const recommended = option?.uiProfile === 'recommended';
+    const lowMemory = option?.uiProfile === 'lowMemory';
+    show(els.localModelGuidance, recommended || lowMemory, 'flex');
+    if (!recommended && !lowMemory) return;
+    if (els.localModelGuidanceBadge) {
+      els.localModelGuidanceBadge.textContent = recommended
+        ? (t.localModelRecommendedBadge || 'Recommended')
+        : (t.localModelLowMemoryBadge || 'Low memory');
+      els.localModelGuidanceBadge.className = 'pill ' + (recommended ? 'success' : 'warn');
+    }
+    if (els.localModelGuidanceText) {
+      els.localModelGuidanceText.textContent = recommended
+        ? (t.localModelRecommendedHint || 'Recommended for the best balance of quality and local performance.')
+        : (t.localModelLowMemoryHint || 'Uses less memory, but accuracy may drop on long or complex diffs.');
+    }
   }
 
   function getDownloadPercent(downloaded, total) {

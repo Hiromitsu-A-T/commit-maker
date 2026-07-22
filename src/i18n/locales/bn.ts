@@ -39,6 +39,10 @@ const bn: UiStrings = {
   localModelStatusError: 'ত্রুটি',
   localModelSizePrefix: 'আকার: ',
   localModelNeedDownload: 'প্রথমে লোকাল মডেল ডাউনলোড করুন।',
+  localModelRecommendedBadge: 'প্রস্তাবিত',
+  localModelRecommendedHint: 'নির্দেশনা অনুসরণ ও লোকাল পারফরম্যান্সের সেরা ভারসাম্য। সাধারণ ব্যবহারের জন্য প্রস্তাবিত।',
+  localModelLowMemoryBadge: 'কম মেমরি',
+  localModelLowMemoryHint: 'কম মেমরি ব্যবহার করে, তবে দীর্ঘ বা জটিল diff এবং বিস্তারিত কাস্টম প্রম্পটে নির্ভুলতা কমতে পারে।',
 
   promptSectionTitle: 'প্রম্পট ও বিকল্প',
   presetNamePlaceholder: 'প্রিসেট নাম',

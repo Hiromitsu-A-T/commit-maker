@@ -39,6 +39,10 @@ const ja: UiStrings = {
   localModelStatusError: 'エラー',
   localModelSizePrefix: 'サイズ: ',
   localModelNeedDownload: 'ローカルモデルをダウンロードしてください。',
+  localModelRecommendedBadge: '推奨',
+  localModelRecommendedHint: '指示追従とローカル性能のバランスが良く、通常利用に推奨します。',
+  localModelLowMemoryBadge: '低メモリ',
+  localModelLowMemoryHint: 'メモリ使用量を抑えますが、長い・複雑な差分や細かなカスタムプロンプトでは精度が低下することがあります。',
 
   promptSectionTitle: 'プロンプトとオプション',
   presetNamePlaceholder: 'プリセット名',

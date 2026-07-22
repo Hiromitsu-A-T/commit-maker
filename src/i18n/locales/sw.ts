@@ -39,6 +39,10 @@ const sw: UiStrings = {
   localModelStatusError: 'Hitilafu',
   localModelSizePrefix: 'Ukubwa: ',
   localModelNeedDownload: 'Pakua modeli ya ndani kwanza.',
+  localModelRecommendedBadge: 'Inapendekezwa',
+  localModelRecommendedHint: 'Uwiano bora kati ya kufuata maagizo na utendaji wa ndani. Inapendekezwa kwa matumizi ya kawaida.',
+  localModelLowMemoryBadge: 'Kumbukumbu ndogo',
+  localModelLowMemoryHint: 'Hutumia kumbukumbu kidogo, lakini usahihi unaweza kupungua kwa diff ndefu au changamano na prompt maalum zenye maelezo.',
 
   promptSectionTitle: 'Maelekezo na chaguo',
   presetNamePlaceholder: 'Jina la preset',
