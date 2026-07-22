@@ -7,13 +7,13 @@
 <p align="center"><em>Git の差分からコミットメッセージを AI 生成し、SCM へ即反映する commit / コミット特化ツール</em></p>
 
 **Git の差分を読み取り、最適なコミットメッセージを自動生成して SCM 入力欄へ反映する VS Code 拡張（コミットメーカー / commit message generator）です。**  
-Gemini / OpenAI / Claude の API キー（BYOK）に加えて、Commit Maker 専用の Codex ログイン連携と API キー不要のローカル LLM にも対応。Local では Qwen3 / Gemma 4 / LFM2.5 の GGUF モデルを選択でき、必要な llama.cpp runtime とモデル別 profile を自動で使い分けます。
+Gemini / OpenAI / Claude の API キー（BYOK）に加えて、Commit Maker 専用の Codex ログイン連携と API キー不要のローカル LLM にも対応。Local では Qwen3.5 / Gemma 4 / LFM2.5 の GGUF モデルを選択でき、必要な llama.cpp runtime とモデル別 profile を自動で使い分けます。
 Cursor や Copilot では実現しにくい、完全カスタマイズ可能な AI コミットメッセージ生成ツール。Git commit を効率化し、チーム全体のコミット品質を向上させます。
 キーはすべてローカルの SecretStorage に保存され、サーバー側に記録を残しません。
 SecretStorage とは VS Code が提供するローカル暗号化ストレージで、APIキーはPCをまたいで同期されません（Settings Sync も無効）。API キーはこの領域からのみ読み書きします。
 
 (English) **VS Code extension that reads your Git diff and auto-fills the SCM commit box with a generated message.**  
-Use your own Gemini / OpenAI / Claude API key (BYOK), connect through Commit Maker dedicated Codex sign-in, or use the Local LLM provider without an API key. Local supports Qwen3, Gemma 4, and LFM2.5 GGUF models and automatically uses the matching llama.cpp runtime and model profile.
+Use your own Gemini / OpenAI / Claude API key (BYOK), connect through Commit Maker dedicated Codex sign-in, or use the Local LLM provider without an API key. Local supports Qwen3.5, Gemma 4, and LFM2.5 GGUF models and automatically uses the matching llama.cpp runtime and model profile.
 Fully customizable AI commit message generator beyond what Cursor or Copilot commonly offer. Streamline your Git commits and elevate your team's commit quality with professional commit messages.
 API keys stay in local SecretStorage; nothing is sent to the server side.
 SecretStorage is VS Code’s local encrypted store; API keys are not synced across machines (Settings Sync disabled) and are read/written only from there.
@@ -53,8 +53,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 ✅ **コミット専用に安価なモデルを使い分けられる** – この拡張機能なら、コミットメッセージ生成のときだけ軽量・低コストモデル＋カスタムプロンプトに切り替えられるため、開発は高性能モデルのまま、コミットだけコストを抑えられます
 (English) **Use a cheaper dedicated model for commits** – This extension switches only commit message generation to a lightweight, low-cost model with a custom prompt, so you keep a powerful model for development while cutting commit costs.
 
-✅ **BYOK / Codex / ローカルモデル対応** – OpenAI / Gemini / Claude はあなたの API キーで動作。Codex は Commit Maker 専用の Codex ログインを使い、Local は API キー不要で Qwen3 / Gemma 4 / LFM2.5 などの GGUF モデルと必要な llama.cpp runtime だけを後から取得します。
-(English) **BYOK / Codex / local model support** – Cloud providers use your own keys; Codex uses Commit Maker dedicated Codex sign-in; Local needs no API key and downloads only the required llama.cpp runtime and a GGUF model such as Qwen3, Gemma 4, or LFM2.5 when you choose it.
+✅ **BYOK / Codex / ローカルモデル対応** – OpenAI / Gemini / Claude はあなたの API キーで動作。Codex は Commit Maker 専用の Codex ログインを使い、Local は API キー不要で Qwen3.5 / Gemma 4 / LFM2.5 などの GGUF モデルと必要な llama.cpp runtime だけを後から取得します。
+(English) **BYOK / Codex / local model support** – Cloud providers use your own keys; Codex uses Commit Maker dedicated Codex sign-in; Local needs no API key and downloads only the required llama.cpp runtime and a GGUF model such as Qwen3.5, Gemma 4, or LFM2.5 when you choose it.
 
 > **Local provider note**: Local は API 利用料なしで使えますが、生成速度は PC の CPU/GPU・メモリ・差分サイズに大きく依存します。クラウド API より遅い場合があります。  
 > (Local can run without cloud API charges, but generation speed depends heavily on your CPU/GPU, memory, and diff size. It may be slower than cloud APIs.)
@@ -62,8 +62,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 ✅ **プロンプトを複数保存・切り替え** – GUI で複数のプロンプトプリセットを保存し、ワンクリックで切り替え可能。チーム規約、個人用、実験用など、用途に応じて使い分けられます。  
 (English) **Save & switch multiple prompts** – Store presets in the GUI and switch with one click for team rules, personal use, or experiments.
 
-✅ **プロバイダー・モデルを自由に選択** – 同じ UI で Gemini の高速モデル、OpenAI / Claude / Codex、ローカル LLM（Qwen3 / Gemma 4 / LFM2.5 の GGUF モデル）を切り替え。コスト・速度・プライバシーを最適化できます。
-(English) **Flexible provider/model selection** – Switch between Gemini, OpenAI, Claude, Codex, and Local LLMs such as Qwen3, Gemma 4, and LFM2.5 models in GGUF format in the same UI.
+✅ **プロバイダー・モデルを自由に選択** – 同じ UI で Gemini の高速モデル、OpenAI / Claude / Codex、ローカル LLM（Qwen3.5 / Gemma 4 / LFM2.5 の GGUF モデル）を切り替え。コスト・速度・プライバシーを最適化できます。
+(English) **Flexible provider/model selection** – Switch between Gemini, OpenAI, Claude, Codex, and Local LLMs such as Qwen3.5, Gemma 4, and LFM2.5 models in GGUF format in the same UI.
 
 ✅ **差分を完全に把握** – Staged / Unstaged / 未追跡 / バイナリを見出し付きで取得。デフォルトで未ステージ・未追跡も含めるため、Git commit 漏れを防止。  
 (English) **Complete diff coverage** – Fetch staged/unstaged/untracked/binary with headings; defaults include unstaged & untracked to prevent commit omissions.
@@ -79,8 +79,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
   (English) **Fast & low-cost default** – Gemini `gemini-3.5-flash-lite` by default; switch to OpenAI/Claude/Codex/Local as needed
 - **最新クラウドモデルに対応**: OpenAI GPT-5.6 Sol / Terra / Luna、Claude Sonnet 5 / Fable 5、Gemini 3.6 Flash / 3.5 Flash-Lite をモデル欄から選択可能
   (English) **Current cloud models supported** – Select OpenAI GPT-5.6 Sol/Terra/Luna, Claude Sonnet 5/Fable 5, and Gemini 3.6 Flash/3.5 Flash-Lite from the model picker
-- **Local LLM なら API 利用料なし**: Qwen3 / Gemma 4 / LFM2.5 などの GGUF モデルをダウンロードすると PC 内のリソースで生成可能。速度は端末性能と差分サイズに依存  
-  (English) **No cloud API charge with Local LLM** – Download a Qwen3, Gemma 4, or LFM2.5 model in GGUF format and generate on your machine; speed depends on device specs and diff size
+- **Local LLM なら API 利用料なし**: Qwen3.5 / Gemma 4 / LFM2.5 などの GGUF モデルをダウンロードすると PC 内のリソースで生成可能。速度は端末性能と差分サイズに依存
+  (English) **No cloud API charge with Local LLM** – Download a Qwen3.5, Gemma 4, or LFM2.5 model in GGUF format and generate on your machine; speed depends on device specs and diff size
 - **追加指示欄でさらにカスタマイズ**: 「英語で短く」「絵文字なし」「Conventional Commits 準拠」など、チームのコミットルールに合わせて自由に指定  
   (English) **Custom instructions field** – Add rules like "short in English", "no emojis", or "follow Conventional Commits" to fit your team's commit standards
 - **SCM ツールバーからも実行可能**: パネルを開かず、杖アイコンから「差分取得→生成→適用」を一発で完了  
@@ -113,8 +113,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 (Open **Commit Maker** from the Activity Bar)
 
 **2. APIキー / モデルを設定**  
-上部のプロバイダーで Gemini / OpenAI / Claude / Codex / Local を選び、クラウド provider なら API キー保存、Codex なら Commit Maker 専用の Codex ログイン、Local なら Qwen3 / Gemma 4 / LFM2.5 などのモデル選択とダウンロードを行います。API キーは SecretStorage に暗号化保存されます。
-(Choose Gemini / OpenAI / Claude / Codex / Local in the top provider selector, then save a cloud API key, sign in to Commit Maker dedicated Codex auth, or select and download a Local model such as Qwen3, Gemma 4, or LFM2.5. API keys are encrypted in SecretStorage.)
+上部のプロバイダーで Gemini / OpenAI / Claude / Codex / Local を選び、クラウド provider なら API キー保存、Codex なら Commit Maker 専用の Codex ログイン、Local なら Qwen3.5 / Gemma 4 / LFM2.5 などのモデル選択とダウンロードを行います。API キーは SecretStorage に暗号化保存されます。
+(Choose Gemini / OpenAI / Claude / Codex / Local in the top provider selector, then save a cloud API key, sign in to Commit Maker dedicated Codex auth, or select and download a Local model such as Qwen3.5, Gemma 4, or LFM2.5. API keys are encrypted in SecretStorage.)
 
 > 💡 **BYOK方式**: すべて自分のAPIキーを使用。利用料は各プロバイダーの課金体系に従います。  
 > (BYOK only: bring your own keys; usage is billed by each provider)
@@ -122,13 +122,13 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 Codex を選ぶ場合、事前に Codex CLI をインストールし、Commit Maker の Codex 欄から「ログイン」を押してください。通常の Codex CLI とは別の `CODEX_HOME` でログインするため、CLI 側のログアウトや別アカウント利用の影響を受けません。Commit Maker は `codex exec` を read-only / ephemeral で呼び出し、最終コミットメッセージだけを受け取ります。
 (For Codex, install the Codex CLI, then press "Sign in" in Commit Maker's Codex section. It signs in with a separate `CODEX_HOME`, so your normal Codex CLI logout or account choice does not affect Commit Maker. Commit Maker calls `codex exec` in read-only / ephemeral mode and uses only the final commit message.)
 
-Local を選ぶ場合、API キーは不要です。上部のモデル欄で Qwen3 / Gemma 4 / LFM2.5 などの GGUF モデルを選び、「モデルをダウンロード」で llama.cpp runtime と選択モデルを取得し、以後は PC 内で生成します。  
-(For Local, no API key is required. Choose a Qwen3, Gemma 4, or LFM2.5 model in GGUF format in the top model field, then use "Download model" to fetch the llama.cpp runtime and selected model. Generation runs on your machine.)
+Local を選ぶ場合、API キーは不要です。上部のモデル欄で Qwen3.5 / Gemma 4 / LFM2.5 などの GGUF モデルを選び、「モデルをダウンロード」で llama.cpp runtime と選択モデルを取得し、以後は PC 内で生成します。
+(For Local, no API key is required. Choose a Qwen3.5, Gemma 4, or LFM2.5 model in GGUF format in the top model field, then use "Download model" to fetch the llama.cpp runtime and selected model. Generation runs on your machine.)
 
 Local は API 利用料なしで使えますが、クラウド API より生成が遅い場合があります。速度は PC の CPU/GPU・メモリ・差分サイズに依存します。  
 (Local can run without cloud API charges, but it may be slower than cloud APIs. Speed depends on your CPU/GPU, memory, and diff size.)
 
-Local の GGUF モデルは 1 件あたり約 2.5 GB〜5.4 GB です。不要になった場合は上部のローカルモデル欄の「削除」から選択中モデルの本体を削除できます。
+Local の GGUF モデルは 1 件あたり約 1.2 GB〜5.4 GB です。不要になった場合は上部のローカルモデル欄の「削除」から選択中モデルの本体を削除できます。
 (Each Local GGUF model is about 2.5 GB to 5.4 GB. You can remove the selected model file from the top Local model section when you no longer need it.)
 
 Local は大きな差分を拡張機能内でファイル別の構造化ダイジェストに圧縮し、Local LLM 呼び出しを少なくして生成します。  
@@ -171,8 +171,8 @@ SCM ビューのタイトルバーにある **杖アイコン** から、パネ�
 ### モデルとプロンプト長 / Model & Prompt Length
 - **モデル選択**: 推奨モデルをプルダウンから選択、または独自モデル名を入力  
   (Choose recommended models or enter custom model names)
-- **Local モデル選択**: `Qwen3-4B-Instruct-2507 Q4_K_M` / `Qwen3-4B-Thinking-2507 Q4_K_M` / `Gemma 4 E4B IT Q4_K_M` / `LFM2.5-8B-A1B Q4_K_M` から選択
-  (Local model choices: `Qwen3-4B-Instruct-2507 Q4_K_M` / `Qwen3-4B-Thinking-2507 Q4_K_M` / `Gemma 4 E4B IT Q4_K_M` / `LFM2.5-8B-A1B Q4_K_M`)
+- **Local モデル選択**: `Qwen3.5-4B Q4_K_M` / `Qwen3.5-2B Q4_K_M (Low-memory)` / `Gemma 4 E4B IT Q4_K_M` / `LFM2.5-8B-A1B Q4_K_M` から選択
+  (Local model choices: `Qwen3.5-4B Q4_K_M` / `Qwen3.5-2B Q4_K_M (Low-memory)` / `Gemma 4 E4B IT Q4_K_M` / `LFM2.5-8B-A1B Q4_K_M`)
 - **プロンプト長制限**: 無制限 / 任意の文字数で設定可能  
   (Unlimited or custom character limit)
 - **省略方法**: 上限超過時は先頭20% + 末尾80%を残し、中央を省略  

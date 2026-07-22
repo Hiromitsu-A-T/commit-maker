@@ -25,8 +25,8 @@ const GENERATION_PROFILES: Record<LocalGenerationProfileId, LocalModelGeneration
 
 const RUNTIME_PROFILES: Record<LocalRuntimeProfileId, LocalModelRuntimeSettings> = {
   default: {},
-  qwen3Thinking: {
-    reasoningBudget: 512
+  qwen35: {
+    reasoning: 'off'
   },
   // Keep Gemma runtime tweaks centralized; add args here only after smoke verification.
   gemma4: {},

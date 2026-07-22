@@ -29,7 +29,10 @@ export function getLocalModelOptions(): LocalModelOption[] {
 export function resolveLocalModelId(value: string | undefined): string {
   const candidate = value?.trim();
   if (!candidate || candidate === LEGACY_DEFAULT_LOCAL_MODEL_ID) return DEFAULT_LOCAL_MODEL_ID;
-  return LOCAL_MODELS.some(model => model.id === candidate) ? candidate : DEFAULT_LOCAL_MODEL_ID;
+  const direct = LOCAL_MODELS.find(model => model.id === candidate);
+  if (direct) return direct.id;
+  const migrated = LOCAL_MODELS.find(model => model.legacyIds?.includes(candidate));
+  return migrated?.id ?? DEFAULT_LOCAL_MODEL_ID;
 }
 
 export function getLocalModelDefinition(

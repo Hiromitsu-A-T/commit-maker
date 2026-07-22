@@ -48,34 +48,40 @@ export const COMMIT_MAX_PROMPT_CHARS_STORAGE_KEY = 'commitMaker.commitMaxPromptC
 export const COMMIT_LOCAL_MODEL_STORAGE_KEY = 'commitMaker.localModelId';
 export const COMMIT_LANGUAGE_STORAGE_KEY = 'commitMaker.language';
 export const LEGACY_DEFAULT_LOCAL_MODEL_ID = 'commit-maker-local-qwen3-4b';
-export const DEFAULT_LOCAL_MODEL_ID = 'Qwen3-4B-Instruct-2507-Q4_K_M';
+export const DEFAULT_LOCAL_MODEL_ID = 'Qwen3.5-4B-Q4_K_M';
+export const QWEN35_2B_LOCAL_MODEL_ID = 'Qwen3.5-2B-Q4_K_M';
 export const GEMMA4_LOCAL_MODEL_ID = 'Gemma-4-E4B-it-Q4_K_M';
 export const LFM25_LOCAL_MODEL_ID = 'LFM2.5-8B-A1B-Q4_K_M';
 export const DEFAULT_LOCAL_RUNTIME_VERSION: LocalRuntimeVersionId = 'b8967';
 export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
   {
     id: DEFAULT_LOCAL_MODEL_ID,
-    label: 'Qwen3-4B-Instruct-2507 Q4_K_M',
-    filename: 'qwen3-4b-instruct-2507-q4_k_m.gguf',
-    url: 'https://huggingface.co/Edge-Quant/Qwen3-4B-Instruct-2507-Q4_K_M-GGUF/resolve/main/qwen3-4b-instruct-2507-q4_k_m.gguf',
-    sha256: '1571ec5115bcfed4b4327fc27b5f44ea284806caf5331eef89326191c9b031d6',
-    sizeBytes: 2_497_279_136,
+    label: 'Qwen3.5-4B Q4_K_M',
+    filename: 'Qwen3.5-4B-Q4_K_M.gguf',
+    url: 'https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf',
+    sha256: '00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4',
+    sizeBytes: 2_740_937_888,
     contextSize: 262_144,
-    runtimeVersion: DEFAULT_LOCAL_RUNTIME_VERSION,
+    runtimeVersion: 'b9441',
     generationProfile: 'deterministic',
-    legacyIds: [LEGACY_DEFAULT_LOCAL_MODEL_ID]
+    runtimeProfile: 'qwen35',
+    legacyIds: [
+      LEGACY_DEFAULT_LOCAL_MODEL_ID,
+      'Qwen3-4B-Instruct-2507-Q4_K_M',
+      'Qwen3-4B-Thinking-2507-Q4_K_M'
+    ]
   },
   {
-    id: 'Qwen3-4B-Thinking-2507-Q4_K_M',
-    label: 'Qwen3-4B-Thinking-2507 Q4_K_M',
-    filename: 'Qwen3-4B-Thinking-2507-Q4_K_M.gguf',
-    url: 'https://huggingface.co/unsloth/Qwen3-4B-Thinking-2507-GGUF/resolve/main/Qwen3-4B-Thinking-2507-Q4_K_M.gguf',
-    sha256: 'ddd52e18200baab281c5c46f70d544ce4d4fe4846eab1608f2fff48a64554212',
-    sizeBytes: 2_497_281_152,
+    id: QWEN35_2B_LOCAL_MODEL_ID,
+    label: 'Qwen3.5-2B Q4_K_M (Low-memory)',
+    filename: 'Qwen3.5-2B-Q4_K_M.gguf',
+    url: 'https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/f6d5376be1edb4d416d56da11e5397a961aca8ae/Qwen3.5-2B-Q4_K_M.gguf',
+    sha256: 'aaf42c8b7c3cab2bf3d69c355048d4a0ee9973d48f16c731c0520ee914699223',
+    sizeBytes: 1_280_835_840,
     contextSize: 262_144,
-    runtimeVersion: DEFAULT_LOCAL_RUNTIME_VERSION,
+    runtimeVersion: 'b9441',
     generationProfile: 'deterministic',
-    runtimeProfile: 'qwen3Thinking'
+    runtimeProfile: 'qwen35'
   },
   {
     id: GEMMA4_LOCAL_MODEL_ID,
@@ -242,7 +248,7 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       setupMode: 'localModel',
       models: LOCAL_MODEL_DEFINITIONS.map(model => model.id),
       defaultModel: DEFAULT_LOCAL_MODEL_ID,
-      issueUrl: 'https://huggingface.co/Edge-Quant/Qwen3-4B-Instruct-2507-Q4_K_M-GGUF',
+      issueUrl: 'https://huggingface.co/unsloth/Qwen3.5-4B-GGUF',
       defaultEndpoint: 'http://127.0.0.1',
       defaultSecret: '',
       supportsReasoning: false,

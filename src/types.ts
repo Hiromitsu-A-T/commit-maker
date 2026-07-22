@@ -8,7 +8,7 @@ export type VerbositySetting = 'low' | 'medium' | 'high';
 export type CommitStatus = 'idle' | 'loading' | 'ready' | 'error';
 export type MaxPromptMode = 'unlimited' | 'limited';
 export type LocalGenerationProfileId = 'deterministic' | 'gemma4' | 'lfm25';
-export type LocalRuntimeProfileId = 'default' | 'qwen3Thinking' | 'gemma4' | 'lfm25';
+export type LocalRuntimeProfileId = 'default' | 'qwen35' | 'gemma4' | 'lfm25';
 export type LocalRuntimeVersionId = 'b8967' | 'b9441';
 
 export interface ProviderOption {

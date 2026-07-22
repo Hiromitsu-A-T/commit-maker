@@ -21,7 +21,7 @@ export async function runPanelMessageGuardTests(): Promise<void> {
   shouldPass({ type: 'commitCodexReasoningChanged', value: 'high' });
   shouldPass({ type: 'commitVerbosityChanged', value: 'high' });
   shouldPass({ type: 'languageChanged', value: 'ja' });
-  shouldPass({ type: 'localModelChanged', value: 'Qwen3-4B-Instruct-2507-Q4_K_M' });
+  shouldPass({ type: 'localModelChanged', value: 'Qwen3.5-4B-Q4_K_M' });
   shouldPass({ type: 'localModelDownload' });
   shouldPass({ type: 'localModelCancelDownload' });
   shouldPass({ type: 'localModelDelete' });
