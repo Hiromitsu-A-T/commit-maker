@@ -24,12 +24,23 @@ export function getVerbosityBlocklistPatterns(): string[] {
 }
 
 const ALLOWED_REASONING_BY_MODEL: Record<string, ReasoningEffort[]> = {
+  'gpt-5.6': ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+  'gpt-5.6-sol': ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+  'gpt-5.6-terra': ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+  'gpt-5.6-luna': ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
   'gpt-5.5': ['none', 'low', 'medium', 'high', 'xhigh'],
   'gpt-5.4': ['none', 'low', 'medium', 'high', 'xhigh'],
   'gpt-5.4-mini': ['none', 'low', 'medium', 'high', 'xhigh'],
   'gpt-5.4-nano': ['none', 'low', 'medium', 'high', 'xhigh'],
+  'gpt-5.4-pro': ['medium', 'high', 'xhigh'],
+  'gpt-5.5-pro': ['medium', 'high', 'xhigh'],
+  'gpt-5.3-codex': ['low', 'medium', 'high', 'xhigh'],
+  'gpt-5.2': ['none', 'low', 'medium', 'high', 'xhigh'],
+  'gpt-5.2-pro': ['medium', 'high', 'xhigh'],
+  'gpt-5.2-codex': ['low', 'medium', 'high', 'xhigh'],
   'gpt-5.1': ['none', 'low', 'medium', 'high'],
   'gpt-5.1-codex': ['low', 'medium', 'high'],
+  'gpt-5.1-codex-max': ['low', 'medium', 'high', 'xhigh'],
   'gpt-5': ['minimal', 'low', 'medium', 'high'],
   'gpt-5-mini': ['minimal', 'low', 'medium', 'high'],
   'gpt-5-nano': ['minimal', 'low', 'medium', 'high'],
@@ -38,6 +49,33 @@ const ALLOWED_REASONING_BY_MODEL: Record<string, ReasoningEffort[]> = {
   'gpt-5-pro': ['high'],
   'gpt-5-codex': ['low', 'medium', 'high'], // minimal不可
   'gpt-5.1-codex-mini': ['low', 'medium', 'high'] // none/minimal不可
+};
+
+const DEFAULT_REASONING_BY_MODEL: Record<string, ReasoningEffort> = {
+  'gpt-5.6': 'medium',
+  'gpt-5.6-sol': 'medium',
+  'gpt-5.6-terra': 'medium',
+  'gpt-5.6-luna': 'medium',
+  'gpt-5.5': 'medium',
+  'gpt-5.5-pro': 'high',
+  'gpt-5.4': 'none',
+  'gpt-5.4-mini': 'none',
+  'gpt-5.4-nano': 'none',
+  'gpt-5.4-pro': 'medium',
+  'gpt-5.3-codex': 'medium',
+  'gpt-5.2': 'none',
+  'gpt-5.2-pro': 'medium',
+  'gpt-5.2-codex': 'medium',
+  'gpt-5.1': 'none',
+  'gpt-5.1-codex': 'medium',
+  'gpt-5.1-codex-max': 'medium',
+  'gpt-5': 'medium',
+  'gpt-5-mini': 'medium',
+  'gpt-5-nano': 'medium',
+  'gpt-5-pro': 'high',
+  'gpt-5-codex': 'medium',
+  'gpt-5.1-codex-mini': 'medium',
+  'gpt-5.1-chat-latest': 'medium'
 };
 
 export function getAllowedReasoningOptions(model: string | undefined): ReasoningEffort[] | undefined {
@@ -53,6 +91,9 @@ export function getAllowedReasoningMap(): Record<string, ReasoningEffort[]> {
 export function getDefaultReasoningForModel(model: string | undefined): ReasoningEffort | undefined {
   const allowed = getAllowedReasoningOptions(model);
   if (!allowed || allowed.length === 0) return undefined;
+  const key = model?.trim().toLowerCase() ?? '';
+  const configuredDefault = DEFAULT_REASONING_BY_MODEL[key];
+  if (configuredDefault && allowed.includes(configuredDefault)) return configuredDefault;
   if (allowed.includes('none')) return 'none';
   if (allowed.includes('medium')) return 'medium';
   return allowed[0];
@@ -60,6 +101,8 @@ export function getDefaultReasoningForModel(model: string | undefined): Reasonin
 
 const ALLOWED_VERBOSITY_BY_MODEL: Record<string, VerbositySetting[]> = {
   'gpt-5.1-codex': ['medium'],
+  'gpt-5.1-codex-max': ['medium'],
+  'gpt-5.2-codex': ['medium'],
   'gpt-5-codex': ['medium'],
   'gpt-5.1-codex-mini': ['medium'],
   'gpt-5.1-chat-latest': ['medium'],

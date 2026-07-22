@@ -75,8 +75,10 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
   (English) **One-click Git commit message generation** – AI reads your Git diff and fills the SCM box instantly with professional commit messages
 - **プロンプトプリセットの保存・管理**: GUI で複数保存し、PC 内の全ワークスペースで共通利用（Settings Sync を除く）  
   (English) **Prompt preset management** – Save multiple in GUI, shared across local workspaces (except Settings Sync)
-- **推奨モデルは高速・低コスト**: デフォルトで Gemini `gemini-2.5-flash-lite` を採用。必要に応じて OpenAI / Claude / Codex / Local へ切り替え可能
-  (English) **Fast & low-cost default** – Gemini `gemini-2.5-flash-lite` by default; switch to OpenAI/Claude/Codex/Local as needed
+- **推奨モデルは高速・低コスト**: デフォルトで Gemini `gemini-3.5-flash-lite` を採用。必要に応じて OpenAI / Claude / Codex / Local へ切り替え可能
+  (English) **Fast & low-cost default** – Gemini `gemini-3.5-flash-lite` by default; switch to OpenAI/Claude/Codex/Local as needed
+- **最新クラウドモデルに対応**: OpenAI GPT-5.6 Sol / Terra / Luna、Claude Sonnet 5 / Fable 5、Gemini 3.6 Flash / 3.5 Flash-Lite をモデル欄から選択可能
+  (English) **Current cloud models supported** – Select OpenAI GPT-5.6 Sol/Terra/Luna, Claude Sonnet 5/Fable 5, and Gemini 3.6 Flash/3.5 Flash-Lite from the model picker
 - **Local LLM なら API 利用料なし**: Qwen3 / Gemma 4 / LFM2.5 などの GGUF モデルをダウンロードすると PC 内のリソースで生成可能。速度は端末性能と差分サイズに依存  
   (English) **No cloud API charge with Local LLM** – Download a Qwen3, Gemma 4, or LFM2.5 model in GGUF format and generate on your machine; speed depends on device specs and diff size
 - **追加指示欄でさらにカスタマイズ**: 「英語で短く」「絵文字なし」「Conventional Commits 準拠」など、チームのコミットルールに合わせて自由に指定  
@@ -133,9 +135,9 @@ Local は大きな差分を拡張機能内でファイル別の構造化ダイ�
 (Local compresses large diffs into a structured per-file digest inside the extension, reducing Local LLM calls for faster generation.)
 
 **3. プロバイダー・モデルを選択**  
-推奨: **Gemini** → `gemini-2.5-flash-lite`（高速・低コスト）  
+推奨: **Gemini** → `gemini-3.5-flash-lite`（高速・低コスト）
 必要に応じて追加指示を入力  
-(Recommended: **Gemini** `gemini-2.5-flash-lite` for speed & cost; add custom instructions if needed)
+(Recommended: **Gemini** `gemini-3.5-flash-lite` for speed & cost; add custom instructions if needed)
 
 **4. コミットメッセージを生成**  
 「変更を読み込んで提案」ボタンをクリックして、プロフェッショナルな commit メッセージを生成  
@@ -178,20 +180,21 @@ SCM ビューのタイトルバーにある **杖アイコン** から、パネ�
 
 ### OpenAI専用設定 / OpenAI-Specific Settings
 UIから切り替え可能（Switchable from UI）:
-- `reasoningEffort` – 推論の深さ
-- `verbosity` – 出力の詳細度
+- `reasoningEffort` – 推論の深さ（既定: `medium`、モデルごとの許可値だけを表示）
+- `verbosity` – 出力の詳細度（既定: `medium`、モデルごとの許可値だけを表示）
 
 ### デフォルト値と保存範囲 / Defaults & Storage Scope
 
 | 設定項目 | デフォルト値 | 保存範囲 |
 |---------|------------|---------|
 | プロバイダー | Gemini | ワークスペース単位 |
-| モデル | `gemini-2.5-flash-lite` | ワークスペース単位 |
+| モデル | `gemini-3.5-flash-lite` | ワークスペース単位 |
+| OpenAI Reasoning / Verbosity | `medium` / `medium` | ワークスペース単位 |
 | プロンプト本体・プリセット | - | PC内共通（globalState） |
 | 差分範囲設定 | Unstaged/Untracked/Binary: オン | ワークスペース単位 |
 
 (Defaults & Storage)
-- **Provider**: Gemini, **Model**: `gemini-2.5-flash-lite` (workspace-scoped)
+- **Provider**: Gemini, **Model**: `gemini-3.5-flash-lite` (workspace-scoped)
 - **Prompts/Presets**: Shared globally on local machine (globalState)
 - **Diff settings**: Unstaged/Untracked/Binary enabled by default (workspace-scoped)
 
@@ -207,13 +210,13 @@ UIから切り替え可能（Switchable from UI）:
 | 設定キー | 説明 |
 |---------|------|
 | `commitMaker.provider` | プロバイダー設定（Gemini / OpenAI / Claude / Codex / Local） |
-| `commitMaker.model` | モデル設定（例: `gemini-2.5-flash-lite`） |
+| `commitMaker.model` | モデル設定（例: `gemini-3.5-flash-lite`） |
 | `commitMaker.endpoint*` | カスタムエンドポイント設定 |
 | `commitMaker.apiKeySecret*` | SecretStorage に保存するキー名 |
 | `commitMaker.codexCommand` | Codex provider が使用する Codex CLI コマンド |
 | `commitMaker.codexReasoningEffort` | Codex provider の推論量（既定: `low`） |
-| `commitMaker.reasoningEffort` | OpenAI Responses の推論設定 |
-| `commitMaker.verbosity` | OpenAI Responses の出力詳細度 |
+| `commitMaker.reasoningEffort` | OpenAI Responses の推論設定（既定: `medium`） |
+| `commitMaker.verbosity` | OpenAI Responses の出力詳細度（既定: `medium`） |
 | `commitMaker.requestTimeoutMs` | LLM 呼び出しタイムアウト（ミリ秒） |
 | `commitMaker.logLlm` | LLM リクエスト/リトライのログ記録（デフォルト: off） |
 | `commitMaker.local*` | Local provider のモデル URL / SHA256 / llama.cpp 自動取得・実行設定 |

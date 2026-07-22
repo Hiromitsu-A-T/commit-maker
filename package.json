@@ -2,7 +2,7 @@
   "name": "commit-maker",
   "displayName": "Commit Maker – コミットメーカー",
   "description": "Git差分からコミットメッセージをAI生成。BYOK、Codex、Qwen3/Gemma 4/LFM2.5のローカルGGUFモデルに対応。",
-  "version": "0.6.17",
+  "version": "0.8.0",
   "publisher": "Hiromitsu",
   "license": "Apache-2.0",
   "repository": {
@@ -165,7 +165,7 @@
         },
         "commitMaker.model": {
           "type": "string",
-          "default": "gemini-2.5-flash-lite",
+          "default": "gemini-3.5-flash-lite",
           "description": "コミット生成に使用するモデル ID"
         },
         "commitMaker.reasoningEffort": {
@@ -176,7 +176,8 @@
             "low",
             "medium",
             "high",
-            "xhigh"
+            "xhigh",
+            "max"
           ],
           "default": "medium",
           "description": "OpenAI Responses API 用 reasoning.effort"

@@ -2,11 +2,12 @@ import { MODEL_SUGGESTIONS_BY_PROVIDER } from '../src/constants';
 
 const key =
   process.env.COMMIT_MAKER_GEMINI_API_KEY ||
+  process.env.GEMINI_API_KEY ||
   process.env.GOOGLE_API_KEY ||
   process.env.google_api_key;
 
 if (!key) {
-  throw new Error('Gemini API key not found in env (COMMIT_MAKER_GEMINI_API_KEY / GOOGLE_API_KEY / google_api_key)');
+  throw new Error('Gemini API key not found in env (COMMIT_MAKER_GEMINI_API_KEY / GEMINI_API_KEY / GOOGLE_API_KEY / google_api_key)');
 }
 
 const models = MODEL_SUGGESTIONS_BY_PROVIDER.gemini;
@@ -21,7 +22,7 @@ async function call(model: string): Promise<void> {
     },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: 'ping' }] }],
-      generationConfig: { maxOutputTokens: 8, temperature: 0 }
+      generationConfig: { maxOutputTokens: model.startsWith('gemini-3.') ? 256 : 8 }
     })
   });
   const text = await res.text();

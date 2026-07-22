@@ -112,8 +112,8 @@ export const DEFAULT_LOCAL_GPU_LAYERS = 99;
 export const DEFAULT_LOCAL_KEEP_ALIVE_MS = 300000;
 export const DEFAULT_LOCAL_MAX_OUTPUT_TOKENS = 4096;
 
-export const REASONING_EFFORT_OPTIONS: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
-export const DEFAULT_REASONING_EFFORT: ReasoningEffort = 'none';
+export const REASONING_EFFORT_OPTIONS: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
+export const DEFAULT_REASONING_EFFORT: ReasoningEffort = 'medium';
 export const CODEX_REASONING_EFFORT_OPTIONS: CodexReasoningEffort[] = ['low', 'medium', 'high', 'xhigh'];
 export const DEFAULT_CODEX_REASONING_EFFORT: CodexReasoningEffort = 'low';
 export const VERBOSITY_OPTIONS: VerbositySetting[] = ['low', 'medium', 'high'];
@@ -135,14 +135,16 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       requiresApiKey: true,
       setupMode: 'apiKey',
       models: [
-        'gemini-2.5-flash-lite',
-        'gemini-3.1-flash-lite',
+        'gemini-3.5-flash-lite',
+        'gemini-3.6-flash',
         'gemini-3.5-flash',
+        'gemini-3.1-pro-preview',
+        'gemini-3.1-flash-lite',
         'gemini-3-flash-preview',
-        'gemini-2.5-flash',
-        'gemini-2.5-pro'
+        'gemini-2.5-flash-lite',
+        'gemini-2.5-flash'
       ],
-      defaultModel: 'gemini-2.5-flash-lite',
+      defaultModel: 'gemini-3.5-flash-lite',
       issueUrl: 'https://aistudio.google.com/app/api-keys',
       defaultEndpoint: 'https://generativelanguage.googleapis.com/v1beta/models',
       defaultSecret: 'commit-maker/api-key/gemini',
@@ -158,21 +160,24 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       requiresApiKey: true,
       setupMode: 'apiKey',
       models: [
+        'gpt-5.6-luna',
+        'gpt-5.6-terra',
+        'gpt-5.6-sol',
+        'gpt-5.5',
+        'gpt-5.5-pro',
         'gpt-5.4-nano',
         'gpt-5.4-mini',
         'gpt-5.4',
-        'gpt-5.5',
+        'gpt-5.4-pro',
+        'gpt-5.3-codex',
         'gpt-5-nano',
         'gpt-5-mini',
         'gpt-5',
-        'gpt-5.1',
         'gpt-5-pro',
-        'gpt-5-codex',
-        'gpt-5.1-codex',
-        'gpt-5.1-codex-mini'
-        // 'gpt-5.1-chat-latest', 'gpt-5-chat-latest' は Responses 非対応のためデフォルト候補から除外
+        'gpt-5-codex'
+        // rolling alias の *-chat-latest と旧 5.1 / 5.2 系は推奨候補へ載せない
       ],
-      defaultModel: 'gpt-5.4-nano',
+      defaultModel: 'gpt-5.6-luna',
       issueUrl: 'https://platform.openai.com/api-keys',
       defaultEndpoint: 'https://api.openai.com/v1/responses',
       defaultSecret: 'commit-maker/api-key',
@@ -189,14 +194,15 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       setupMode: 'apiKey',
       models: [
         'claude-haiku-4-5',
+        'claude-sonnet-5',
+        'claude-fable-5',
         'claude-sonnet-4-6',
         'claude-opus-4-8',
+        'claude-opus-4-7',
+        'claude-opus-4-6',
         'claude-haiku-4-5-20251001',
         'claude-sonnet-4-5-20250929',
-        'claude-opus-4-5-20251101',
-        'claude-opus-4-1-20250805',
-        'claude-opus-4-20250514',
-        'claude-sonnet-4-20250514'
+        'claude-opus-4-5-20251101'
       ],
       defaultModel: 'claude-haiku-4-5',
       issueUrl: 'https://console.anthropic.com/settings/keys',

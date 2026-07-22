@@ -3,10 +3,11 @@ import { MODEL_SUGGESTIONS_BY_PROVIDER, ANTHROPIC_API_VERSION } from '../src/con
 const key =
   process.env.COMMIT_MAKER_CLAUDE_API_KEY ||
   process.env.ANTHROPIC_API_KEY ||
+  process.env.CLAUDE_API_KEY ||
   process.env.anthropic_api_key;
 
 if (!key) {
-  throw new Error('Claude API key not found in env (COMMIT_MAKER_CLAUDE_API_KEY / ANTHROPIC_API_KEY / anthropic_api_key)');
+  throw new Error('Claude API key not found in env (COMMIT_MAKER_CLAUDE_API_KEY / ANTHROPIC_API_KEY / CLAUDE_API_KEY / anthropic_api_key)');
 }
 
 const models = MODEL_SUGGESTIONS_BY_PROVIDER.claude;
@@ -21,7 +22,7 @@ async function call(model: string): Promise<void> {
     },
     body: JSON.stringify({
       model,
-      max_tokens: 32,
+      max_tokens: model === 'claude-sonnet-5' || model === 'claude-fable-5' ? 256 : 32,
       messages: [{ role: 'user', content: 'ping' }]
     })
   });

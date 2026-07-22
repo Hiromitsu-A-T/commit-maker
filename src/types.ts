@@ -2,7 +2,7 @@ import { LanguageCode, isLanguageCode, SUPPORTED_LANG_CODES } from './i18n/langu
 
 export type ProviderId = 'openai' | 'gemini' | 'claude' | 'codex' | 'local';
 export type ProviderSetupMode = 'apiKey' | 'codexAuth' | 'localModel';
-export type ReasoningEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
+export type ReasoningEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 export type CodexReasoningEffort = 'low' | 'medium' | 'high' | 'xhigh';
 export type VerbositySetting = 'low' | 'medium' | 'high';
 export type CommitStatus = 'idle' | 'loading' | 'ready' | 'error';
@@ -115,7 +115,8 @@ export function isReasoningEffort(value: unknown): value is ReasoningEffort {
     value === 'low' ||
     value === 'medium' ||
     value === 'high' ||
-    value === 'xhigh'
+    value === 'xhigh' ||
+    value === 'max'
   );
 }
 

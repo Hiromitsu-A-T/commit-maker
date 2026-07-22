@@ -69,7 +69,13 @@ import {
 } from './promptPresets';
 import { getApiKeySecretName, getEndpoint } from './providerSettings';
 import { ensureCodexHome, getCodexCommand } from './services/codexCli';
-import { DEFAULT_INCLUDE_FLAGS, DEFAULT_PROMPT_LIMIT, getDefaultModelForProvider } from './defaults';
+import {
+  DEFAULT_INCLUDE_FLAGS,
+  DEFAULT_PROMPT_LIMIT,
+  getDefaultModelForProvider,
+  resolveReasoningSetting,
+  resolveVerbositySetting
+} from './defaults';
 import { loadPromptPresetsFromStorage, persistPromptPresets } from './promptPresetStorage';
 import { toPanelState, withStatus } from './panelSync';
 import { CommitState } from './commitState';
@@ -326,7 +332,9 @@ export class CommitController implements vscode.Disposable {
       COMMIT_MAX_PROMPT_CHARS_STORAGE_KEY,
       DEFAULT_PROMPT_LIMIT.maxPromptChars
     );
-    const reasoning = this.context.workspaceState.get<ReasoningEffort>(COMMIT_REASONING_STORAGE_KEY, DEFAULT_REASONING_EFFORT);
+    const configuredReasoning = config.get<string>('reasoningEffort', DEFAULT_REASONING_EFFORT);
+    const storedReasoning = this.context.workspaceState.get<string>(COMMIT_REASONING_STORAGE_KEY);
+    const reasoning = resolveReasoningSetting(storedReasoning, configuredReasoning);
     const configuredCodexReasoning = config.get<string>('codexReasoningEffort', DEFAULT_CODEX_REASONING_EFFORT);
     const storedCodexReasoning = this.context.workspaceState.get<string>(COMMIT_CODEX_REASONING_STORAGE_KEY);
     const codexReasoning = isCodexReasoningEffort(storedCodexReasoning)
@@ -334,7 +342,9 @@ export class CommitController implements vscode.Disposable {
       : isCodexReasoningEffort(configuredCodexReasoning)
         ? configuredCodexReasoning
         : DEFAULT_CODEX_REASONING_EFFORT;
-    const verbosity = this.context.workspaceState.get<VerbositySetting>(COMMIT_VERBOSITY_STORAGE_KEY, DEFAULT_VERBOSITY);
+    const configuredVerbosity = config.get<string>('verbosity', DEFAULT_VERBOSITY);
+    const storedVerbosity = this.context.workspaceState.get<string>(COMMIT_VERBOSITY_STORAGE_KEY);
+    const verbosity = resolveVerbositySetting(storedVerbosity, configuredVerbosity);
     return {
       prompt,
       provider,
@@ -1141,7 +1151,7 @@ function sameFsPath(left?: string, right?: string): boolean {
 
 function getEnvVarName(provider: ProviderId): string[] {
   if (provider === 'openai') return ['COMMIT_MAKER_OPENAI_API_KEY', 'OPENAI_API_KEY', 'openai_api_key'];
-  if (provider === 'gemini') return ['COMMIT_MAKER_GEMINI_API_KEY', 'GOOGLE_API_KEY', 'google_api_key'];
-  if (provider === 'claude') return ['COMMIT_MAKER_CLAUDE_API_KEY', 'ANTHROPIC_API_KEY', 'anthropic_api_key'];
+  if (provider === 'gemini') return ['COMMIT_MAKER_GEMINI_API_KEY', 'GEMINI_API_KEY', 'GOOGLE_API_KEY', 'google_api_key'];
+  if (provider === 'claude') return ['COMMIT_MAKER_CLAUDE_API_KEY', 'ANTHROPIC_API_KEY', 'CLAUDE_API_KEY', 'anthropic_api_key'];
   return [];
 }

@@ -1,5 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { DEFAULT_PROVIDER_ENDPOINTS } from '../src/constants';
+import { callClaude } from '../src/services/llm/claude';
+import { callGemini } from '../src/services/llm/gemini';
+import { callOpenAi } from '../src/services/llm/openai';
 
 type ProviderResult = {
   provider: string;
@@ -23,127 +27,66 @@ function envFirst(names: string[]): string | undefined {
   return names.map(name => process.env[name]).find(Boolean);
 }
 
-async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = 30000): Promise<Response> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-async function checkOpenAi(
-  key: string,
-  model: string,
-  reasoning: 'none' | 'xhigh'
-): Promise<ProviderResult> {
-  const body: Record<string, unknown> = {
+async function checkOpenAi(key: string, model: string): Promise<ProviderResult> {
+  await callOpenAi({
+    prompt: 'Return exactly: ok',
     model,
-    input: 'Return exactly: ok',
-    max_output_tokens: reasoning === 'xhigh' ? 64 : 16,
-    reasoning: { effort: reasoning },
-    text: { format: { type: 'text' }, verbosity: 'low' }
-  };
-  if (reasoning === 'none') {
-    body.temperature = 0;
-  }
-  const res = await fetchWithTimeout('https://api.openai.com/v1/responses', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${key}`
-    },
-    body: JSON.stringify(body)
+    apiKey: key,
+    endpoint: DEFAULT_PROVIDER_ENDPOINTS.openai,
+    reasoning: 'none',
+    verbosity: 'low',
+    maxOutputTokens: 256,
+    timeoutMs: 120000
   });
-  const text = await res.text();
-  if (!res.ok) {
-    throw new Error(`OpenAI ${model} reasoning=${reasoning} HTTP ${res.status}: ${text.slice(0, 300)}`);
-  }
-  return { provider: 'OpenAI', model, detail: `reasoning=${reasoning}` };
+  return { provider: 'OpenAI', model, detail: 'reasoning=none' };
 }
 
-async function checkGemini(key: string, model: string, maxOutputTokens = 8): Promise<ProviderResult> {
-  let lastText = '';
-  let lastStatus = 0;
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
-    const res = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': key
-      },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: 'Return exactly: ok' }] }],
-        generationConfig: { maxOutputTokens, temperature: 0 }
-      })
-    });
-    const text = await res.text();
-    if (res.ok) {
-      return { provider: 'Gemini', model, detail: `maxOutputTokens=${maxOutputTokens}` };
-    }
-    lastText = text;
-    lastStatus = res.status;
-    if (res.status !== 503 || attempt === 3) {
-      break;
-    }
-    await new Promise(resolve => setTimeout(resolve, attempt * 5000));
-  }
-  throw new Error(`Gemini ${model} HTTP ${lastStatus}: ${lastText.slice(0, 300)}`);
+async function checkGemini(key: string, model: string): Promise<ProviderResult> {
+  await callGemini({
+    prompt: 'Return exactly: ok',
+    model,
+    apiKey: key,
+    endpoint: DEFAULT_PROVIDER_ENDPOINTS.gemini,
+    timeoutMs: 120000
+  });
+  return { provider: 'Gemini', model, detail: 'generateContent' };
 }
 
 async function checkClaude(key: string, model: string): Promise<ProviderResult> {
-  const body: Record<string, unknown> = {
+  await callClaude({
+    prompt: 'Return exactly: ok',
     model,
-    max_tokens: 8,
-    messages: [{ role: 'user', content: 'Return exactly: ok' }]
-  };
-  if (!model.startsWith('claude-opus-4-8')) {
-    body.temperature = 0;
-  }
-  const res = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify(body)
+    apiKey: key,
+    endpoint: DEFAULT_PROVIDER_ENDPOINTS.claude,
+    timeoutMs: 120000
   });
-  const text = await res.text();
-  if (!res.ok) {
-    throw new Error(`Claude ${model} HTTP ${res.status}: ${text.slice(0, 300)}`);
-  }
-  return { provider: 'Claude', model, detail: 'max_tokens=8' };
+  return { provider: 'Claude', model, detail: 'messages' };
 }
 
 async function main(): Promise<void> {
   loadLocalEnv();
-  const checks: Array<Promise<ProviderResult>> = [];
+  const checks: Array<() => Promise<ProviderResult>> = [];
   const openAiKey = envFirst(['COMMIT_MAKER_OPENAI_API_KEY', 'OPENAI_API_KEY', 'openai_api_key']);
-  const geminiKey = envFirst(['COMMIT_MAKER_GEMINI_API_KEY', 'GOOGLE_API_KEY', 'google_api_key']);
-  const claudeKey = envFirst(['COMMIT_MAKER_CLAUDE_API_KEY', 'ANTHROPIC_API_KEY', 'anthropic_api_key']);
+  const geminiKey = envFirst(['COMMIT_MAKER_GEMINI_API_KEY', 'GEMINI_API_KEY', 'GOOGLE_API_KEY', 'google_api_key']);
+  const claudeKey = envFirst(['COMMIT_MAKER_CLAUDE_API_KEY', 'ANTHROPIC_API_KEY', 'CLAUDE_API_KEY', 'anthropic_api_key']);
 
   if (openAiKey) {
-    for (const model of ['gpt-5.4-nano', 'gpt-5.4-mini', 'gpt-5.4', 'gpt-5.5']) {
-      checks.push(checkOpenAi(openAiKey, model, 'none'));
-      checks.push(checkOpenAi(openAiKey, model, 'xhigh'));
+    for (const model of ['gpt-5.6-luna', 'gpt-5.6-terra', 'gpt-5.6-sol']) {
+      checks.push(() => checkOpenAi(openAiKey, model));
     }
   } else {
     console.error('SKIP OpenAI: API key not found in env or .env');
   }
   if (geminiKey) {
-    checks.push(checkGemini(geminiKey, 'gemini-2.5-flash-lite'));
-    checks.push(checkGemini(geminiKey, 'gemini-3.1-flash-lite'));
-    checks.push(checkGemini(geminiKey, 'gemini-3.5-flash', 64));
-    checks.push(checkGemini(geminiKey, 'gemini-3-flash-preview', 64));
+    checks.push(() => checkGemini(geminiKey, 'gemini-3.5-flash-lite'));
+    checks.push(() => checkGemini(geminiKey, 'gemini-3.6-flash'));
   } else {
     console.error('SKIP Gemini: API key not found in env or .env');
   }
   if (claudeKey) {
-    checks.push(checkClaude(claudeKey, 'claude-haiku-4-5'));
-    checks.push(checkClaude(claudeKey, 'claude-sonnet-4-6'));
-    checks.push(checkClaude(claudeKey, 'claude-opus-4-8'));
+    checks.push(() => checkClaude(claudeKey, 'claude-haiku-4-5'));
+    checks.push(() => checkClaude(claudeKey, 'claude-sonnet-5'));
+    checks.push(() => checkClaude(claudeKey, 'claude-fable-5'));
   } else {
     console.error('SKIP Claude: API key not found in env or .env');
   }
@@ -151,9 +94,19 @@ async function main(): Promise<void> {
     throw new Error('No cloud API keys found. Set env vars or a local .env file and rerun npm run smoke:cloud:minimal');
   }
 
-  const results = await Promise.all(checks);
-  for (const result of results) {
-    console.log(`OK ${result.provider} ${result.model} (${result.detail})`);
+  const failures: string[] = [];
+  for (const check of checks) {
+    try {
+      const result = await check();
+      console.log(`OK ${result.provider} ${result.model} (${result.detail})`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      failures.push(message);
+      console.error(`FAIL ${message}`);
+    }
+  }
+  if (failures.length > 0) {
+    throw new Error(`${failures.length} cloud smoke check(s) failed`);
   }
 }
 
