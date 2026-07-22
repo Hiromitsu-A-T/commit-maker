@@ -37,8 +37,10 @@
   }
 
   function ready() {
-    send({ type: 'ready' });
     render();
+    document.body.classList.remove('app-pending');
+    document.body.setAttribute('aria-busy', 'false');
+    send({ type: 'ready' });
   }
 
   function queryElements() {
@@ -746,7 +748,9 @@
       }
     }
     if (els.localModelDownload) {
-      els.localModelDownload.textContent = getLocalModelDownloadButtonLabel(model, t);
+      const downloadLabel = getLocalModelDownloadButtonLabel(model, t);
+      els.localModelDownload.textContent = downloadLabel;
+      els.localModelDownload.title = downloadLabel;
       els.localModelDownload.disabled = busy || model.status === 'ready';
     }
     if (els.localModelCancel) els.localModelCancel.disabled = !downloading;

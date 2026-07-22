@@ -12,10 +12,15 @@ function renderStatus(els, state, strings) {
             : state.commitStatus === 'error'
                 ? t.statusError
                 : t.statusIdle;
-    badges.push({ text: statusText, className: statusClass });
-    if (state.commitStatus === 'loading' && state.commitProgress) {
-        badges.push({ text: state.commitProgress });
-    }
+    const progressText = state.commitStatus === 'loading' && state.commitProgress
+        ? ` · ${state.commitProgress}`
+        : '';
+    const primaryStatusText = statusText + progressText;
+    badges.push({
+        text: primaryStatusText,
+        className: ['status-primary', statusClass].filter(Boolean).join(' '),
+        title: primaryStatusText
+    });
     badges.push({ text: state.commitIncludeUnstaged ? t.badgeUnstagedOn : t.badgeUnstagedOff });
     badges.push({ text: (state.commitProvider || '-') + ' · ' + (state.commitModel || state.commitCustomModel || '-') });
     Dom.updateBadges(els.statusRow, badges);
@@ -30,21 +35,27 @@ function renderApiKeyBadges(els, providerOptions, state, strings) {
         if (setupMode === 'localModel') {
             const model = state.localModel || {};
             const status = getLocalModelStatus(model, t);
+            const text = opt.badge + ': ' + status.text;
             return {
-                text: opt.badge + ': ' + status.text,
+                text,
+                title: text,
                 className: getProviderBadgeClass(opt.id, activeProvider, status.className)
             };
         }
         if (setupMode === 'codexAuth') {
             const ready = Boolean(state.apiKeys?.[opt.id]?.ready);
+            const text = opt.badge + ': ' + getCodexBadgeText(ready, t);
             return {
-                text: opt.badge + ': ' + getCodexBadgeText(ready, t),
+                text,
+                title: text,
                 className: getProviderBadgeClass(opt.id, activeProvider, ready ? 'success' : 'warn')
             };
         }
         const ready = Boolean(state.apiKeys?.[opt.id]?.ready);
+        const text = opt.badge + ': ' + (ready ? t.apiKeySaved : t.apiKeyNotSaved);
         return {
-            text: opt.badge + ': ' + (ready ? t.apiKeySaved : t.apiKeyNotSaved),
+            text,
+            title: text,
             className: getProviderBadgeClass(opt.id, activeProvider, ready ? 'success' : 'warn')
         };
     });

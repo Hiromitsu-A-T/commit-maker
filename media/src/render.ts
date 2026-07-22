@@ -2,7 +2,7 @@ type DomApi = {
   renderSelect: (el: HTMLSelectElement | null, options: string[], selected?: string) => void;
   show: (el: HTMLElement | null, visible: boolean, display?: string) => void;
   setDisabled: (el: HTMLElement | null, disabled: boolean) => void;
-  updateBadges: (container: HTMLElement | null, badges: { text: string; className?: string }[]) => void;
+  updateBadges: (container: HTMLElement | null, badges: { text: string; className?: string; title?: string }[]) => void;
 };
 
 const Dom = (window as any).CommitMakerDom as DomApi;
@@ -10,7 +10,7 @@ const Dom = (window as any).CommitMakerDom as DomApi;
 function renderStatus(els: any, state: any, strings: any): void {
   if (!els.statusRow) return;
   const t = strings || {};
-  const badges = [] as { text: string; className?: string }[];
+  const badges = [] as { text: string; className?: string; title?: string }[];
   const statusClass = state.commitStatus === 'ready' ? 'success' : state.commitStatus === 'error' ? 'danger' : '';
   const statusText =
     state.commitStatus === 'loading'
@@ -20,10 +20,15 @@ function renderStatus(els: any, state: any, strings: any): void {
         : state.commitStatus === 'error'
           ? t.statusError
           : t.statusIdle;
-  badges.push({ text: statusText, className: statusClass });
-  if (state.commitStatus === 'loading' && state.commitProgress) {
-    badges.push({ text: state.commitProgress });
-  }
+  const progressText = state.commitStatus === 'loading' && state.commitProgress
+    ? ` · ${state.commitProgress}`
+    : '';
+  const primaryStatusText = statusText + progressText;
+  badges.push({
+    text: primaryStatusText,
+    className: ['status-primary', statusClass].filter(Boolean).join(' '),
+    title: primaryStatusText
+  });
   badges.push({ text: state.commitIncludeUnstaged ? t.badgeUnstagedOn : t.badgeUnstagedOff });
   badges.push({ text: (state.commitProvider || '-') + ' · ' + (state.commitModel || state.commitCustomModel || '-') });
   Dom.updateBadges(els.statusRow, badges);
@@ -38,21 +43,27 @@ function renderApiKeyBadges(els: any, providerOptions: any[], state: any, string
     if (setupMode === 'localModel') {
       const model = state.localModel || {};
       const status = getLocalModelStatus(model, t);
+      const text = opt.badge + ': ' + status.text;
       return {
-        text: opt.badge + ': ' + status.text,
+        text,
+        title: text,
         className: getProviderBadgeClass(opt.id, activeProvider, status.className)
       };
     }
     if (setupMode === 'codexAuth') {
       const ready = Boolean(state.apiKeys?.[opt.id]?.ready);
+      const text = opt.badge + ': ' + getCodexBadgeText(ready, t);
       return {
-        text: opt.badge + ': ' + getCodexBadgeText(ready, t),
+        text,
+        title: text,
         className: getProviderBadgeClass(opt.id, activeProvider, ready ? 'success' : 'warn')
       };
     }
     const ready = Boolean(state.apiKeys?.[opt.id]?.ready);
+    const text = opt.badge + ': ' + (ready ? t.apiKeySaved : t.apiKeyNotSaved);
     return {
-      text: opt.badge + ': ' + (ready ? t.apiKeySaved : t.apiKeyNotSaved),
+      text,
+      title: text,
       className: getProviderBadgeClass(opt.id, activeProvider, ready ? 'success' : 'warn')
     };
   });

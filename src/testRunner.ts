@@ -13,6 +13,7 @@ import { runPanelMessageGuardTests } from './panelMessageGuard.test';
 import { runPanelBodyTests } from './panelBody.test';
 import { runModelCapabilitiesTests } from './modelCapabilities.test';
 import { runProviderSettingsTests } from './providerSettings.test';
+import { runWebviewSerializationTests } from './webviewSerialization.test';
 
 async function main() {
   await runDiffCollectorTests();
@@ -28,6 +29,7 @@ async function main() {
   await runPanelMessageGuardTests();
   await runPanelBodyTests();
   await runProviderSettingsTests();
+  await runWebviewSerializationTests();
   runModelCapabilitiesTests();
   console.log('All tests completed');
 }

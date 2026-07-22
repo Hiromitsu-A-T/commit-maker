@@ -24,6 +24,7 @@ export async function runPanelBodyTests(): Promise<void> {
   assert.ok(html.includes('id="localModelGuidance"'), 'local model guidance should be available');
   assert.ok(html.includes('id="localModelGuidanceBadge"'), 'local model guidance should include a badge');
   assert.ok(html.includes('id="localModelGuidanceText"'), 'local model guidance should include explanatory text');
+  assert.ok(html.includes('id="promptSaved" class="pill hint" role="status"'), 'prompt feedback should be an overlay status');
   assert.ok(html.includes('id="reasoningLabel"'), 'reasoning label should be addressable for provider-specific text');
   assert.ok(html.includes('id="advancedModelControls"'), 'advanced controls should be grouped');
   assert.ok(html.indexOf('id="apiKeyIssue"') < html.indexOf('id="apiKeyCloudPanel"'), 'API key issue link should stay in the provider header');

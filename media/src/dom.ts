@@ -1,6 +1,7 @@
 interface BadgeSpec {
   text: string;
   className?: string;
+  title?: string;
 }
 
 function renderSelect(selectEl: HTMLSelectElement | null, options: string[], selected?: string): void {
@@ -29,12 +30,20 @@ function setDisabled(el: HTMLElement | null, disabled: boolean): void {
 
 function updateBadges(container: HTMLElement | null, badges: BadgeSpec[]): void {
   if (!container) return;
-  container.innerHTML = '';
-  for (const badge of badges) {
-    const span = document.createElement('span');
-    span.className = 'badge ' + (badge.className || '');
-    span.textContent = badge.text;
-    container.appendChild(span);
+  badges.forEach((badge, index) => {
+    let span = container.children.item(index);
+    if (!(span instanceof HTMLSpanElement)) {
+      span = document.createElement('span');
+      container.appendChild(span);
+    }
+    const className = 'badge' + (badge.className ? ' ' + badge.className : '');
+    if (span.className !== className) span.className = className;
+    if (span.textContent !== badge.text) span.textContent = badge.text;
+    const title = badge.title || badge.text;
+    if (span.getAttribute('title') !== title) span.setAttribute('title', title);
+  });
+  while (container.children.length > badges.length) {
+    container.lastElementChild?.remove();
   }
 }
 

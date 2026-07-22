@@ -108,7 +108,7 @@ export function renderPanelBody(strings: UiStrings): string {
     <section>
       <h3 class="section-header mt0">
         <span>${strings.promptSectionTitle}</span>
-        <span id="promptSaved" class="pill hint"></span>
+        <span id="promptSaved" class="pill hint" role="status" aria-live="polite" aria-atomic="true"></span>
       </h3>
       <div class="label-row space-between">
         <div class="preset-row">

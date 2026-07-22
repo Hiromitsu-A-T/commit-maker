@@ -38,6 +38,7 @@ import { DEFAULT_LANGUAGE, STRINGS } from './i18n/strings';
 import { UiStrings } from './i18n/types';
 import { SUPPORTED_LANG_CODES } from './i18n/languages';
 import { createDefaultLocalModelState, getLocalModelOptions } from './services/localModel';
+import { serializeForInlineScript } from './webviewSerialization';
 
 interface RenderContext {
   cspSource: string;
@@ -529,7 +530,7 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
       promptPresets: ctx.promptPresets,
       localModelOptions: ctx.localModelOptions,
       allowedStateKeys: ctx.allowedStateKeys,
-      defaultState: createDefaultState(this.state.language || DEFAULT_LANGUAGE)
+      defaultState: this.state
     };
     return /* html */ `<!DOCTYPE html>
   <html lang="${ctx.strings.langCode}">
@@ -539,9 +540,9 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <link rel="stylesheet" href="${ctx.styleUri}" />
     </head>
-    <body>
+    <body class="app-pending" aria-busy="true">
       ${renderPanelBody(ctx.strings)}
-      <script nonce="${ctx.nonce}">window.CommitMakerBootstrap = ${JSON.stringify(bootstrap)};</script>
+      <script nonce="${ctx.nonce}">window.CommitMakerBootstrap = ${serializeForInlineScript(bootstrap)};</script>
       <script src="${webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'ui', 'dom.js'))}" nonce="${ctx.nonce}"></script>
       <script src="${webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'ui', 'render.js'))}" nonce="${ctx.nonce}"></script>
       <script src="${webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'ui', 'events.js'))}" nonce="${ctx.nonce}"></script>
