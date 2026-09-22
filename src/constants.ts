@@ -144,6 +144,8 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       setupMode: 'apiKey',
       models: [
         'gemini-3.5-flash-lite',
+        'gemini-3.8-flash',
+        'gemini-3.7-flash',
         'gemini-3.6-flash',
         'gemini-3.5-flash',
         'gemini-3.1-pro-preview',
@@ -168,6 +170,9 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       requiresApiKey: true,
       setupMode: 'apiKey',
       models: [
+        'gpt-6-luna',
+        'gpt-6-sol',
+        'gpt-6-astra',
         'gpt-5.6-luna',
         'gpt-5.6-terra',
         'gpt-5.6-sol',
@@ -185,7 +190,7 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
         'gpt-5-codex'
         // rolling alias の *-chat-latest と旧 5.1 / 5.2 系は推奨候補へ載せない
       ],
-      defaultModel: 'gpt-5.6-luna',
+      defaultModel: 'gpt-6-luna',
       issueUrl: 'https://platform.openai.com/api-keys',
       defaultEndpoint: 'https://api.openai.com/v1/responses',
       defaultSecret: 'commit-maker/api-key',
@@ -202,6 +207,9 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       setupMode: 'apiKey',
       models: [
         'claude-haiku-4-5',
+        'claude-opus-5-5',
+        'claude-fable-5-1',
+        'claude-opus-5',
         'claude-sonnet-5',
         'claude-fable-5',
         'claude-sonnet-4-6',
@@ -228,12 +236,15 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       requiresApiKey: false,
       setupMode: 'codexAuth',
       models: [
-        'gpt-5.5',
-        'gpt-5.4-mini',
-        'gpt-5.4',
-        'gpt-5.3-codex-spark'
+        'gpt-6-luna',
+        'gpt-6-sol',
+        'gpt-6-astra',
+        'gpt-5.6-luna',
+        'gpt-5.6-terra',
+        'gpt-5.6-sol',
+        'gpt-5.5'
       ],
-      defaultModel: 'gpt-5.5',
+      defaultModel: 'gpt-6-luna',
       issueUrl: 'https://developers.openai.com/codex/auth',
       defaultEndpoint: '',
       defaultSecret: '',

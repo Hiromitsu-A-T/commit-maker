@@ -28,17 +28,18 @@ function envFirst(names: string[]): string | undefined {
 }
 
 async function checkOpenAi(key: string, model: string): Promise<ProviderResult> {
+  const reasoning = model === 'gpt-6-astra' ? 'low' : 'none';
   await callOpenAi({
     prompt: 'Return exactly: ok',
     model,
     apiKey: key,
     endpoint: DEFAULT_PROVIDER_ENDPOINTS.openai,
-    reasoning: 'none',
+    reasoning,
     verbosity: 'low',
     maxOutputTokens: 256,
     timeoutMs: 120000
   });
-  return { provider: 'OpenAI', model, detail: 'reasoning=none' };
+  return { provider: 'OpenAI', model, detail: `reasoning=${reasoning}` };
 }
 
 async function checkGemini(key: string, model: string): Promise<ProviderResult> {
@@ -71,7 +72,7 @@ async function main(): Promise<void> {
   const claudeKey = envFirst(['COMMIT_MAKER_CLAUDE_API_KEY', 'ANTHROPIC_API_KEY', 'CLAUDE_API_KEY', 'anthropic_api_key']);
 
   if (openAiKey) {
-    for (const model of ['gpt-5.6-luna', 'gpt-5.6-terra', 'gpt-5.6-sol']) {
+    for (const model of ['gpt-6-luna', 'gpt-6-sol', 'gpt-6-astra']) {
       checks.push(() => checkOpenAi(openAiKey, model));
     }
   } else {
@@ -79,14 +80,14 @@ async function main(): Promise<void> {
   }
   if (geminiKey) {
     checks.push(() => checkGemini(geminiKey, 'gemini-3.5-flash-lite'));
-    checks.push(() => checkGemini(geminiKey, 'gemini-3.6-flash'));
+    checks.push(() => checkGemini(geminiKey, 'gemini-3.8-flash'));
   } else {
     console.error('SKIP Gemini: API key not found in env or .env');
   }
   if (claudeKey) {
     checks.push(() => checkClaude(claudeKey, 'claude-haiku-4-5'));
-    checks.push(() => checkClaude(claudeKey, 'claude-sonnet-5'));
-    checks.push(() => checkClaude(claudeKey, 'claude-fable-5'));
+    checks.push(() => checkClaude(claudeKey, 'claude-opus-5-5'));
+    checks.push(() => checkClaude(claudeKey, 'claude-fable-5-1'));
   } else {
     console.error('SKIP Claude: API key not found in env or .env');
   }

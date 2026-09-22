@@ -3,7 +3,7 @@ import { buildCodexExecArgs, parseCodexOutput } from './codex';
 
 export async function runCodexLlmTests(): Promise<void> {
   const args = buildCodexExecArgs({
-    model: 'gpt-5.5',
+    model: 'gpt-6-luna',
     outputPath: '/tmp/out.json',
     schemaPath: '/tmp/schema.json',
     cwd: '/tmp/work',
@@ -19,7 +19,7 @@ export async function runCodexLlmTests(): Promise<void> {
   assert.ok(args.includes('--ignore-rules'));
   assert.ok(args.includes('--skip-git-repo-check'));
   assert.ok(args.includes('web_search="disabled"'));
-  assert.deepStrictEqual(args.slice(-3), ['--model', 'gpt-5.5', '-']);
+  assert.deepStrictEqual(args.slice(-3), ['--model', 'gpt-6-luna', '-']);
 
   assert.strictEqual(parseCodexOutput('{"message":"feat: Codex連携を追加"}'), 'feat: Codex連携を追加');
   assert.strictEqual(parseCodexOutput('```json\n{"message":"fix: 出力整形を修正"}\n```'), 'fix: 出力整形を修正');

@@ -77,8 +77,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
   (English) **Prompt preset management** – Save multiple in GUI, shared across local workspaces (except Settings Sync)
 - **推奨モデルは高速・低コスト**: デフォルトで Gemini `gemini-3.5-flash-lite` を採用。必要に応じて OpenAI / Claude / Codex / Local へ切り替え可能
   (English) **Fast & low-cost default** – Gemini `gemini-3.5-flash-lite` by default; switch to OpenAI/Claude/Codex/Local as needed
-- **最新クラウドモデルに対応**: OpenAI GPT-5.6 Sol / Terra / Luna、Claude Sonnet 5 / Fable 5、Gemini 3.6 Flash / 3.5 Flash-Lite をモデル欄から選択可能
-  (English) **Current cloud models supported** – Select OpenAI GPT-5.6 Sol/Terra/Luna, Claude Sonnet 5/Fable 5, and Gemini 3.6 Flash/3.5 Flash-Lite from the model picker
+- **最新クラウドモデルに対応**: OpenAI GPT-6 Luna / Sol / Astra、Claude Opus 5.5 / Fable 5.1 / Sonnet 5、Gemini 3.8 Flash / 3.5 Flash-Lite をモデル欄から選択可能。OpenAI と Codex の初期モデルは GPT-6 Luna
+  (English) **Current cloud models supported** – Select OpenAI GPT-6 Luna/Sol/Astra, Claude Opus 5.5/Fable 5.1/Sonnet 5, and Gemini 3.8 Flash/3.5 Flash-Lite; GPT-6 Luna is the initial OpenAI and Codex model
 - **Local LLM なら API 利用料なし**: Qwen3.5 / Gemma 4 / LFM2.5 などの GGUF モデルをダウンロードすると PC 内のリソースで生成可能。速度は端末性能と差分サイズに依存
   (English) **No cloud API charge with Local LLM** – Download a Qwen3.5, Gemma 4, or LFM2.5 model in GGUF format and generate on your machine; speed depends on device specs and diff size
 - **追加指示欄でさらにカスタマイズ**: 「英語で短く」「絵文字なし」「Conventional Commits 準拠」など、チームのコミットルールに合わせて自由に指定  
