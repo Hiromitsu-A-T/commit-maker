@@ -23,7 +23,7 @@ const de: UiStrings = {
   codexReasoningLabel: 'Codex-Denkaufwand',
   verbosityLabel: 'Detailgrad (nur OpenAI)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (GPT-5 Familie)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'Lokales LLM',

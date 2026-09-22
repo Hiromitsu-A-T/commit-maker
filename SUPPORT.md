@@ -19,7 +19,7 @@ Include / 含めてほしい情報:
 - Commit Maker version
 - VS Code version
 - Operating system
-- Provider in use: Gemini, OpenAI, Claude, or Local
+- Provider in use: OpenAI, Gemini, Claude, Codex, or Local
 - What you expected and what happened
 
 API キー、Personal Access Token、非公開リポジトリの差分、その他の秘密情報は

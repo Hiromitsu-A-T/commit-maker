@@ -23,7 +23,7 @@ const ja: UiStrings = {
   codexReasoningLabel: 'Codex 推論レベル',
   verbosityLabel: '回答の詳細度 (OpenAIのみ)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (GPT-5 系)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'ローカル LLM',

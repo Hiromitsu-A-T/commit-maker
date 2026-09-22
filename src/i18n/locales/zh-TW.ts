@@ -23,7 +23,7 @@ const zhTw: UiStrings = {
   codexReasoningLabel: 'Codex 推理強度',
   verbosityLabel: '回應詳略（僅 OpenAI）',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI（GPT-5 系列）',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: '本機 LLM',

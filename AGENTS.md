@@ -10,7 +10,7 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 - `AGENTS.md`: 開発者向け。構造、配布手順、CI/シークレット運用、開発ポリシーを集約し、README には載せない。
 
 ## 設定とシークレット
-- 設定キー（`commitMaker.*`）: `provider` / `endpoint` / `endpointGemini` / `endpointClaude` / `endpointLocal` / `model`（デフォルト `gemini-3.5-flash-lite`）/ `reasoningEffort` / `verbosity` / `apiKeySecret*` / `requestTimeoutMs` / `local*`。旧 `simpleUi.*` は置換して使用。
+- 設定キー（`commitMaker.*`）: `provider` / `endpoint` / `endpointGemini` / `endpointClaude` / `endpointLocal` / `model`（デフォルト `gpt-6-luna`）/ `reasoningEffort` / `verbosity` / `apiKeySecret*` / `requestTimeoutMs` / `local*`。旧 `simpleUi.*` は置換して使用。
 - ログ出力: `commitMaker.logLlm` を `true` で LLM 呼び出しの試行/リトライを Output チャネルへ記録（デフォルト `false`）。
 - シークレット保存先: GitHub Actions → `Settings > Secrets and variables > Actions` に `VSCE_PAT`（Marketplace 用）、`OVSX_PAT`（Open VSX 用）を登録。ローカル開発時は `.env` に置かず、VS Code SecretStorage へ保存。
 - `.env` はリポジトリに含めない（`.vscodeignore` で除外済み）。ただし **CI/ローカルで一時利用するトークンを .env に置く場合がある**。その際は `.env` を手元専用にし、必ずコミット・配布対象から除外する（既に ignore 済み）。`VSCE_PAT` / `OVSX_PAT` を .env に置いてもビルド・公開は可能だが、公開リポジトリに絶対含めないこと。
@@ -93,7 +93,7 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 
 ## 開発メモ
 - Webview CSP は nonce 付き。スタイル/スクリプトは同梱のみ。
-- プロバイダー並びとデフォルト: 「Gemini → OpenAI → Claude → Local」。Local は API キー不要で、ユーザーが明示的にモデルをダウンロードした場合のみ利用する。llama.cpp runtime は未指定なら OS/CPU 別に自動取得し、SHA-256 検証後に globalStorage へ展開する。`commitMaker.localRuntimePath` は開発・検証用の上書き設定として扱う。
+- プロバイダー並びとデフォルト: 「OpenAI → Gemini → Claude → Codex → Local」、初期モデルは `gpt-6-luna`。Local は API キー不要で、ユーザーが明示的にモデルをダウンロードした場合のみ利用する。llama.cpp runtime は未指定なら OS/CPU 別に自動取得し、SHA-256 検証後に globalStorage へ展開する。`commitMaker.localRuntimePath` は開発・検証用の上書き設定として扱う。
 - Local モデル固有の sampling / runtime 調整は `services/localModelProfiles.ts` の profile に集約し、モデル名で分岐しない。新規モデルは `LOCAL_MODEL_DEFINITIONS` で profile を選ぶ。
 - 差分取得は Git API 優先、フォールバックで `git diff` / `git status --porcelain`。
 - API キー未保存のクラウド provider は選択可能だが生成ボタンを無効化し、Reasoning/Verbosity を非表示。Local はモデル未ダウンロード時に生成ボタンを無効化。

@@ -1,8 +1,8 @@
 {
   "name": "commit-maker",
   "displayName": "Commit Maker – コミットメーカー",
-  "description": "Git差分からコミットメッセージをAI生成。BYOK、Codex、Qwen3.5/Gemma 4/LFM2.5のローカルGGUFモデルに対応。",
-  "version": "0.14.0",
+  "description": "Git差分からコミットメッセージをAI生成。OpenAI GPT-6 Lunaを初期選択。BYOK、Codex、ローカルGGUFモデルに対応。",
+  "version": "0.15.0",
   "publisher": "Hiromitsu",
   "license": "Apache-2.0",
   "repository": {
@@ -124,13 +124,13 @@
         "commitMaker.provider": {
           "type": "string",
           "enum": [
-            "gemini",
             "openai",
+            "gemini",
             "claude",
             "codex",
             "local"
           ],
-          "default": "gemini",
+          "default": "openai",
           "description": "選択する LLM プロバイダー"
         },
         "commitMaker.endpoint": {
@@ -165,7 +165,7 @@
         },
         "commitMaker.model": {
           "type": "string",
-          "default": "gemini-3.5-flash-lite",
+          "default": "gpt-6-luna",
           "description": "コミット生成に使用するモデル ID"
         },
         "commitMaker.reasoningEffort": {

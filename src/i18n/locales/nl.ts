@@ -23,7 +23,7 @@ const nl: UiStrings = {
   codexReasoningLabel: 'Codex-redeneerinspanning',
   verbosityLabel: 'Gedetailleerdheid (alleen OpenAI)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (GPT-5-familie)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'Lokale LLM',

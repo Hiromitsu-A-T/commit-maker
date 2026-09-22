@@ -1,9 +1,11 @@
 import * as assert from 'assert';
 import {
+  DEFAULT_PROVIDER,
   DEFAULT_MODEL_BY_PROVIDER,
   DEFAULT_REASONING_EFFORT,
   DEFAULT_VERBOSITY,
   MODEL_SUGGESTIONS_BY_PROVIDER,
+  PROVIDER_OPTIONS,
   REASONING_EFFORT_OPTIONS
 } from './constants';
 import {
@@ -16,6 +18,10 @@ import { isReasoningEffort } from './types';
 
 export function runModelCapabilitiesTests(): void {
   const packageProperties = require('../package.json').contributes.configuration.properties;
+  assert.strictEqual(DEFAULT_PROVIDER, 'openai');
+  assert.strictEqual(PROVIDER_OPTIONS[0].id, DEFAULT_PROVIDER);
+  assert.strictEqual(packageProperties['commitMaker.provider'].default, DEFAULT_PROVIDER);
+  assert.strictEqual(packageProperties['commitMaker.model'].default, DEFAULT_MODEL_BY_PROVIDER[DEFAULT_PROVIDER]);
   assert.strictEqual(packageProperties['commitMaker.reasoningEffort'].default, DEFAULT_REASONING_EFFORT);
   assert.strictEqual(packageProperties['commitMaker.verbosity'].default, DEFAULT_VERBOSITY);
   assert.ok(packageProperties['commitMaker.reasoningEffort'].enum.includes('max'));

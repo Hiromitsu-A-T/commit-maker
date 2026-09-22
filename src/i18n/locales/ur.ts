@@ -23,7 +23,7 @@ const ur: UiStrings = {
   codexReasoningLabel: 'Codex استدلال کی سطح',
   verbosityLabel: 'تفصیل کی سطح (صرف OpenAI)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (GPT-5 فیملی)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'مقامی LLM',

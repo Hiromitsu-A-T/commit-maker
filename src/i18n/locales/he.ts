@@ -23,7 +23,7 @@ const he: UiStrings = {
   codexReasoningLabel: 'רמת היסק של Codex',
   verbosityLabel: 'רמת פירוט (רק OpenAI)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (משפחת GPT-5)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'LLM מקומי',

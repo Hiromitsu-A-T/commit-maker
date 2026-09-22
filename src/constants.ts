@@ -135,33 +135,6 @@ export const GEMINI_GENERATE_SUFFIX = ':generateContent';
 export function buildProviderCapabilities(strings: UiStrings): ProviderCapability[] {
   return [
     {
-      id: 'gemini',
-      label: strings.providerLabelGemini,
-      badge: 'Gemini',
-      description: strings.providerDescriptionGemini,
-      apiKeyPlaceholder: 'AIza...',
-      requiresApiKey: true,
-      setupMode: 'apiKey',
-      models: [
-        'gemini-3.5-flash-lite',
-        'gemini-3.8-flash',
-        'gemini-3.7-flash',
-        'gemini-3.6-flash',
-        'gemini-3.5-flash',
-        'gemini-3.1-pro-preview',
-        'gemini-3.1-flash-lite',
-        'gemini-3-flash-preview',
-        'gemini-2.5-flash-lite',
-        'gemini-2.5-flash'
-      ],
-      defaultModel: 'gemini-3.5-flash-lite',
-      issueUrl: 'https://aistudio.google.com/app/api-keys',
-      defaultEndpoint: 'https://generativelanguage.googleapis.com/v1beta/models',
-      defaultSecret: 'commit-maker/api-key/gemini',
-      supportsReasoning: false,
-      supportsVerbosity: false
-    },
-    {
       id: 'openai',
       label: strings.providerLabelOpenAi,
       badge: 'OpenAI',
@@ -196,6 +169,33 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       defaultSecret: 'commit-maker/api-key',
       supportsReasoning: true,
       supportsVerbosity: true
+    },
+    {
+      id: 'gemini',
+      label: strings.providerLabelGemini,
+      badge: 'Gemini',
+      description: strings.providerDescriptionGemini,
+      apiKeyPlaceholder: 'AIza...',
+      requiresApiKey: true,
+      setupMode: 'apiKey',
+      models: [
+        'gemini-3.5-flash-lite',
+        'gemini-3.8-flash',
+        'gemini-3.7-flash',
+        'gemini-3.6-flash',
+        'gemini-3.5-flash',
+        'gemini-3.1-pro-preview',
+        'gemini-3.1-flash-lite',
+        'gemini-3-flash-preview',
+        'gemini-2.5-flash-lite',
+        'gemini-2.5-flash'
+      ],
+      defaultModel: 'gemini-3.5-flash-lite',
+      issueUrl: 'https://aistudio.google.com/app/api-keys',
+      defaultEndpoint: 'https://generativelanguage.googleapis.com/v1beta/models',
+      defaultSecret: 'commit-maker/api-key/gemini',
+      supportsReasoning: false,
+      supportsVerbosity: false
     },
     {
       id: 'claude',
@@ -326,7 +326,7 @@ export const PROVIDER_ISSUE_URLS: Record<ProviderId, string> = buildProviderIssu
 export const MODEL_SUGGESTIONS_BY_PROVIDER: Record<ProviderId, readonly string[]> =
   buildModelSuggestionsByProvider();
 
-export const DEFAULT_PROVIDER: ProviderId = 'gemini';
+export const DEFAULT_PROVIDER: ProviderId = 'openai';
 
 export const DEFAULT_MODEL_BY_PROVIDER: Record<ProviderId, string> = buildDefaultModelByProvider();
 

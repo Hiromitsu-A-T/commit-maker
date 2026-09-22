@@ -23,7 +23,7 @@ const fa: UiStrings = {
   codexReasoningLabel: 'سطح استدلال Codex',
   verbosityLabel: 'سطح جزئیات (فقط OpenAI)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (خانواده GPT-5)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'LLM محلی',
