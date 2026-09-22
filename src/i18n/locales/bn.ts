@@ -23,7 +23,7 @@ const bn: UiStrings = {
   codexReasoningLabel: 'Codex যুক্তি-স্তর',
   verbosityLabel: 'বিবরণের স্তর (শুধু OpenAI)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (GPT-5 পরিবার)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'লোকাল LLM',

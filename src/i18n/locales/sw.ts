@@ -23,7 +23,7 @@ const sw: UiStrings = {
   codexReasoningLabel: 'Kiwango cha kufikiri cha Codex',
   verbosityLabel: 'Kiwango cha maelezo (OpenAI pekee)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (familia ya GPT-5)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'LLM ya ndani',

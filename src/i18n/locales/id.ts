@@ -23,7 +23,7 @@ const id: UiStrings = {
   codexReasoningLabel: 'Tingkat penalaran Codex',
   verbosityLabel: 'Tingkat detail (hanya OpenAI)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (keluarga GPT-5)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'LLM lokal',

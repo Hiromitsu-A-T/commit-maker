@@ -7,13 +7,13 @@
 <p align="center"><em>Git の差分からコミットメッセージを AI 生成し、SCM へ即反映する commit / コミット特化ツール</em></p>
 
 **Git の差分を読み取り、最適なコミットメッセージを自動生成して SCM 入力欄へ反映する VS Code 拡張（コミットメーカー / commit message generator）です。**  
-Gemini / OpenAI / Claude の API キー（BYOK）に加えて、Commit Maker 専用の Codex ログイン連携と API キー不要のローカル LLM にも対応。Local では Qwen3.5 / Gemma 4 / LFM2.5 の GGUF モデルを選択でき、必要な llama.cpp runtime とモデル別 profile を自動で使い分けます。
+初期選択は OpenAI の GPT-6 Luna（API キーが必要）。Gemini / Claude の BYOK、Commit Maker 専用の Codex ログイン連携、API キー不要のローカル LLM にも対応。Local では Qwen3.5 / Gemma 4 / LFM2.5 の GGUF モデルを選択でき、必要な llama.cpp runtime とモデル別 profile を自動で使い分けます。
 Cursor や Copilot では実現しにくい、完全カスタマイズ可能な AI コミットメッセージ生成ツール。Git commit を効率化し、チーム全体のコミット品質を向上させます。
 キーはすべてローカルの SecretStorage に保存され、サーバー側に記録を残しません。
 SecretStorage とは VS Code が提供するローカル暗号化ストレージで、APIキーはPCをまたいで同期されません（Settings Sync も無効）。API キーはこの領域からのみ読み書きします。
 
 (English) **VS Code extension that reads your Git diff and auto-fills the SCM commit box with a generated message.**  
-Use your own Gemini / OpenAI / Claude API key (BYOK), connect through Commit Maker dedicated Codex sign-in, or use the Local LLM provider without an API key. Local supports Qwen3.5, Gemma 4, and LFM2.5 GGUF models and automatically uses the matching llama.cpp runtime and model profile.
+OpenAI GPT-6 Luna is selected initially and requires an API key. You can also use a Gemini or Claude API key (BYOK), connect through Commit Maker dedicated Codex sign-in, or use the Local LLM provider without an API key. Local supports Qwen3.5, Gemma 4, and LFM2.5 GGUF models and automatically uses the matching llama.cpp runtime and model profile.
 Fully customizable AI commit message generator beyond what Cursor or Copilot commonly offer. Streamline your Git commits and elevate your team's commit quality with professional commit messages.
 API keys stay in local SecretStorage; nothing is sent to the server side.
 SecretStorage is VS Code’s local encrypted store; API keys are not synced across machines (Settings Sync disabled) and are read/written only from there.
@@ -62,8 +62,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 ✅ **プロンプトを複数保存・切り替え** – GUI で複数のプロンプトプリセットを保存し、ワンクリックで切り替え可能。チーム規約、個人用、実験用など、用途に応じて使い分けられます。  
 (English) **Save & switch multiple prompts** – Store presets in the GUI and switch with one click for team rules, personal use, or experiments.
 
-✅ **プロバイダー・モデルを自由に選択** – 同じ UI で Gemini の高速モデル、OpenAI / Claude / Codex、ローカル LLM（Qwen3.5 / Gemma 4 / LFM2.5 の GGUF モデル）を切り替え。コスト・速度・プライバシーを最適化できます。
-(English) **Flexible provider/model selection** – Switch between Gemini, OpenAI, Claude, Codex, and Local LLMs such as Qwen3.5, Gemma 4, and LFM2.5 models in GGUF format in the same UI.
+✅ **プロバイダー・モデルを自由に選択** – 同じ UI で OpenAI の GPT-6 Luna、Gemini / Claude / Codex、ローカル LLM（Qwen3.5 / Gemma 4 / LFM2.5 の GGUF モデル）を切り替え。コスト・速度・プライバシーを最適化できます。
+(English) **Flexible provider/model selection** – Switch between OpenAI, Gemini, Claude, Codex, and Local LLMs such as Qwen3.5, Gemma 4, and LFM2.5 models in GGUF format in the same UI.
 
 ✅ **差分を完全に把握** – Staged / Unstaged / 未追跡 / バイナリを見出し付きで取得。デフォルトで未ステージ・未追跡も含めるため、Git commit 漏れを防止。  
 (English) **Complete diff coverage** – Fetch staged/unstaged/untracked/binary with headings; defaults include unstaged & untracked to prevent commit omissions.
@@ -75,8 +75,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
   (English) **One-click Git commit message generation** – AI reads your Git diff and fills the SCM box instantly with professional commit messages
 - **プロンプトプリセットの保存・管理**: GUI で複数保存し、PC 内の全ワークスペースで共通利用（Settings Sync を除く）  
   (English) **Prompt preset management** – Save multiple in GUI, shared across local workspaces (except Settings Sync)
-- **推奨モデルは高速・低コスト**: デフォルトで Gemini `gemini-3.5-flash-lite` を採用。必要に応じて OpenAI / Claude / Codex / Local へ切り替え可能
-  (English) **Fast & low-cost default** – Gemini `gemini-3.5-flash-lite` by default; switch to OpenAI/Claude/Codex/Local as needed
+- **低コストな初期モデル**: 有料 API の入力・出力トークン単価を基準に OpenAI `gpt-6-luna` を初期選択。Gemini の無料枠や Claude / Codex / Local にも切り替え可能（[OpenAI 料金](https://developers.openai.com/api/docs/pricing) / [Gemini 料金](https://ai.google.dev/gemini-api/docs/pricing)）
+  (English) **Low-cost default** – OpenAI `gpt-6-luna` is selected based on paid input/output token rates. Gemini’s free tier, Claude, Codex, and Local remain available ([OpenAI pricing](https://developers.openai.com/api/docs/pricing) / [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing)).
 - **最新クラウドモデルに対応**: OpenAI GPT-6 Luna / Sol / Astra、Claude Opus 5.5 / Fable 5.1 / Sonnet 5、Gemini 3.8 Flash / 3.5 Flash-Lite をモデル欄から選択可能。OpenAI と Codex の初期モデルは GPT-6 Luna
   (English) **Current cloud models supported** – Select OpenAI GPT-6 Luna/Sol/Astra, Claude Opus 5.5/Fable 5.1/Sonnet 5, and Gemini 3.8 Flash/3.5 Flash-Lite; GPT-6 Luna is the initial OpenAI and Codex model
 - **Local LLM なら API 利用料なし**: Qwen3.5 / Gemma 4 / LFM2.5 などの GGUF モデルをダウンロードすると PC 内のリソースで生成可能。速度は端末性能と差分サイズに依存
@@ -113,11 +113,11 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 (Open **Commit Maker** from the Activity Bar)
 
 **2. APIキー / モデルを設定**  
-上部のプロバイダーで Gemini / OpenAI / Claude / Codex / Local を選び、クラウド provider なら API キー保存、Codex なら Commit Maker 専用の Codex ログイン、Local なら Qwen3.5 / Gemma 4 / LFM2.5 などのモデル選択とダウンロードを行います。API キーは SecretStorage に暗号化保存されます。
-(Choose Gemini / OpenAI / Claude / Codex / Local in the top provider selector, then save a cloud API key, sign in to Commit Maker dedicated Codex auth, or select and download a Local model such as Qwen3.5, Gemma 4, or LFM2.5. API keys are encrypted in SecretStorage.)
+上部のプロバイダーで OpenAI / Gemini / Claude / Codex / Local を選び、クラウド provider なら API キー保存、Codex なら Commit Maker 専用の Codex ログイン、Local なら Qwen3.5 / Gemma 4 / LFM2.5 などのモデル選択とダウンロードを行います。API キーは SecretStorage に暗号化保存されます。
+(Choose OpenAI / Gemini / Claude / Codex / Local in the top provider selector, then save a cloud API key, sign in to Commit Maker dedicated Codex auth, or select and download a Local model such as Qwen3.5, Gemma 4, or LFM2.5. API keys are encrypted in SecretStorage.)
 
-> 💡 **BYOK方式**: すべて自分のAPIキーを使用。利用料は各プロバイダーの課金体系に従います。  
-> (BYOK only: bring your own keys; usage is billed by each provider)
+> 💡 **クラウド API の BYOK**: OpenAI / Gemini / Claude はご自身の API キーを使います。Codex は専用ログイン、Local は API キー不要です。
+> (OpenAI, Gemini, and Claude use your own API keys. Codex uses its dedicated sign-in; Local requires no API key.)
 
 Codex を選ぶ場合、事前に Codex CLI をインストールし、Commit Maker の Codex 欄から「ログイン」を押してください。通常の Codex CLI とは別の `CODEX_HOME` でログインするため、CLI 側のログアウトや別アカウント利用の影響を受けません。Commit Maker は `codex exec` を read-only / ephemeral で呼び出し、最終コミットメッセージだけを受け取ります。
 (For Codex, install the Codex CLI, then press "Sign in" in Commit Maker's Codex section. It signs in with a separate `CODEX_HOME`, so your normal Codex CLI logout or account choice does not affect Commit Maker. Commit Maker calls `codex exec` in read-only / ephemeral mode and uses only the final commit message.)
@@ -139,9 +139,9 @@ Local は大きな差分を拡張機能内でファイル別の構造化ダイ�
 (Local compresses large diffs into a structured per-file digest inside the extension, reducing Local LLM calls for faster generation.)
 
 **3. プロバイダー・モデルを選択**  
-推奨: **Gemini** → `gemini-3.5-flash-lite`（高速・低コスト）
+初期設定: **OpenAI** → `gpt-6-luna`（API キーが必要。Gemini の無料枠も選択可能）
 必要に応じて追加指示を入力  
-(Recommended: **Gemini** `gemini-3.5-flash-lite` for speed & cost; add custom instructions if needed)
+(Default: **OpenAI** `gpt-6-luna` requires an API key; Gemini’s free tier is also available. Add custom instructions if needed.)
 
 **4. コミットメッセージを生成**  
 「変更を読み込んで提案」ボタンをクリックして、プロフェッショナルな commit メッセージを生成  
@@ -191,14 +191,14 @@ UIから切り替え可能（Switchable from UI）:
 
 | 設定項目 | デフォルト値 | 保存範囲 |
 |---------|------------|---------|
-| プロバイダー | Gemini | ワークスペース単位 |
-| モデル | `gemini-3.5-flash-lite` | ワークスペース単位 |
+| プロバイダー | OpenAI | ワークスペース単位 |
+| モデル | `gpt-6-luna` | ワークスペース単位 |
 | OpenAI Reasoning / Verbosity | `medium` / `medium` | ワークスペース単位 |
 | プロンプト本体・プリセット | - | PC内共通（globalState） |
 | 差分範囲設定 | Unstaged/Untracked/Binary: オン | ワークスペース単位 |
 
 (Defaults & Storage)
-- **Provider**: Gemini, **Model**: `gemini-3.5-flash-lite` (workspace-scoped)
+- **Provider**: OpenAI, **Model**: `gpt-6-luna` (workspace-scoped)
 - **Prompts/Presets**: Shared globally on local machine (globalState)
 - **Diff settings**: Unstaged/Untracked/Binary enabled by default (workspace-scoped)
 
@@ -213,8 +213,8 @@ UIから切り替え可能（Switchable from UI）:
 
 | 設定キー | 説明 |
 |---------|------|
-| `commitMaker.provider` | プロバイダー設定（Gemini / OpenAI / Claude / Codex / Local） |
-| `commitMaker.model` | モデル設定（例: `gemini-3.5-flash-lite`） |
+| `commitMaker.provider` | プロバイダー設定（OpenAI / Gemini / Claude / Codex / Local） |
+| `commitMaker.model` | モデル設定（例: `gpt-6-luna`） |
 | `commitMaker.endpoint*` | カスタムエンドポイント設定 |
 | `commitMaker.apiKeySecret*` | SecretStorage に保存するキー名 |
 | `commitMaker.codexCommand` | Codex provider が使用する Codex CLI コマンド |
