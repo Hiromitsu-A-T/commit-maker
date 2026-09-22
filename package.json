@@ -2,7 +2,7 @@
   "name": "commit-maker",
   "displayName": "Commit Maker – コミットメーカー",
   "description": "Git差分からコミットメッセージをAI生成。OpenAI GPT-6 Lunaを初期選択。BYOK、Codex、ローカルGGUFモデルに対応。",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "publisher": "Hiromitsu",
   "license": "Apache-2.0",
   "repository": {
