@@ -22,6 +22,8 @@ export function runModelCapabilitiesTests(): void {
 
   assert.strictEqual(DEFAULT_MODEL_BY_PROVIDER.gemini, 'gemini-3.5-flash-lite');
   assert.strictEqual(MODEL_SUGGESTIONS_BY_PROVIDER.gemini[0], 'gemini-3.5-flash-lite');
+  assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.gemini.includes('gemini-3.8-flash'));
+  assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.gemini.includes('gemini-3.7-flash'));
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.gemini.includes('gemini-3.6-flash'));
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.gemini.includes('gemini-3.1-pro-preview'));
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.gemini.includes('gemini-3.1-flash-lite'));
@@ -29,7 +31,16 @@ export function runModelCapabilitiesTests(): void {
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.gemini.includes('gemini-3-flash-preview'));
   assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.gemini.includes('gemini-2.5-pro'));
 
-  assert.strictEqual(DEFAULT_MODEL_BY_PROVIDER.openai, 'gpt-5.6-luna');
+  assert.strictEqual(DEFAULT_MODEL_BY_PROVIDER.openai, 'gpt-6-luna');
+  assert.deepStrictEqual(
+    MODEL_SUGGESTIONS_BY_PROVIDER.openai.slice(0, 3),
+    ['gpt-6-luna', 'gpt-6-sol', 'gpt-6-astra']
+  );
+  assert.deepStrictEqual(getAllowedReasoningOptions('gpt-6-astra'), ['low', 'medium', 'high', 'xhigh', 'max']);
+  assert.deepStrictEqual(
+    getAllowedReasoningOptions('gpt-6-luna'),
+    ['none', 'low', 'medium', 'high', 'xhigh', 'max']
+  );
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.openai.includes('gpt-5.6-sol'));
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.openai.includes('gpt-5.6-terra'));
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.openai.includes('gpt-5.6-luna'));
@@ -57,7 +68,8 @@ export function runModelCapabilitiesTests(): void {
   assert.deepStrictEqual(getAllowedReasoningOptions('gpt-5.1-codex-max'), ['low', 'medium', 'high', 'xhigh']);
   assert.deepStrictEqual(getAllowedVerbosityOptions('gpt-5.2-codex'), ['medium']);
   assert.strictEqual(getAllowedVerbosityOptions('gpt-5.3-codex'), undefined);
-  assert.strictEqual(getDefaultReasoningForModel('gpt-5.6-luna'), 'medium');
+  assert.strictEqual(getDefaultReasoningForModel('gpt-6-luna'), 'medium');
+  assert.strictEqual(getDefaultReasoningForModel('gpt-6-astra'), 'low');
   assert.strictEqual(getDefaultReasoningForModel('gpt-5.4-nano'), 'none');
   assert.strictEqual(getDefaultReasoningForModel('gpt-5.5-pro'), 'high');
   assert.ok(REASONING_EFFORT_OPTIONS.includes('xhigh'));
@@ -66,6 +78,9 @@ export function runModelCapabilitiesTests(): void {
   assert.ok(isReasoningEffort('max'));
 
   assert.strictEqual(DEFAULT_MODEL_BY_PROVIDER.claude, 'claude-haiku-4-5');
+  assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-opus-5-5'));
+  assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-fable-5-1'));
+  assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-opus-5'));
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-sonnet-4-6'));
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-opus-4-8'));
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-opus-4-7'));
@@ -76,8 +91,11 @@ export function runModelCapabilitiesTests(): void {
   assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-opus-4-20250514'));
   assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-sonnet-4-20250514'));
 
-  assert.strictEqual(DEFAULT_MODEL_BY_PROVIDER.codex, 'gpt-5.5');
-  assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-5.4-mini'));
+  assert.strictEqual(DEFAULT_MODEL_BY_PROVIDER.codex, 'gpt-6-luna');
+  assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-6-sol'));
+  assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-6-astra'));
+  assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-5.4-mini'));
+  assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-5.4'));
 
   assert.strictEqual(resolveReasoningSetting(undefined, 'high'), 'high');
   assert.strictEqual(resolveReasoningSetting('low', 'high'), 'low');

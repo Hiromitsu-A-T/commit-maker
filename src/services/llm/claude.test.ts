@@ -81,7 +81,30 @@ async function testSonnet5OmitsTemperature(): Promise<void> {
   assert.ok(!Object.prototype.hasOwnProperty.call(bodies[0], 'temperature'));
 }
 
-async function testFable5ReadsTextAfterThinkingBlock(): Promise<void> {
+async function testOpus55OmitsTemperature(): Promise<void> {
+  const bodies: any[] = [];
+  await withMockFetch(async (_url, options) => {
+    bodies.push(JSON.parse(String(options?.body)));
+    return {
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ content: [{ type: 'text', text: 'ok' }] })
+    } as any;
+  }, async () => {
+    await callClaude({
+      prompt: 'ping',
+      model: 'claude-opus-5-5',
+      apiKey: 'test-key',
+      endpoint: 'https://api.anthropic.com/v1/messages',
+      timeoutMs: 1000
+    });
+  });
+
+  assert.strictEqual(bodies.length, 1);
+  assert.ok(!Object.prototype.hasOwnProperty.call(bodies[0], 'temperature'));
+}
+
+async function testFable51ReadsTextAfterThinkingBlock(): Promise<void> {
   const bodies: any[] = [];
   const result = await withMockFetch(async (_url, options) => {
     bodies.push(JSON.parse(String(options?.body)));
@@ -97,7 +120,7 @@ async function testFable5ReadsTextAfterThinkingBlock(): Promise<void> {
     } as any;
   }, async () => callClaude({
     prompt: 'ping',
-    model: 'claude-fable-5',
+    model: 'claude-fable-5-1',
     apiKey: 'test-key',
     endpoint: 'https://api.anthropic.com/v1/messages',
     timeoutMs: 1000
@@ -111,6 +134,7 @@ export async function runClaudeLlmTests(): Promise<void> {
   await testOpus48OmitsTemperature();
   await testSonnet46KeepsTemperature();
   await testSonnet5OmitsTemperature();
-  await testFable5ReadsTextAfterThinkingBlock();
+  await testOpus55OmitsTemperature();
+  await testFable51ReadsTextAfterThinkingBlock();
   console.log('claude.test.ts passed');
 }

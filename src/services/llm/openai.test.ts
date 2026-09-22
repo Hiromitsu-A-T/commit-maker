@@ -84,6 +84,41 @@ async function testGpt56MaxReasoningBody(): Promise<void> {
   assert.ok(!Object.prototype.hasOwnProperty.call(bodies[0], 'temperature'));
 }
 
+async function testGpt6ReasoningBody(): Promise<void> {
+  const bodies: any[] = [];
+  await withMockFetch(async (url, options) => {
+    if (String(url).endsWith('/v1/models')) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ data: MODEL_SUGGESTIONS_BY_PROVIDER.openai.map(id => ({ id })) })
+      } as any;
+    }
+    bodies.push(JSON.parse(String(options?.body)));
+    return {
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ output_text: 'ok' })
+    } as any;
+  }, async () => {
+    const base = {
+      prompt: 'ping',
+      apiKey: 'test-key',
+      endpoint: 'https://api.openai.com/v1/responses',
+      verbosity: 'high' as const,
+      maxOutputTokens: 8,
+      timeoutMs: 1000
+    };
+    await callOpenAi({ ...base, model: 'gpt-6-luna', reasoning: 'max' });
+    await callOpenAi({ ...base, model: 'gpt-6-astra', reasoning: 'none' });
+  });
+
+  assert.deepStrictEqual(bodies.map(body => body.model), ['gpt-6-luna', 'gpt-6-astra']);
+  assert.deepStrictEqual(bodies[0].reasoning, { effort: 'max' });
+  assert.deepStrictEqual(bodies[1].reasoning, { effort: 'low' });
+  assert.ok(bodies.every(body => !Object.prototype.hasOwnProperty.call(body, 'temperature')));
+}
+
 async function testGpt54InvalidReasoningFallsBack(): Promise<void> {
   const bodies: any[] = [];
   await withMockFetch(async (_url, options) => {
@@ -199,6 +234,7 @@ async function testRejectsHttpEndpointBeforeModelFetch(): Promise<void> {
 export async function runOpenAiLlmTests(): Promise<void> {
   await testGpt54ReasoningBody();
   await testGpt56MaxReasoningBody();
+  await testGpt6ReasoningBody();
   await testGpt54InvalidReasoningFallsBack();
   await testIntermediateModelConstraints();
   await testRejectsHttpEndpointBeforeModelFetch();
