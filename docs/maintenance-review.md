@@ -410,3 +410,13 @@ npm run smoke:local:runtime
 | R4 | 統合後の実ブラウザーと一覧 | 5 provider の操作と32言語×4モデル×3幅の384ケースが成功。console error / warning と pageerror は0。現存202ファイル・手書き184ファイル・新旧207パスの記録に欠け・余り・重複なし。browser.json / inventory-verification.json。 |
 
 V / T / L の「公開未実施」は各レビュー時点の記録である。公開はこの0.18.0をコミットし、mainとv0.18.0タグをpushしてstable workflowから行う。両ストアへの公開結果はGitHub Actionsの実行結果とストアのバージョンで確認する。
+
+## 0.18.0の公開結果
+
+2026-10-06にmainとv0.18.0をpushし、[mainのCI](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/37385402547)と[stable公開workflow](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/37385529355)が成功した。公開対象はc10ba29。Windows・macOS・Linuxのruntime取得・検証・実行も成功し、MarketplaceとOpen VSXへ同じCI成果物を公開した。
+
+08:05 JSTに、[Marketplace](https://marketplace.visualstudio.com/items?itemName=Hiromitsu.commit-maker)と[Open VSX](https://open-vsx.org/extension/Hiromitsu/commit-maker)の公開APIで0.18.0を確認した。公開後のバッジ更新も成功し、mainへ取り込んだ。
+
+CIのVSIXの126 entriesは、実VS Codeで検証したローカルVSIXと全ファイルの内容が一致した。Open VSXで配布中のVSIXのSHA-256もCI成果物と一致する（58604cf83aa0c37fce15299b8576c44e643a9ff61a900495489cbe3b9b295135）。証拠は output/release-0.18.0/publish-run.json / published-package-verification.json / open-vsx-package-verification.json / store-verification.json。
+
+この追記は公開後の記録であり、公開タグに含まれる拡張機能のコードは変更していない。
