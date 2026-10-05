@@ -23,7 +23,7 @@ const my: UiStrings = {
   codexReasoningLabel: 'Codex ကျိုးကြောင်းဆင်ခြင်မှု အားထုတ်မှု',
   verbosityLabel: 'အကြောင်းအရာအသေးစိတ် (OpenAI သီးသန့်)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (GPT-5 မျိုးစု)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'စက်တွင်း LLM',

@@ -23,7 +23,7 @@ const tl: UiStrings = {
   codexReasoningLabel: 'Antas ng pangangatwiran ng Codex',
   verbosityLabel: 'Antas ng detalye (OpenAI lang)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (pamilyang GPT-5)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'Lokal na LLM',

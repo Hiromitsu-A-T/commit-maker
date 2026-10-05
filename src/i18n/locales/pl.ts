@@ -23,7 +23,7 @@ const pl: UiStrings = {
   codexReasoningLabel: 'Poziom rozumowania Codex',
   verbosityLabel: 'Poziom szczegółowości (tylko OpenAI)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (rodzina GPT-5)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'Lokalny LLM',

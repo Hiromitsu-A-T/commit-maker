@@ -23,7 +23,7 @@ const ko: UiStrings = {
   codexReasoningLabel: 'Codex 추론 강도',
   verbosityLabel: '답변 상세도 (OpenAI 전용)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (GPT-5 계열)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: '로컬 LLM',

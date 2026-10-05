@@ -23,7 +23,7 @@ const ta: UiStrings = {
   codexReasoningLabel: 'Codex பகுத்தறிவு நிலை',
   verbosityLabel: 'விவர அளவு (OpenAI மட்டும்)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (GPT-5 தொடர்)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'உள்ளூர் LLM',

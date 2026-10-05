@@ -23,7 +23,7 @@ const th: UiStrings = {
   codexReasoningLabel: 'ระดับการให้เหตุผลของ Codex',
   verbosityLabel: 'ระดับรายละเอียด (เฉพาะ OpenAI)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (ตระกูล GPT-5)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'LLM ภายในเครื่อง',

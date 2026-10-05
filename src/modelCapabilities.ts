@@ -3,6 +3,9 @@ import { ReasoningEffort, VerbositySetting } from './types';
 
 // 空配列は Responses API 非対応、未登録はカスタムモデルの指定を通す。
 const ALLOWED_REASONING_BY_MODEL: Record<string, ReasoningEffort[]> = {
+  'gpt-6-astra': ['low', 'medium', 'high', 'xhigh', 'max'],
+  'gpt-6-sol': ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+  'gpt-6-luna': ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
   'gpt-5.6': ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
   'gpt-5.6-sol': ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
   'gpt-5.6-terra': ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
@@ -31,6 +34,9 @@ const ALLOWED_REASONING_BY_MODEL: Record<string, ReasoningEffort[]> = {
 };
 
 const DEFAULT_REASONING_BY_MODEL: Record<string, ReasoningEffort> = {
+  'gpt-6-astra': 'low',
+  'gpt-6-sol': 'medium',
+  'gpt-6-luna': 'medium',
   'gpt-5.6': 'medium',
   'gpt-5.6-sol': 'medium',
   'gpt-5.6-terra': 'medium',

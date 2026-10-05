@@ -23,7 +23,7 @@ const vi: UiStrings = {
   codexReasoningLabel: 'Mức suy luận Codex',
   verbosityLabel: 'Mức chi tiết (chỉ OpenAI)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (dòng GPT-5)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'LLM cục bộ',

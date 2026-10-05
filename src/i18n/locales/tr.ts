@@ -23,7 +23,7 @@ const tr: UiStrings = {
   codexReasoningLabel: 'Codex akıl yürütme seviyesi',
   verbosityLabel: 'Detay seviyesi (yalnızca OpenAI)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (GPT-5 ailesi)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'Yerel LLM',

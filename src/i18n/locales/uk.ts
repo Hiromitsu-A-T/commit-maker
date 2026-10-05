@@ -23,7 +23,7 @@ const uk: UiStrings = {
   codexReasoningLabel: 'Рівень міркувань Codex',
   verbosityLabel: 'Рівень деталізації (лише OpenAI)',
   providerLabelGemini: 'Google Gemini',
-  providerLabelOpenAi: 'OpenAI (сімейство GPT-5)',
+  providerLabelOpenAi: 'OpenAI',
   providerLabelClaude: 'Anthropic Claude',
   providerLabelCodex: 'OpenAI Codex',
   providerLabelLocal: 'Локальна LLM',
