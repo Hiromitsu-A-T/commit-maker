@@ -1,6 +1,7 @@
 import type * as vscode from 'vscode';
 import assert from 'assert';
-import * as fs from 'fs';
+import * as crypto from 'crypto';
+import fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import {
@@ -13,8 +14,9 @@ import {
   LEGACY_DEFAULT_LOCAL_MODEL_ID,
   QWEN35_2B_LOCAL_MODEL_ID
 } from '../constants';
-import { deleteLocalModel, getLocalModelDefinition, getLocalModelOptions, inspectLocalModel, resolveLocalModelId } from './localModel';
+import { deleteLocalModel, downloadLocalModel, getLocalModelDefinition, getLocalModelOptions, getLocalModelPath, inspectLocalModel, resolveLocalModelId } from './localModel';
 import { resolveLocalGenerationSettings, resolveLocalRuntimeArgs } from './localModelProfiles';
+import { withMockFetch } from '../testSupport';
 
 function createConfig(values: Record<string, string | undefined> = {}) {
   return {
@@ -193,6 +195,45 @@ export async function runLocalModelTests(): Promise<void> {
     assert.strictEqual(fs.existsSync(partialPath), false);
   } finally {
     await fs.promises.rm(partialRoot, { recursive: true, force: true });
+  }
+
+  const downloadRoot = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'commit-maker-local-model-cancel-'));
+  const originalReadStream = fs.createReadStream;
+  try {
+    const bytes = Buffer.from('isolated model fixture');
+    const config = createConfig({
+      localModelUrl: 'https://fixture.example/model.gguf',
+      localModelFilename: 'fixture.gguf',
+      localModelSha256: crypto.createHash('sha256').update(bytes).digest('hex')
+    });
+    const context = { globalStorageUri: { fsPath: downloadRoot } } as unknown as vscode.ExtensionContext;
+    const modelPath = getLocalModelPath(context, getLocalModelDefinition(config));
+    const controller = new AbortController();
+    // 転送の完了後、ハッシュ用の読み込みが始まった時点で取り消す。
+    fs.createReadStream = (filePath, options) => {
+      const stream = originalReadStream(filePath, options);
+      if (filePath === `${modelPath}.download`) stream.once('open', () => controller.abort());
+      return stream;
+    };
+    await withMockFetch(async url => {
+      assert.strictEqual(String(url), 'https://fixture.example/model.gguf');
+      return new Response(bytes);
+    }, async () => {
+      await assert.rejects(
+        () => downloadLocalModel(context, config, undefined, controller.signal, () => {}),
+        { name: 'AbortError' }
+      );
+      assert.strictEqual(controller.signal.aborted, true);
+      assert.strictEqual(fs.existsSync(modelPath), false, '検証中に取り消したモデルを配置しない');
+      assert.strictEqual(fs.existsSync(`${modelPath}.download`), false);
+      fs.createReadStream = originalReadStream;
+      const downloaded = await downloadLocalModel(context, config, undefined, undefined, () => {});
+      assert.strictEqual(downloaded.status, 'ready');
+      assert.deepStrictEqual(await fs.promises.readFile(modelPath), bytes);
+    });
+  } finally {
+    fs.createReadStream = originalReadStream;
+    await fs.promises.rm(downloadRoot, { recursive: true, force: true });
   }
 
   console.log('localModel.test.ts passed');

@@ -1,8 +1,11 @@
 import type * as vscode from 'vscode';
 import assert from 'assert';
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { execFileSync } from 'child_process';
+import { withMockFetch } from '../testSupport';
 import { DEFAULT_LOCAL_MODEL, DEFAULT_LOCAL_RUNTIME_VERSION } from '../constants';
 import {
   ensureLocalRuntime,
@@ -120,6 +123,59 @@ export async function runLocalRuntimeTests(): Promise<void> {
     assert.strictEqual(workspaceOnly, bundledPath);
   } finally {
     await fs.promises.rm(configuredRoot, { recursive: true, force: true });
+  }
+
+  const installRoot = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'commit-maker-runtime-cancel-'));
+  const asset = getLocalRuntimeAsset();
+  assert.ok(asset);
+  const originalAsset = { ...asset };
+  const originalReaddir = fs.promises.readdir;
+  try {
+    const fixtureDir = path.join(installRoot, 'fixture');
+    await fs.promises.mkdir(fixtureDir);
+    await fs.promises.writeFile(path.join(fixtureDir, asset.executable), 'isolated runtime fixture');
+    const archivePath = path.join(installRoot, 'fixture.tar.gz');
+    execFileSync('tar', ['-czf', archivePath, '-C', fixtureDir, asset.executable]);
+    const bytes = await fs.promises.readFile(archivePath);
+    // 公開資産へ通信せず、同じ検証・展開処理に小さな fixture を渡す。
+    asset.type = 'tar.gz';
+    asset.sha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+    const context = { globalStorageUri: { fsPath: path.join(installRoot, 'storage') } } as unknown as vscode.ExtensionContext;
+    const extensionUri = { fsPath: installRoot } as vscode.Uri;
+    const installDir = path.join(context.globalStorageUri.fsPath, 'runtimes', 'llama.cpp',
+      asset.runtimeVersion, `${asset.platform}-${asset.arch}`);
+    const partialArchive = path.join(context.globalStorageUri.fsPath, 'runtimes', 'downloads', `${asset.archiveName}.download`);
+    const controller = new AbortController();
+    fs.promises.readdir = (async (...args: Parameters<typeof originalReaddir>) => {
+      const entries = await originalReaddir(...args);
+      if (args[0] === `${installDir}.download`) controller.abort();
+      return entries;
+    }) as typeof originalReaddir;
+    await withMockFetch(async url => {
+      assert.strictEqual(String(url), asset.url);
+      return new Response(bytes);
+    }, async () => {
+      await assert.rejects(
+        () => ensureLocalRuntime(context, extensionUri, createRuntimePathConfig(undefined), { abortSignal: controller.signal }),
+        { name: 'AbortError' }
+      );
+      assert.strictEqual(controller.signal.aborted, true);
+      assert.strictEqual(fs.existsSync(installDir), false, '展開後に取り消した runtime を配置しない');
+      assert.strictEqual(fs.existsSync(`${installDir}.download`), false);
+      assert.strictEqual(fs.existsSync(partialArchive), false);
+      fs.promises.readdir = originalReaddir;
+      const installed = await ensureLocalRuntime(context, extensionUri, createRuntimePathConfig(undefined));
+      assert.strictEqual(await fs.promises.readFile(installed, 'utf8'), 'isolated runtime fixture');
+      assert.strictEqual(fs.existsSync(partialArchive), false);
+      await assert.rejects(
+        () => ensureLocalRuntime(context, extensionUri, createRuntimePathConfig(undefined), { abortSignal: controller.signal }),
+        { name: 'AbortError' }
+      );
+    });
+  } finally {
+    fs.promises.readdir = originalReaddir;
+    Object.assign(asset, originalAsset);
+    await fs.promises.rm(installRoot, { recursive: true, force: true });
   }
 
   console.log('localRuntime.test.ts passed');

@@ -132,6 +132,7 @@ export async function downloadLocalModel(
   abortSignal: AbortSignal | undefined,
   onProgress: (progress: DownloadProgress) => void
 ): Promise<LocalModelState> {
+  abortSignal?.throwIfAborted();
   const model = getLocalModelDefinition(config, modelId);
   const modelPath = getLocalModelPath(context, model);
   const tmpPath = `${modelPath}.download`;
@@ -147,12 +148,13 @@ export async function downloadLocalModel(
       });
     });
     if (model.sha256) {
-      const actual = await sha256File(tmpPath);
+      const actual = await sha256File(tmpPath, abortSignal);
       if (actual.toLowerCase() !== model.sha256.toLowerCase()) {
         throw new Error(`SHA256 mismatch: expected ${model.sha256}, got ${actual}`);
       }
     }
-    // 検証できたファイルだけを正式な名前へ移し、途中の取得物と区別する。
+    // 検証中の取り消しも確認してから、正式な保存先へ配置する。
+    abortSignal?.throwIfAborted();
     await fs.promises.rename(tmpPath, modelPath);
     return await inspectLocalModel(context, config, model.id);
   } catch (error) {

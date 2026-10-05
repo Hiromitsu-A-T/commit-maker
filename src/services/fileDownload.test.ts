@@ -14,6 +14,9 @@ export async function runFileDownloadTests(): Promise<void> {
     await downloadToFile('https://fixture.example/file', destination, undefined, value => progress.push(value.downloadedBytes));
     assert.strictEqual(await fs.promises.readFile(destination, 'utf8'), 'abc');
     assert.strictEqual(await sha256File(destination), 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
+    const cancelledHash = new AbortController();
+    cancelledHash.abort();
+    await assert.rejects(() => sha256File(path.join(root, 'missing'), cancelledHash.signal), { name: 'AbortError' });
     assert.strictEqual(progress.at(-1), 3);
     await assert.rejects(() => downloadToFile('https://fixture.example/file', root), { code: 'EISDIR' });
     const controller = new AbortController();

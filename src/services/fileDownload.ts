@@ -1,6 +1,6 @@
 import * as crypto from 'crypto';
 import * as fs from 'fs';
-import { Readable } from 'stream';
+import { addAbortSignal, Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 
 export interface DownloadProgress {
@@ -40,10 +40,14 @@ export async function downloadToFile(
   );
 }
 
-export async function sha256File(filePath: string): Promise<string> {
+export async function sha256File(filePath: string, abortSignal?: AbortSignal): Promise<string> {
+  abortSignal?.throwIfAborted();
   const hash = crypto.createHash('sha256');
-  for await (const chunk of fs.createReadStream(filePath)) {
+  const stream = fs.createReadStream(filePath);
+  if (abortSignal) addAbortSignal(abortSignal, stream);
+  for await (const chunk of stream) {
     hash.update(chunk);
   }
+  abortSignal?.throwIfAborted();
   return hash.digest('hex');
 }

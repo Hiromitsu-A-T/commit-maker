@@ -151,6 +151,7 @@ export async function ensureLocalRuntime(
   config: vscode.WorkspaceConfiguration,
   options: EnsureLocalRuntimeOptions = {}
 ): Promise<string> {
+  options.abortSignal?.throwIfAborted();
   const runtimeVersion = options.runtimeVersion ?? DEFAULT_LOCAL_RUNTIME_VERSION;
   const configured = getExplicitUserConfigurationString(config, 'localRuntimePath')?.trim();
   if (configured) {
@@ -185,13 +186,15 @@ export async function ensureLocalRuntime(
 
   try {
     await downloadToFile(asset.url, tmpArchivePath, options.abortSignal, options.onProgress);
-    const actual = await sha256File(tmpArchivePath);
+    const actual = await sha256File(tmpArchivePath, options.abortSignal);
     if (actual.toLowerCase() !== asset.sha256.toLowerCase()) {
       throw new Error(`SHA256 mismatch: expected ${asset.sha256}, got ${actual}`);
     }
     await fs.promises.rm(installDir, { recursive: true, force: true }).catch(() => undefined);
     await fs.promises.mkdir(tmpInstallDir, { recursive: true });
+    options.abortSignal?.throwIfAborted();
     await extractArchive(tmpArchivePath, tmpInstallDir, asset.type);
+    options.abortSignal?.throwIfAborted();
 
     const executable = await findRuntimeExecutable(tmpInstallDir, asset.executable);
     if (!executable) {
@@ -200,6 +203,8 @@ export async function ensureLocalRuntime(
     if (process.platform !== 'win32') {
       await fs.promises.chmod(executable, 0o755);
     }
+    // 展開中に取り消されても、検証済みキャッシュとして残さない。
+    options.abortSignal?.throwIfAborted();
     await fs.promises.rename(tmpInstallDir, installDir);
     await removeIfExists(tmpArchivePath);
     const installedAfterRename = await findRuntimeExecutable(installDir, asset.executable);
