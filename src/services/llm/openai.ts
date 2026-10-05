@@ -1,6 +1,4 @@
-import * as vscode from 'vscode';
 import {
-  supportsVerbosity,
   getAllowedReasoningOptions,
   getDefaultReasoningForModel,
   getAllowedVerbosityOptions,
@@ -8,7 +6,7 @@ import {
 } from '../../modelCapabilities';
 import { DEFAULT_REASONING_EFFORT, DEFAULT_VERBOSITY, DEFAULT_MODEL_BY_PROVIDER } from '../../constants';
 import { ReasoningEffort, VerbositySetting } from '../../types';
-import { callLlmJson, validateHttps } from './shared';
+import { asRecord, callLlmJson, createAbortController, validateHttps } from './shared';
 import { getStrings, DEFAULT_LANGUAGE } from '../../i18n/strings';
 
 export interface OpenAiCallParams {
@@ -24,14 +22,14 @@ export interface OpenAiCallParams {
   logger?: (message: string) => void;
 }
 
-let cachedModels: { ids: Set<string>; fetchedAt: number } | undefined;
+let cachedModels: { ids: Set<string>; fetchedAt: number; apiKey: string; origin: string } | undefined;
 
 function resolveReasoning(model: string, requested?: ReasoningEffort): ReasoningEffort | undefined {
   const allowed = getAllowedReasoningOptions(model);
   if (!allowed) {
     return requested;
   }
-  const desired = (requested ?? getDefaultReasoningForModel(model)) as ReasoningEffort | undefined;
+  const desired = requested ?? getDefaultReasoningForModel(model);
   if (desired && allowed.includes(desired)) {
     return desired;
   }
@@ -67,34 +65,35 @@ export async function callOpenAi({
   const strings = getStrings(DEFAULT_LANGUAGE);
 
   validateHttps(endpoint, 'OpenAI endpoint');
-  const resolvedModel = await ensureModelExists(model, apiKey, endpoint, logger);
-  const effectiveReasoning = resolveReasoning(resolvedModel, reasoning);
-  const effectiveVerbosity = resolveVerbosity(resolvedModel, verbosity);
-  if (getAllowedReasoningOptions(resolvedModel)?.length === 0) {
-    throw new Error(`Model "${resolvedModel}" is not supported on /v1/responses (reasoning.effort unsupported).`);
-  }
-  const attempt = async (modelId: string): Promise<string> =>
-    callLlmJson({
+  const { controller, dispose } = createAbortController(abortSignal, timeoutMs);
+  try {
+    controller.signal.throwIfAborted();
+    const resolvedModel = await ensureModelExists(model, apiKey, endpoint, controller.signal, logger);
+    const effectiveReasoning = resolveReasoning(resolvedModel, reasoning);
+    const effectiveVerbosity = resolveVerbosity(resolvedModel, verbosity);
+    if (getAllowedReasoningOptions(resolvedModel)?.length === 0) {
+      throw new Error(`Model "${resolvedModel}" is not supported on /v1/responses (reasoning.effort unsupported).`);
+    }
+    return await callLlmJson({
       label: 'OpenAI',
       endpoint: ensureResponsesEndpoint(endpoint),
-      abortSignal,
-      timeoutMs,
+      abortSignal: controller.signal,
+      timeoutMs: 0,
       logger,
-      buildRequest: base => {
-        const url = base;
+      buildRequest: url => {
         const body: Record<string, unknown> = {
-          model: modelId,
+          model: resolvedModel,
           input: prompt,
           max_output_tokens: maxOutputTokens
         };
         if (effectiveReasoning) {
           body.reasoning = { effort: effectiveReasoning };
         }
-        // temperature は gpt-5.1 系で reasoning ≠ none の場合に非対応のため条件付きで付与
+        // 推論を指定する要求では temperature を省き、none または未指定時だけ付ける。
         if (!effectiveReasoning || effectiveReasoning === 'none') {
           body.temperature = 0;
         }
-        if (supportsVerbosity(modelId) && effectiveVerbosity) {
+        if (effectiveVerbosity) {
           body.text = { format: { type: 'text' }, verbosity: effectiveVerbosity };
         }
         return {
@@ -107,7 +106,7 @@ export async function callOpenAi({
         };
       },
       parse: raw => {
-        const data = raw ? JSON.parse(raw) as any : {};
+        const data = asRecord(raw ? JSON.parse(raw) : undefined);
         const text = extractOpenAiText(data) || extractFromChat(data);
         if (!text || !text.trim()) {
           throw new Error(strings.msgLlmEmptyOpenAi);
@@ -115,18 +114,20 @@ export async function callOpenAi({
         return text;
       }
     });
-
-  return attempt(resolvedModel);
+  } finally {
+    dispose();
+  }
 }
 
 async function ensureModelExists(
   requested: string,
   apiKey: string,
   endpoint: string,
+  abortSignal: AbortSignal,
   logger?: (message: string) => void
 ): Promise<string> {
   const preferred = requested?.trim() || DEFAULT_MODEL_BY_PROVIDER.openai;
-  const available = await listAvailableModels(apiKey, endpoint, logger);
+  const available = await listAvailableModels(apiKey, endpoint, abortSignal, logger);
   if (available.size === 0) {
     // モデル一覧取得に失敗した場合は指定をそのまま使う
     return preferred;
@@ -140,16 +141,19 @@ async function ensureModelExists(
 async function listAvailableModels(
   apiKey: string,
   endpoint: string,
+  abortSignal: AbortSignal,
   logger?: (message: string) => void
 ): Promise<Set<string>> {
   const now = Date.now();
-  if (cachedModels && now - cachedModels.fetchedAt < 5 * 60 * 1000) {
+  const origin = new URL(endpoint).origin;
+  // モデル一覧は接続先と認証情報ごとに保持する。
+  if (cachedModels && cachedModels.apiKey === apiKey && cachedModels.origin === origin && now - cachedModels.fetchedAt < 5 * 60 * 1000) {
     return cachedModels.ids;
   }
   try {
-    const base = new URL(endpoint);
-    const url = `${base.origin}/v1/models`;
+    const url = `${origin}/v1/models`;
     const res = await fetch(url, {
+      signal: abortSignal,
       headers: {
         Authorization: `Bearer ${apiKey}`
       }
@@ -158,66 +162,51 @@ async function listAvailableModels(
       logger?.(`OpenAI: /models returned ${res.status}, skipping availability check`);
       throw new Error(`models list failed: ${res.status}`);
     }
-    const data = await res.json();
-    const list = Array.isArray((data as any)?.data) ? (data as any).data : [];
-    const ids = new Set<string>(list.map((m: any) => m.id).filter(Boolean));
-    cachedModels = { ids, fetchedAt: now };
+    const data = asRecord(await res.json());
+    const list = Array.isArray(data.data) ? data.data : [];
+    const ids = new Set(list.map(item => asRecord(item).id)
+      .filter((id): id is string => typeof id === 'string' && Boolean(id)));
+    cachedModels = { ids, fetchedAt: now, apiKey, origin };
     return ids;
   } catch (error) {
+    abortSignal.throwIfAborted();
     logger?.(`OpenAI: model list fetch failed (${String(error)}), proceeding without filter`);
     return new Set<string>();
   }
-}
-
-function shouldUseResponses(base: string, model: string): boolean {
-  return base.includes('/responses');
 }
 
 function ensureResponsesEndpoint(endpoint: string): string {
   return endpoint.includes('/responses') ? endpoint : endpoint.replace(/\/$/, '') + '/responses';
 }
 
-function extractFromResponses(payload: any): string | undefined {
-  const outputs = payload?.output ?? payload?.outputs;
-  if (Array.isArray(outputs)) {
-    const first = outputs[0];
-    if (first?.content?.[0]?.text) {
-      return first.content[0].text as string;
-    }
-  }
-  if (payload?.response_text) {
-    return payload.response_text as string;
-  }
-  return undefined;
-}
-
-function extractOpenAiText(payload: any): string | undefined {
-  if (payload?.output_text && typeof payload.output_text === 'string' && payload.output_text.trim()) {
+function extractOpenAiText(payload: Record<string, unknown>): string | undefined {
+  if (typeof payload.output_text === 'string' && payload.output_text.trim()) {
     return payload.output_text;
   }
 
-  const outputs = payload?.output ?? payload?.outputs;
+  const outputs = payload.output ?? payload.outputs;
   const collected: string[] = [];
   if (Array.isArray(outputs)) {
     for (const item of outputs) {
-      // content 配列内の text / output_text を収集
-      const contents = item?.content;
+      // 複数の出力を順に集め、空の出力だけを除く。
+      const output = asRecord(item);
+      const contents = output.content;
       if (Array.isArray(contents)) {
-        for (const c of contents) {
-          if (typeof c?.text === 'string' && c.text.trim()) collected.push(c.text);
-          else if (typeof c?.output_text === 'string' && c.output_text.trim()) collected.push(c.output_text);
-          else if (typeof c === 'string' && c.trim()) collected.push(c);
+        for (const chunk of contents) {
+          const content = asRecord(chunk);
+          if (typeof content.text === 'string' && content.text.trim()) collected.push(content.text);
+          else if (typeof content.output_text === 'string' && content.output_text.trim()) collected.push(content.output_text);
+          else if (typeof chunk === 'string' && chunk.trim()) collected.push(chunk);
         }
       }
-      // message オブジェクト内の content を収集（稀に出現）
-      const msg = item?.message;
-      if (msg?.content) {
-        if (typeof msg.content === 'string' && msg.content.trim()) {
-          collected.push(msg.content);
-        } else if (Array.isArray(msg.content)) {
-          for (const c of msg.content) {
-            if (typeof c?.text === 'string' && c.text.trim()) collected.push(c.text);
-          }
+      // message 形式の互換応答も同じ順序で収集する。
+      const message = asRecord(output.message);
+      if (typeof message.content === 'string' && message.content.trim()) {
+        collected.push(message.content);
+      } else if (Array.isArray(message.content)) {
+        for (const chunk of message.content) {
+          const content = asRecord(chunk);
+          if (typeof content.text === 'string' && content.text.trim()) collected.push(content.text);
         }
       }
     }
@@ -226,14 +215,12 @@ function extractOpenAiText(payload: any): string | undefined {
     }
   }
 
-  // 旧構造: response_text や choices をフォールバック
-  return extractFromResponses(payload);
+  // 旧形式の response_text は文字列の場合だけ受け入れる。
+  return typeof payload.response_text === 'string' ? payload.response_text : undefined;
 }
 
-function extractFromChat(payload: any): string | undefined {
-  const choices = payload?.choices;
-  if (Array.isArray(choices) && choices[0]?.message?.content) {
-    return choices[0].message.content as string;
-  }
-  return undefined;
+function extractFromChat(payload: Record<string, unknown>): string | undefined {
+  const choice = asRecord(Array.isArray(payload.choices) ? payload.choices[0] : undefined);
+  const content = asRecord(choice.message).content;
+  return typeof content === 'string' ? content : undefined;
 }

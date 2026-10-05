@@ -28,9 +28,7 @@ const RUNTIME_PROFILES: Record<LocalRuntimeProfileId, LocalModelRuntimeSettings>
   qwen35: {
     reasoning: 'off'
   },
-  // Keep Gemma runtime tweaks centralized; add args here only after smoke verification.
   gemma4: {},
-  // LFM2.5 requires a newer llama.cpp runtime; version selection lives on the model definition.
   lfm25: {}
 };
 

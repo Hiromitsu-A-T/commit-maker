@@ -71,6 +71,8 @@ export interface LocalModelDefinition {
   runtimeProfile?: LocalRuntimeProfileId;
   runtime?: Partial<LocalModelRuntimeSettings>;
   uiProfile?: LocalModelUiProfile;
+  uiBadge?: string;
+  uiDetails: string;
   legacyIds?: string[];
 }
 
@@ -97,6 +99,8 @@ export interface LocalModelOption {
   label: string;
   sizeLabel: string;
   uiProfile?: LocalModelUiProfile;
+  uiBadge?: string;
+  uiDetails: string;
 }
 
 export interface PromptPreset {

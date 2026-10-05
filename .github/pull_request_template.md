@@ -4,8 +4,12 @@
 
 ## Verification / 確認
 
+- [ ] `npm run lint`
+- [ ] `npm run typecheck`
 - [ ] `npm run compile`
+- [ ] `npm run build:media`
 - [ ] `npm test`
+- [ ] `npm run test:integration`
 - [ ] Documentation or package metadata updated, if user-facing behavior changed
 - [ ] ユーザーに見える挙動を変えた場合、README または package metadata を更新済み
 - [ ] No API keys, personal access tokens, private diffs, or local-only notes are included

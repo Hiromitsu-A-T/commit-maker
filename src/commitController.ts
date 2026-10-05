@@ -21,21 +21,15 @@ import {
   DEFAULT_PROVIDER,
   DEFAULT_REASONING_EFFORT,
   DEFAULT_VERBOSITY,
-  MODEL_SUGGESTIONS_BY_PROVIDER,
   COMMIT_REASONING_STORAGE_KEY,
   COMMIT_VERBOSITY_STORAGE_KEY,
   getDefaultCommitPrompt,
   getDefaultPromptPresets,
-  PROMPT_PRESETS_STORAGE_KEY,
-  ACTIVE_PROMPT_PRESET_STORAGE_KEY,
   COMMIT_LANGUAGE_STORAGE_KEY
 } from './constants';
 import { CommitPanelProvider } from './panel';
 import {
   ProviderId,
-  ReasoningEffort,
-  VerbositySetting,
-  LocalModelGenerationSettings,
   isCodexReasoningEffort,
   isProviderId,
   isReasoningEffort,
@@ -43,12 +37,12 @@ import {
   PromptPreset,
   isLanguageCode
 } from './types';
-import { collectDiff, DEFAULT_DIFF_COLLECTION_LIMIT_CHARS } from './services/diffCollector';
+import { collectDiff, GitRepositoryLike, DEFAULT_DIFF_COLLECTION_LIMIT_CHARS } from './services/diffCollector';
 import { applyPromptLimit, buildLocalDiffDigest, getLocalPromptCharLimit } from './promptLimit';
 import { callOpenAi } from './services/llm/openai';
 import { callClaude } from './services/llm/claude';
 import { callGemini } from './services/llm/gemini';
-import { callLocalLlm, stopLocalLlmRuntime } from './services/llm/local';
+import { callLocalLlm, LocalLlmCallParams, stopLocalLlmRuntime } from './services/llm/local';
 import { callCodex } from './services/llm/codex';
 import {
   deleteLocalModel,
@@ -67,12 +61,13 @@ import {
   resolveActivePresetId,
   upsertPreset
 } from './promptPresets';
-import { getApiKeySecretName, getEndpoint } from './providerSettings';
+import { getApiKeySecretName, getEndpoint, getApiKeyEnvironmentNames } from './providerSettings';
 import { ensureCodexHome, getCodexCommand } from './services/codexCli';
 import {
   DEFAULT_INCLUDE_FLAGS,
   DEFAULT_PROMPT_LIMIT,
   getDefaultModelForProvider,
+  resolveCodexReasoningSetting,
   resolveReasoningSetting,
   resolveVerbositySetting
 } from './defaults';
@@ -80,7 +75,7 @@ import { loadPromptPresetsFromStorage, persistPromptPresets } from './promptPres
 import { toPanelState, withStatus } from './panelSync';
 import { CommitState } from './commitState';
 import { DEFAULT_LANGUAGE, getStrings } from './i18n/strings';
-import { getLanguagePromptName } from './i18n/languages';
+import { buildCommitPrompt } from './commitPrompt';
 import {
   getAllowedReasoningOptions,
   getDefaultReasoningForModel,
@@ -88,13 +83,11 @@ import {
   getDefaultVerbosityForModel
 } from './modelCapabilities';
 import { buildProviderCapabilities } from './constants';
-import { getUserConfigurationValue } from './configScope';
+import { getExplicitConfigurationValue, getUserConfigurationValue } from './configScope';
 
-interface GitRepository {
+interface GitRepository extends GitRepositoryLike {
   rootUri: vscode.Uri;
   inputBox: { value: string };
-  diffWithHEAD?(uri?: vscode.Uri): Promise<string>;
-  diffIndexWithHEAD?(uri?: vscode.Uri): Promise<string>;
 }
 
 interface GitApi {
@@ -107,6 +100,10 @@ export class CommitController implements vscode.Disposable {
   private currentAbortController: AbortController | undefined;
   private activeGenerationId = 0;
   private currentModelDownloadAbortController: AbortController | undefined;
+  private currentLocalTestAbortController: AbortController | undefined;
+  private localModelRevision = 0;
+  private disposed = false;
+  private promptToastTimer: ReturnType<typeof setTimeout> | undefined;
   private get strings() {
     return getStrings(this.state.language || DEFAULT_LANGUAGE);
   }
@@ -132,7 +129,13 @@ export class CommitController implements vscode.Disposable {
   }
 
   public dispose(): void {
+    this.disposed = true;
+    this.localModelRevision += 1;
+    if (this.promptToastTimer) clearTimeout(this.promptToastTimer);
+    this.currentAbortController?.abort();
+    this.activeGenerationId += 1;
     this.currentModelDownloadAbortController?.abort();
+    this.currentLocalTestAbortController?.abort();
     stopLocalLlmRuntime();
     while (this.disposables.length) {
       this.disposables.pop()?.dispose();
@@ -164,25 +167,7 @@ export class CommitController implements vscode.Disposable {
         void this.deletePromptPreset(payload.id);
       }),
       this.panel.onDidChangeLanguage(value => {
-        if (isLanguageCode(value)) {
-          const prevLang = this.state.language || DEFAULT_LANGUAGE;
-          const prevDefaultPrompt = getDefaultCommitPrompt(prevLang);
-          const keepPrompt = this.state.prompt && this.state.prompt !== prevDefaultPrompt;
-
-          this.state.language = value;
-          const defaults = getDefaultPromptPresets(value);
-          this.state.promptPresets = normalizePresets(this.state.promptPresets, defaults);
-          this.state.activePromptPresetId = resolveActivePresetId(
-            this.state.promptPresets,
-            this.state.activePromptPresetId,
-            defaults
-          );
-          if (!keepPrompt) {
-            this.state.prompt = getDefaultCommitPrompt(value);
-          }
-          void this.context.globalState.update(COMMIT_LANGUAGE_STORAGE_KEY, value);
-          this.panel.updateState(toPanelState(this.state));
-        }
+        this.setLanguage(value);
       }),
       this.panel.onDidChangeApiKeyProvider(value => {
         if (isProviderId(value)) {
@@ -306,16 +291,18 @@ export class CommitController implements vscode.Disposable {
     const config = vscode.workspace.getConfiguration('commitMaker');
     const configuredProvider = config.get<string>('provider', DEFAULT_PROVIDER);
     const defaultProvider = isProviderId(configuredProvider) ? configuredProvider : DEFAULT_PROVIDER;
-    const provider = this.context.workspaceState.get<ProviderId>(COMMIT_PROVIDER_STORAGE_KEY, defaultProvider);
+    const storedProvider = this.context.workspaceState.get<string>(COMMIT_PROVIDER_STORAGE_KEY);
+    const provider = isProviderId(storedProvider) ? storedProvider : defaultProvider;
     const storedApiKeyProvider = this.context.globalState.get<string>(COMMIT_API_KEY_PROVIDER_STORAGE_KEY);
     const apiKeyProvider = isProviderId(storedApiKeyProvider) ? storedApiKeyProvider : provider;
     const storedModel = this.context.workspaceState.get<string>(COMMIT_MODEL_STORAGE_KEY);
     const storedLocalModelId = this.context.workspaceState.get<string>(COMMIT_LOCAL_MODEL_STORAGE_KEY);
     const storedGlobalLocalModelId = this.context.globalState.get<string>(COMMIT_LOCAL_MODEL_STORAGE_KEY);
     const localModelId = resolveLocalModelId(storedLocalModelId || storedGlobalLocalModelId || (provider === 'local' ? storedModel : undefined));
+    const configuredModel = getExplicitConfigurationValue<string>(config, 'model');
     const model = provider === 'local'
       ? resolveLocalModelId(storedModel || localModelId)
-      : storedModel || getDefaultModelForProvider(provider);
+      : storedModel || configuredModel?.trim() || getDefaultModelForProvider(provider);
     const includeUnstaged = this.context.workspaceState.get<boolean>(
       COMMIT_INCLUDE_UNSTAGED_STORAGE_KEY,
       DEFAULT_INCLUDE_FLAGS.includeUnstaged
@@ -337,11 +324,7 @@ export class CommitController implements vscode.Disposable {
     const reasoning = resolveReasoningSetting(storedReasoning, configuredReasoning);
     const configuredCodexReasoning = config.get<string>('codexReasoningEffort', DEFAULT_CODEX_REASONING_EFFORT);
     const storedCodexReasoning = this.context.workspaceState.get<string>(COMMIT_CODEX_REASONING_STORAGE_KEY);
-    const codexReasoning = isCodexReasoningEffort(storedCodexReasoning)
-      ? storedCodexReasoning
-      : isCodexReasoningEffort(configuredCodexReasoning)
-        ? configuredCodexReasoning
-        : DEFAULT_CODEX_REASONING_EFFORT;
+    const codexReasoning = resolveCodexReasoningSetting(storedCodexReasoning, configuredCodexReasoning);
     const configuredVerbosity = config.get<string>('verbosity', DEFAULT_VERBOSITY);
     const storedVerbosity = this.context.workspaceState.get<string>(COMMIT_VERBOSITY_STORAGE_KEY);
     const verbosity = resolveVerbositySetting(storedVerbosity, configuredVerbosity);
@@ -368,21 +351,35 @@ export class CommitController implements vscode.Disposable {
     };
   }
 
+  private setLanguage(language: CommitState['language']): void {
+    const previousDefaultPrompt = getDefaultCommitPrompt(this.state.language);
+    const hasCustomPrompt = Boolean(this.state.prompt && this.state.prompt !== previousDefaultPrompt);
+    this.state.language = language;
+    const defaults = getDefaultPromptPresets(language);
+    this.state.promptPresets = normalizePresets(this.state.promptPresets, defaults);
+    this.state.activePromptPresetId = resolveActivePresetId(this.state.promptPresets, this.state.activePromptPresetId, defaults);
+    // 利用者の指示を維持し、既定の指示だけを新しい言語へ切り替える。
+    if (!hasCustomPrompt) {
+      this.state.prompt = getDefaultCommitPrompt(language);
+    }
+    void this.context.globalState.update(COMMIT_LANGUAGE_STORAGE_KEY, language);
+    this.panel.updateState(toPanelState(this.state));
+  }
+
   private getDefaultPresets(): PromptPreset[] {
     return getDefaultPromptPresets(this.state.language || DEFAULT_LANGUAGE);
   }
 
-  private getDefaultPrompt(): string {
-    return getDefaultCommitPrompt(this.state.language || DEFAULT_LANGUAGE);
-  }
-
   private setProvider(provider: ProviderId): void {
+    if (provider !== this.state.provider && this.currentAbortController) {
+      void this.cancelCurrent();
+    }
     this.state.provider = provider;
     this.state.apiKeyProvider = provider;
     const fallbackModel = provider === 'local'
       ? resolveLocalModelId(this.state.localModelId || DEFAULT_LOCAL_MODEL_ID)
       : getDefaultModelForProvider(provider);
-    // プロバイダーを切り替えたら常にそのプロバイダーのデフォルトモデルへリセットする
+    // クラウドは既定モデル、Local は直前に選んだモデルを使用する。
     this.setModel(fallbackModel, true);
 
     void this.context.workspaceState.update(COMMIT_PROVIDER_STORAGE_KEY, provider);
@@ -392,14 +389,23 @@ export class CommitController implements vscode.Disposable {
 
   private setModel(model: string, isCustom = false): void {
     const nextModel = this.state.provider === 'local' ? resolveLocalModelId(model) : model;
+    if (this.state.provider === 'local' && this.isLocalModelBusy() && nextModel !== this.state.localModelId) {
+      this.panel.updateState(toPanelState(this.state));
+      return;
+    }
+    if (nextModel !== this.state.model && this.currentAbortController) {
+      void this.cancelCurrent();
+    }
     this.state.model = nextModel;
     if (this.state.provider === 'local') {
       this.state.localModelId = nextModel;
       this.state.customModel = nextModel;
-      this.state.localModel = createDefaultLocalModelState(nextModel);
+      if (!this.isLocalModelBusy()) {
+        this.state.localModel = createDefaultLocalModelState(nextModel);
+        void this.refreshLocalModelState();
+      }
       void this.context.workspaceState.update(COMMIT_LOCAL_MODEL_STORAGE_KEY, nextModel);
       void this.context.globalState.update(COMMIT_LOCAL_MODEL_STORAGE_KEY, nextModel);
-      void this.refreshLocalModelState();
     } else if (isCustom) {
       this.state.customModel = nextModel;
     }
@@ -441,10 +447,9 @@ export class CommitController implements vscode.Disposable {
     }
   }
 
-  /** 現在のプロバイダーに存在しないモデルが保存されていた場合はデフォルトに戻す */
+  /** Local の旧 ID を移行し、クラウドでは保存済みのカスタムモデルも維持する。 */
   private normalizeModelForProvider(): void {
     const provider = this.state.provider || DEFAULT_PROVIDER;
-    const suggestions = MODEL_SUGGESTIONS_BY_PROVIDER[provider] || [];
     const currentModel = this.state.model;
     if (provider === 'local') {
       const localModelId = resolveLocalModelId(currentModel || this.state.localModelId);
@@ -455,10 +460,7 @@ export class CommitController implements vscode.Disposable {
       void this.context.globalState.update(COMMIT_LOCAL_MODEL_STORAGE_KEY, localModelId);
       return;
     }
-    const currentCustom = this.state.customModel;
-    const isUnknown = currentModel && !suggestions.includes(currentModel);
-    const isCustom = currentModel && currentModel === currentCustom && !suggestions.includes(currentModel);
-    if (!currentModel || isUnknown || isCustom) {
+    if (!currentModel) {
       const fallback = getDefaultModelForProvider(provider);
       this.state.model = fallback;
       this.state.customModel = fallback;
@@ -466,14 +468,18 @@ export class CommitController implements vscode.Disposable {
   }
 
   private async refreshLocalModelState(): Promise<void> {
+    if (this.disposed || this.isLocalModelBusy()) return;
+    const revision = ++this.localModelRevision;
     const config = vscode.workspace.getConfiguration('commitMaker');
     const localModel = await inspectLocalModel(this.context, config, this.state.localModelId);
+    if (!this.isCurrentLocalModelOperation(revision)) return;
     this.state.localModel = localModel;
     this.panel.updateState({ localModel });
   }
 
   private async setLocalModel(modelId: string): Promise<void> {
-    if (this.currentModelDownloadAbortController || this.state.localModel?.status === 'loading') {
+    if (this.isLocalModelBusy()) {
+      this.panel.updateState(toPanelState(this.state));
       return;
     }
     const next = resolveLocalModelId(modelId);
@@ -495,26 +501,31 @@ export class CommitController implements vscode.Disposable {
   }
 
   private async downloadLocalModel(): Promise<void> {
-    if (this.currentModelDownloadAbortController) {
+    if (this.disposed || this.isLocalModelBusy()) {
       return;
     }
     const config = vscode.workspace.getConfiguration('commitMaker');
     const controller = new AbortController();
     this.currentModelDownloadAbortController = controller;
+    const revision = ++this.localModelRevision;
+    const modelId = this.state.localModelId;
     let lastPanelUpdate = 0;
     try {
-      const pending = await inspectLocalModel(this.context, config, this.state.localModelId);
+      const pending = await inspectLocalModel(this.context, config, modelId);
+      controller.signal.throwIfAborted();
+      if (!this.isCurrentLocalModelOperation(revision)) return;
       this.state.localModel = { ...pending, status: 'downloading', downloadedBytes: 0, error: undefined };
       this.panel.updateState({ localModel: this.state.localModel });
 
-      const localModel = await downloadLocalModel(this.context, config, this.state.localModelId, controller.signal, progress => {
+      const localModel = await downloadLocalModel(this.context, config, modelId, controller.signal, progress => {
+        if (!this.isCurrentLocalModelOperation(revision)) return;
         const now = Date.now();
         const totalBytes = progress.totalBytes ?? this.state.localModel?.totalBytes;
         const isComplete = Boolean(totalBytes && progress.downloadedBytes >= totalBytes);
         if (!isComplete && now - lastPanelUpdate < 500) return;
         lastPanelUpdate = now;
         this.state.localModel = {
-          ...this.state.localModel!,
+          ...this.state.localModel,
           status: 'downloading',
           downloadedBytes: progress.downloadedBytes,
           totalBytes
@@ -523,22 +534,26 @@ export class CommitController implements vscode.Disposable {
       });
       this.state.localModel = { ...localModel, status: 'loading', error: undefined };
       this.panel.updateState({ localModel: this.state.localModel });
-      const localModelDefinition = getLocalModelDefinition(config, this.state.localModelId);
+      const localModelDefinition = getLocalModelDefinition(config, modelId);
       await ensureLocalRuntime(this.context, this.context.extensionUri, config, {
         runtimeVersion: resolveLocalRuntimeVersion(localModelDefinition),
         abortSignal: controller.signal,
-        logger: this.createLocalLogger(config)
+        logger: this.createLlmLogger(config)
       });
+      controller.signal.throwIfAborted();
+      if (!this.isCurrentLocalModelOperation(revision)) return;
       this.state.localModel = localModel;
       this.panel.updateState({ localModel });
       void vscode.window.showInformationMessage(this.strings.msgLocalModelDownloadComplete);
     } catch (error) {
+      if (!this.isCurrentLocalModelOperation(revision)) return;
       const aborted = controller.signal.aborted;
       const detail = error instanceof Error ? error.message : String(error);
-      const localModel = await inspectLocalModel(this.context, config, this.state.localModelId);
+      const localModel = await inspectLocalModel(this.context, config, modelId);
+      if (!this.isCurrentLocalModelOperation(revision)) return;
       this.state.localModel = {
         ...localModel,
-        status: aborted ? 'notDownloaded' : 'error',
+        status: aborted ? localModel.status : 'error',
         error: aborted ? undefined : detail
       };
       this.panel.updateState({ localModel: this.state.localModel });
@@ -557,17 +572,23 @@ export class CommitController implements vscode.Disposable {
   }
 
   private async deleteLocalModel(): Promise<void> {
-    this.cancelLocalModelDownload();
+    if (this.disposed || this.isLocalModelBusy()) return;
+    const revision = ++this.localModelRevision;
     const config = vscode.workspace.getConfiguration('commitMaker');
+    this.state.localModel = { ...this.state.localModel, status: 'loading' };
+    this.panel.updateState({ localModel: this.state.localModel });
     stopLocalLlmRuntime();
     try {
       const localModel = await deleteLocalModel(this.context, config, this.state.localModelId);
+      if (!this.isCurrentLocalModelOperation(revision)) return;
       this.state.localModel = localModel;
       this.panel.updateState({ localModel });
       void vscode.window.showInformationMessage(this.strings.msgLocalModelDeleted);
     } catch (error) {
+      if (!this.isCurrentLocalModelOperation(revision)) return;
       const detail = error instanceof Error ? error.message : String(error);
       const localModel = await inspectLocalModel(this.context, config, this.state.localModelId);
+      if (!this.isCurrentLocalModelOperation(revision)) return;
       this.state.localModel = { ...localModel, status: 'error', error: detail };
       this.panel.updateState({ localModel: this.state.localModel });
       void vscode.window.showErrorMessage(detail);
@@ -575,39 +596,48 @@ export class CommitController implements vscode.Disposable {
   }
 
   private async testLocalModel(): Promise<void> {
+    if (this.disposed || this.isLocalModelBusy()) return;
     const prev = this.state.localModel;
     if (!prev || prev.status !== 'ready') {
       void vscode.window.showErrorMessage(this.strings.msgLocalModelMissing);
       return;
     }
+    const controller = new AbortController();
+    const revision = ++this.localModelRevision;
+    this.currentLocalTestAbortController = controller;
     this.state.localModel = { ...prev, status: 'loading' };
     this.panel.updateState({ localModel: this.state.localModel });
     try {
-      const runtime = await this.getLocalRuntimeConfig();
+      const runtime = await this.getLocalRuntimeConfig(controller.signal, prev);
       await callLocalLlm({
+        ...runtime,
         prompt: 'Return exactly: local model ready',
-        modelPath: runtime.modelPath,
-        extensionUri: this.context.extensionUri,
-        runtimePath: runtime.runtimePath,
-        timeoutMs: runtime.timeout,
-        maxOutputTokens: 64,
-        contextSize: runtime.contextSize,
-        threads: runtime.threads,
-        gpuLayers: runtime.gpuLayers,
-        keepAliveMs: runtime.keepAliveMs,
-        generation: runtime.generation,
-        runtimeArgs: runtime.runtimeArgs,
-        logger: runtime.logger
+        abortSignal: controller.signal,
+        maxOutputTokens: 64
       });
+      if (controller.signal.aborted || !this.isCurrentLocalModelOperation(revision)) return;
       this.state.localModel = { ...prev, status: 'ready', error: undefined };
       this.panel.updateState({ localModel: this.state.localModel });
       void vscode.window.showInformationMessage(this.strings.localModelStatusReady);
     } catch (error) {
+      if (controller.signal.aborted || !this.isCurrentLocalModelOperation(revision)) return;
       const detail = error instanceof Error ? error.message : String(error);
       this.state.localModel = { ...prev, status: 'error', error: detail };
       this.panel.updateState({ localModel: this.state.localModel });
       void vscode.window.showErrorMessage(this.strings.msgLocalServerStartFailed.replace('{detail}', detail));
+    } finally {
+      this.currentLocalTestAbortController = undefined;
     }
+  }
+
+  private isLocalModelBusy(): boolean {
+    return Boolean(this.currentModelDownloadAbortController || this.currentLocalTestAbortController) ||
+      this.state.localModel?.status === 'loading' ||
+      (this.state.provider === 'local' && this.state.status === 'loading');
+  }
+
+  private isCurrentLocalModelOperation(revision: number): boolean {
+    return !this.disposed && revision === this.localModelRevision;
   }
 
   private async generateCommitMessage(
@@ -616,35 +646,41 @@ export class CommitController implements vscode.Disposable {
     includeBinary: boolean,
     progress?: (message: string) => void,
     repo?: GitRepository
-  ): Promise<void> {
-    const generationId = this.startGeneration();
+  ): Promise<boolean> {
+    if (this.disposed || (this.state.provider === 'local' && this.isLocalModelBusy())) return false;
+    const state = { ...this.state };
+    // この生成の設定と signal を保持し、後から始まる生成と混ぜない。
+    const { generationId, abortSignal } = this.startGeneration();
     const report = (message: string): void => this.reportGenerationProgress(generationId, message, progress);
     try {
       const targetRepo = repo ?? (await this.getRepositoryOrThrow());
-      if (!this.isCurrentGeneration(generationId)) return;
+      if (!this.isCurrentGeneration(generationId)) return false;
       report(this.strings.msgCommitGenerateFetchingDiff);
-      const diff = await this.prepareDiff(targetRepo, includeUnstaged, includeUntracked, includeBinary);
-      if (!this.isCurrentGeneration(generationId)) return;
+      const diff = await this.prepareDiff(targetRepo, includeUnstaged, includeUntracked, includeBinary, state);
+      if (!this.isCurrentGeneration(generationId)) return false;
       report(this.strings.msgCommitGenerateCallingLlm);
-      const result = this.state.provider === 'local'
-        ? await this.generateLocalCommitMessage(diff, report)
-        : await this.callLlm(this.buildPrompt(diff));
-      if (!this.isCurrentGeneration(generationId)) return;
+      const result = state.provider === 'local'
+        ? await this.generateLocalCommitMessage(diff, state, abortSignal, report)
+        : await this.callLlm(buildCommitPrompt(diff, state), state, abortSignal);
+      if (!this.isCurrentGeneration(generationId)) return false;
       this.handleGenerationSuccess(result);
+      return true;
     } catch (error) {
-      if (!this.isCurrentGeneration(generationId)) return;
+      if (!this.isCurrentGeneration(generationId)) return false;
       this.handleGenerationError(error);
+      return false;
     } finally {
       await this.finishGeneration(generationId);
     }
   }
 
-  private startGeneration(): number {
+  private startGeneration(): { generationId: number; abortSignal: AbortSignal } {
     this.currentAbortController?.abort();
-    this.currentAbortController = new AbortController();
+    const controller = new AbortController();
+    this.currentAbortController = controller;
     const generationId = ++this.activeGenerationId;
     this.setStatus('loading', { result: undefined, lastError: undefined, progressMessage: undefined });
-    return generationId;
+    return { generationId, abortSignal: controller.signal };
   }
 
   private async finishGeneration(generationId: number): Promise<void> {
@@ -671,7 +707,8 @@ export class CommitController implements vscode.Disposable {
     repo: GitRepository,
     includeUnstaged: boolean,
     includeUntracked: boolean,
-    includeBinary: boolean
+    includeBinary: boolean,
+    state: CommitState
   ): Promise<string> {
     const config = vscode.workspace.getConfiguration('commitMaker');
     const maxCollectedChars = getUserConfigurationValue<number>(
@@ -686,7 +723,7 @@ export class CommitController implements vscode.Disposable {
       maxCollectedChars,
       logger: this.output
     });
-    diff = applyPromptLimit(diff, this.state.maxPromptMode ?? 'unlimited', this.state.maxPromptChars);
+    diff = applyPromptLimit(diff, state.maxPromptMode ?? 'unlimited', state.maxPromptChars);
     if (!diff.trim()) {
       throw new Error(this.strings.msgDiffEmpty);
     }
@@ -694,7 +731,8 @@ export class CommitController implements vscode.Disposable {
   }
 
   private async applyCommitMessage(repo?: GitRepository): Promise<void> {
-    if (!this.state.result) {
+    const result = this.state.result;
+    if (!result) {
       void vscode.window.showInformationMessage(this.strings.msgCommitNotGenerated);
       return;
     }
@@ -703,7 +741,7 @@ export class CommitController implements vscode.Disposable {
       void vscode.window.showErrorMessage(this.strings.msgRepoNotFound);
       return;
     }
-    targetRepo.inputBox.value = this.state.result;
+    targetRepo.inputBox.value = result;
     void vscode.window.showInformationMessage(this.strings.msgCommitApplySuccess);
   }
 
@@ -746,21 +784,21 @@ export class CommitController implements vscode.Disposable {
       return;
     }
     await this.runWithScmProgress(this.strings.msgCommitGenerateTitle, this.state.provider === 'local', async report => {
-      await this.generateCommitMessage(
+      const generated = await this.generateCommitMessage(
         this.state.includeUnstaged,
         this.state.includeUntracked,
         this.state.includeBinary,
         report,
         repo
       );
-      if (this.state.status === 'error') {
-        // エラー時は apply を試さない（generate 側でメッセージ済み）
+      if (!generated) {
+        // 中止・置換された生成は、別の生成結果を SCM へ反映しない。
         return;
       }
       report(this.strings.msgCommitApplyProgress);
       await this.applyCommitMessage(repo);
     }).catch(error => {
-      this.handleUnexpectedCommandError(error);
+      this.handleGenerationError(error);
     });
   }
 
@@ -771,17 +809,15 @@ export class CommitController implements vscode.Disposable {
   ): Promise<T> {
     const location = showNotification ? vscode.ProgressLocation.Notification : vscode.ProgressLocation.SourceControl;
     return vscode.window.withProgress({ location, title, cancellable: true }, async (progress, token) => {
-      token.onCancellationRequested(() => {
+      const cancellation = token.onCancellationRequested(() => {
         void this.cancelCurrent(this.strings.msgCancelled);
       });
-      return await work(message => progress.report({ message }));
+      try {
+        return await work(message => progress.report({ message }));
+      } finally {
+        cancellation.dispose();
+      }
     });
-  }
-
-  private handleUnexpectedCommandError(error: unknown): void {
-    const message = error instanceof Error ? error.message : String(error);
-    this.setStatus('error', { lastError: message, progressMessage: undefined });
-    void vscode.window.showErrorMessage(`${this.strings.msgCommitGenerateFailedPrefix}${message}`);
   }
 
   private async cancelCurrent(reason = this.strings.msgCancelled): Promise<void> {
@@ -814,48 +850,35 @@ export class CommitController implements vscode.Disposable {
     this.panel.updateState({ commitProgress: message });
   }
 
-  private buildPrompt(diff: string): string {
-    const guard = this.strings.promptGuard;
-    const userInstructionLabel = this.strings.userInstructionLabel;
-    const instruction = this.state.prompt || this.getDefaultPrompt();
-    const languageCode = this.state.language || DEFAULT_LANGUAGE;
-    const languagePromptName = getLanguagePromptName(languageCode);
-    const outputLanguageHint = [
-      `Default output language selected in Commit Maker: ${languageCode} / ${languagePromptName} / ${this.strings.languageName}.`,
-      'Do not answer in English unless the selected language is en or the user instructions below explicitly request English.',
-      'If Conventional Commits are requested, the required pattern is "<type>: <summary>". The first characters must be one of feat:, fix:, chore:, docs:, refactor:, test:, ci:, build:, or perf:.',
-      'Use exactly one type prefix at the very beginning, then write the rest in the requested language.',
-      'For non-Latin selected languages, use the native script for natural-language text.',
-      'Do not invent issue numbers, PR numbers, file names, or identifiers; include them only when they appear below.',
-      'If the user instructions below request a different output language, follow those instructions instead.'
-    ].join(' ');
-    return `${guard}\n\n${outputLanguageHint}\n\n${userInstructionLabel}\n${instruction}\n\n${this.strings.diffHeading}\n${diff}`;
-  }
-
-  private async generateLocalCommitMessage(diff: string, progress?: (message: string) => void): Promise<string> {
+  private async generateLocalCommitMessage(
+    diff: string, state: CommitState, abortSignal: AbortSignal, progress?: (message: string) => void
+  ): Promise<string> {
     const config = vscode.workspace.getConfiguration('commitMaker');
     const maxOutputTokens = this.getConfiguredMaxOutputTokens(config, DEFAULT_LOCAL_MAX_OUTPUT_TOKENS);
     const promptLimit = getLocalPromptCharLimit(
       config.get<number>('localContextSize', DEFAULT_LOCAL_CONTEXT_SIZE),
       maxOutputTokens
     );
-    const prompt = this.buildPrompt(diff);
+    const prompt = buildCommitPrompt(diff, state);
     const fastPromptLimit = Math.min(promptLimit, 12000);
     if (prompt.length <= fastPromptLimit) {
-      return this.callLlm(prompt);
+      return this.callLlm(prompt, state, abortSignal);
     }
 
-    const promptOverhead = this.buildPrompt('').length + 1000;
+    const promptOverhead = buildCommitPrompt('', state).length + 1000;
     const digestLimit = Math.max(8000, Math.min(16000, promptLimit - promptOverhead));
     progress?.(`Local digest · ${this.strings.msgCommitGenerateCallingLlm}`);
     const digest = buildLocalDiffDigest(diff, digestLimit);
-    return this.callLlm(this.buildPrompt(digest));
+    return this.callLlm(buildCommitPrompt(digest, state), state, abortSignal);
   }
 
   private showPromptToast(message: string): void {
+    if (this.disposed) return;
+    if (this.promptToastTimer) clearTimeout(this.promptToastTimer);
     this.state.promptToast = message;
     this.panel.updateState({ promptToast: message });
-    setTimeout(() => {
+    this.promptToastTimer = setTimeout(() => {
+      this.promptToastTimer = undefined;
       if (this.state.promptToast === message) {
         this.state.promptToast = undefined;
         this.panel.updateState({ promptToast: undefined });
@@ -873,114 +896,75 @@ export class CommitController implements vscode.Disposable {
     });
   }
 
-  private async callLlm(prompt: string): Promise<string> {
-    const provider = this.state.provider;
+  private async callLlm(prompt: string, state: CommitState, abortSignal: AbortSignal): Promise<string> {
+    const provider = state.provider;
     const config = vscode.workspace.getConfiguration('commitMaker');
-    const { endpoint, model, apiKey, timeout, maxOutputTokens } = await this.getProviderRuntimeConfig(provider);
-    const abortSignal = this.currentAbortController?.signal;
-    const logEnabled = config.get<boolean>('logLlm', false);
-    const log = logEnabled ? (message: string): void => this.output.appendLine(message) : undefined;
+    const { endpoint, model, apiKey, timeout, maxOutputTokens } = await this.getProviderRuntimeConfig(provider, state.model);
+    const log = this.createLlmLogger(config);
 
-    const dispatcher: Record<ProviderId, () => Promise<string>> = {
-      openai: () => {
-        const reasoningEffort = this.state.reasoning || DEFAULT_REASONING_EFFORT;
-        const verbosity = this.state.verbosity || DEFAULT_VERBOSITY;
+    const cloudParams = { prompt, model, apiKey, endpoint, abortSignal, timeoutMs: timeout, logger: log };
+    switch (provider) {
+      case 'openai':
         return callOpenAi({
-          prompt,
-          model,
-          apiKey,
-          endpoint,
+          ...cloudParams,
           maxOutputTokens,
-          reasoning: reasoningEffort,
-          verbosity,
-          abortSignal,
-          timeoutMs: timeout,
-          logger: log
+          reasoning: state.reasoning || DEFAULT_REASONING_EFFORT,
+          verbosity: state.verbosity || DEFAULT_VERBOSITY
         });
-      },
-      claude: () =>
-        callClaude({
-          prompt,
-          model,
-          apiKey,
-          endpoint,
-          abortSignal,
-          timeoutMs: timeout,
-          logger: log
-        }),
-      gemini: () =>
-        callGemini({
-          prompt,
-          model,
-          apiKey,
-          endpoint,
-          abortSignal,
-          timeoutMs: timeout,
-          logger: log
-        }),
-      codex: async () =>
-        callCodex({
+      case 'claude':
+        return callClaude(cloudParams);
+      case 'gemini':
+        return callGemini(cloudParams);
+      case 'codex':
+        return callCodex({
           prompt,
           model,
           codexCommand: getCodexCommand(config),
           codexHome: await ensureCodexHome(this.context),
-          reasoning: this.state.codexReasoning || DEFAULT_CODEX_REASONING_EFFORT,
+          reasoning: state.codexReasoning || DEFAULT_CODEX_REASONING_EFFORT,
           abortSignal,
           timeoutMs: timeout,
           logger: log
-        }),
-      local: async () => {
-        return this.callLocalPrompt(prompt, maxOutputTokens, log);
-      }
-    };
-
-    const fn = dispatcher[provider];
-    if (!fn) {
-      throw new Error(this.strings.msgUnsupportedProvider.replace('{provider}', this.providerLabels[provider] || provider));
+        });
+      case 'local':
+        return this.callLocalPrompt(prompt, maxOutputTokens, log, abortSignal, state.localModel);
     }
-    return fn();
   }
 
   private async callLocalPrompt(
     prompt: string,
     maxOutputTokens: number,
-    logger?: (message: string) => void
+    logger?: (message: string) => void,
+    abortSignal = this.currentAbortController?.signal,
+    modelSnapshot = this.state.localModel
   ): Promise<string> {
-    const runtime = await this.getLocalRuntimeConfig();
+    const runtime = await this.getLocalRuntimeConfig(abortSignal, modelSnapshot);
     return callLocalLlm({
+      ...runtime,
       prompt,
-      modelPath: runtime.modelPath,
-      extensionUri: this.context.extensionUri,
-      runtimePath: runtime.runtimePath,
-      abortSignal: this.currentAbortController?.signal,
-      timeoutMs: runtime.timeout,
+      abortSignal,
       maxOutputTokens,
-      contextSize: runtime.contextSize,
-      threads: runtime.threads,
-      gpuLayers: runtime.gpuLayers,
-      keepAliveMs: runtime.keepAliveMs,
-      generation: runtime.generation,
-      runtimeArgs: runtime.runtimeArgs,
       logger: logger ?? runtime.logger
     });
   }
 
   private async getProviderRuntimeConfig(
-    provider: ProviderId
+    provider: ProviderId,
+    selectedModel: string
   ): Promise<{ endpoint: string; model: string; apiKey: string; timeout: number; maxOutputTokens: number }> {
     const config = vscode.workspace.getConfiguration('commitMaker');
     const endpoint = getEndpoint(config, provider);
-    const model = this.state.model?.trim() || getDefaultModelForProvider(provider);
+    const model = selectedModel.trim() || getDefaultModelForProvider(provider);
     if (provider === 'local' || provider === 'codex') {
       const timeout = config.get<number>('requestTimeoutMs', 300000);
       const maxOutputTokens = this.getConfiguredMaxOutputTokens(config, DEFAULT_LOCAL_MAX_OUTPUT_TOKENS);
       return { endpoint, model, apiKey: '', timeout, maxOutputTokens };
     }
     const apiKeyName = getApiKeySecretName(config, provider);
-    const envKey = getEnvVarName(provider);
+    const envKey = getApiKeyEnvironmentNames(provider);
     const apiKey =
       (apiKeyName ? await this.context.secrets.get(apiKeyName) : undefined) ||
-      (envKey ? envKey.map(name => process.env[name]).find(Boolean) : undefined);
+      envKey.map(name => process.env[name]).find(Boolean);
     if (!apiKey) {
       throw new Error(this.strings.msgApiKeyMissing.replace('{provider}', this.providerLabels[provider] || provider));
     }
@@ -990,51 +974,37 @@ export class CommitController implements vscode.Disposable {
   }
 
   private getConfiguredMaxOutputTokens(config: vscode.WorkspaceConfiguration, fallback: number): number {
-    const inspected = config.inspect<number>('maxOutputTokens') as any;
-    const configured = (
-      inspected?.workspaceFolderLanguageValue ??
-      inspected?.workspaceLanguageValue ??
-      inspected?.globalLanguageValue ??
-      inspected?.workspaceFolderValue ??
-      inspected?.workspaceValue ??
-      inspected?.globalValue
-    );
+    const configured = getExplicitConfigurationValue<number>(config, 'maxOutputTokens');
     return typeof configured === 'number' && configured > 0 ? configured : fallback;
   }
 
-  private async getLocalRuntimeConfig(): Promise<{
-    modelPath: string;
-    runtimePath: string;
-    timeout: number;
-    contextSize: number;
-    threads: number;
-    gpuLayers: number;
-    keepAliveMs: number;
-    generation?: LocalModelGenerationSettings;
-    runtimeArgs: string[];
-    logger?: (message: string) => void;
-  }> {
+  private async getLocalRuntimeConfig(
+    abortSignal = this.currentAbortController?.signal,
+    modelSnapshot = this.state.localModel
+  ): Promise<Omit<LocalLlmCallParams, 'prompt' | 'abortSignal' | 'maxOutputTokens'>> {
     const config = vscode.workspace.getConfiguration('commitMaker');
-    let localModel = this.state.localModel;
+    let localModel = modelSnapshot;
     if (!localModel || localModel.status !== 'ready' || !localModel.path) {
-      localModel = await inspectLocalModel(this.context, config, this.state.localModelId);
+      localModel = await inspectLocalModel(this.context, config, modelSnapshot?.id || this.state.localModelId);
+      abortSignal?.throwIfAborted();
       this.state.localModel = localModel;
       this.panel.updateState({ localModel });
     }
     if (!localModel.path || localModel.status !== 'ready') {
       throw new Error(this.strings.msgLocalModelMissing);
     }
-    const localModelDefinition = getLocalModelDefinition(config, this.state.localModelId);
-    const logger = this.createLocalLogger(config);
+    const localModelDefinition = getLocalModelDefinition(config, localModel.id);
+    const logger = this.createLlmLogger(config);
     const runtimePath = await ensureLocalRuntime(this.context, this.context.extensionUri, config, {
       runtimeVersion: resolveLocalRuntimeVersion(localModelDefinition),
-      abortSignal: this.currentAbortController?.signal,
+      abortSignal,
       logger
     });
     return {
       modelPath: localModel.path,
+      extensionUri: this.context.extensionUri,
       runtimePath,
-      timeout: config.get<number>('requestTimeoutMs', 300000),
+      timeoutMs: config.get<number>('requestTimeoutMs', 300000),
       contextSize: config.get<number>('localContextSize', DEFAULT_LOCAL_CONTEXT_SIZE),
       threads: config.get<number>('localThreads', 0),
       gpuLayers: config.get<number>('localGpuLayers', DEFAULT_LOCAL_GPU_LAYERS),
@@ -1045,7 +1015,7 @@ export class CommitController implements vscode.Disposable {
     };
   }
 
-  private createLocalLogger(config: vscode.WorkspaceConfiguration): ((message: string) => void) | undefined {
+  private createLlmLogger(config: vscode.WorkspaceConfiguration): ((message: string) => void) | undefined {
     const logEnabled = config.get<boolean>('logLlm', false);
     return logEnabled ? (message: string): void => this.output.appendLine(message) : undefined;
   }
@@ -1061,6 +1031,7 @@ export class CommitController implements vscode.Disposable {
     this.state.prompt = prompt;
     await this.context.globalState.update(COMMIT_PROMPT_STORAGE_KEY, prompt);
     await persistPromptPresets(this.context, presets, activeId);
+    if (this.disposed) return;
     this.panel.updateState(toPanelState(this.state));
     if (options?.toast) {
       this.showPromptToast(options.toast);
@@ -1098,7 +1069,7 @@ export class CommitController implements vscode.Disposable {
     if (activeUri?.fsPath) {
       const match = repos.find(repo => {
         const rel = path.relative(repo.rootUri.fsPath, activeUri.fsPath);
-        return rel && !rel.startsWith('..') && !path.isAbsolute(rel);
+        return rel !== '..' && !rel.startsWith('..' + path.sep) && !path.isAbsolute(rel);
       });
       if (match) {
         return match;
@@ -1147,11 +1118,4 @@ function sameFsPath(left?: string, right?: string): boolean {
   return process.platform === 'win32'
     ? normalizedLeft.toLowerCase() === normalizedRight.toLowerCase()
     : normalizedLeft === normalizedRight;
-}
-
-function getEnvVarName(provider: ProviderId): string[] {
-  if (provider === 'openai') return ['COMMIT_MAKER_OPENAI_API_KEY', 'OPENAI_API_KEY', 'openai_api_key'];
-  if (provider === 'gemini') return ['COMMIT_MAKER_GEMINI_API_KEY', 'GEMINI_API_KEY', 'GOOGLE_API_KEY', 'google_api_key'];
-  if (provider === 'claude') return ['COMMIT_MAKER_CLAUDE_API_KEY', 'ANTHROPIC_API_KEY', 'CLAUDE_API_KEY', 'anthropic_api_key'];
-  return [];
 }

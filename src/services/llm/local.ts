@@ -11,7 +11,7 @@ import {
 } from '../../constants';
 import { getStrings, DEFAULT_LANGUAGE } from '../../i18n/strings';
 import { LocalModelGenerationSettings } from '../../types';
-import { createAbortController, postJsonWithBackoff } from './shared';
+import { asRecord, createAbortController, postJsonWithBackoff } from './shared';
 import { findBundledRuntime } from '../localRuntime';
 
 const LOCAL_SYSTEM_PROMPT = [
@@ -60,6 +60,8 @@ interface RuntimeState {
 }
 
 let activeRuntime: RuntimeState | undefined;
+let startingRuntime: Promise<RuntimeState> | undefined;
+let startupController: AbortController | undefined;
 
 export async function callLocalLlm({
   prompt,
@@ -82,12 +84,13 @@ export async function callLocalLlm({
     throw new Error(strings.msgLocalModelMissing);
   }
 
-  const binaryPath = resolveLlamaServerPath(extensionUri, runtimePath);
-  const key = { binaryPath, modelPath, contextSize, threads, gpuLayers, runtimeArgs };
-  const runtime = await ensureRuntime(key, logger);
-
   const { controller, dispose } = createAbortController(abortSignal, timeoutMs);
+  let runtime: RuntimeState | undefined;
   try {
+    controller.signal.throwIfAborted();
+    const binaryPath = resolveLlamaServerPath(extensionUri, runtimePath);
+    const key = { binaryPath, modelPath, contextSize, threads, gpuLayers, runtimeArgs };
+    runtime = await ensureRuntime(key, controller.signal, logger);
     return await postJsonWithBackoff(
       `${runtime.endpoint}/v1/chat/completions`,
       {
@@ -96,8 +99,9 @@ export async function callLocalLlm({
         headers: { 'Content-Type': 'application/json' },
         body: buildChatCompletionBody(prompt, maxOutputTokens, generation),
         parse: raw => {
-          const data = raw ? JSON.parse(raw) as any : {};
-          const text = data?.choices?.[0]?.message?.content || data?.content || data?.response;
+          const data = asRecord(raw ? JSON.parse(raw) : undefined);
+          const choice = asRecord(Array.isArray(data.choices) ? data.choices[0] : undefined);
+          const text = asRecord(choice.message).content || data.content || data.response;
           const cleaned = cleanupLocalOutput(typeof text === 'string' ? text : '');
           if (!cleaned.trim()) {
             throw new Error(strings.msgLlmEmptyLocal);
@@ -110,11 +114,12 @@ export async function callLocalLlm({
     );
   } finally {
     dispose();
-    scheduleStop(keepAliveMs);
+    if (runtime && runtime === activeRuntime) scheduleStop(keepAliveMs);
   }
 }
 
 export function stopLocalLlmRuntime(): void {
+  startupController?.abort();
   if (!activeRuntime) return;
   if (activeRuntime.stopTimer) {
     clearTimeout(activeRuntime.stopTimer);
@@ -135,7 +140,13 @@ function resolveLlamaServerPath(extensionUri: vscode.Uri, configured?: string): 
   throw new Error(getStrings(DEFAULT_LANGUAGE).msgLocalRuntimeMissing);
 }
 
-async function ensureRuntime(key: RuntimeKey, logger?: (message: string) => void): Promise<RuntimeState> {
+async function ensureRuntime(key: RuntimeKey, abortSignal: AbortSignal, logger?: (message: string) => void): Promise<RuntimeState> {
+  // 起動完了前に次の生成が来てもサーバーを重複起動しない。
+  while (startingRuntime) {
+    await startingRuntime.catch(() => undefined);
+    abortSignal.throwIfAborted();
+  }
+  abortSignal.throwIfAborted();
   if (activeRuntime && sameRuntime(activeRuntime.key, key) && !activeRuntime.process.killed) {
     if (activeRuntime.stopTimer) {
       clearTimeout(activeRuntime.stopTimer);
@@ -145,7 +156,21 @@ async function ensureRuntime(key: RuntimeKey, logger?: (message: string) => void
   }
 
   stopLocalLlmRuntime();
+  const { controller, dispose } = createAbortController(abortSignal, 120000);
+  startupController = controller;
+  startingRuntime = startRuntime(key, controller.signal, logger);
+  try {
+    return await startingRuntime;
+  } finally {
+    startingRuntime = undefined;
+    startupController = undefined;
+    dispose();
+  }
+}
+
+async function startRuntime(key: RuntimeKey, abortSignal: AbortSignal, logger?: (message: string) => void): Promise<RuntimeState> {
   const port = await getFreePort();
+  abortSignal.throwIfAborted();
   const args = [
     '-m',
     key.modelPath,
@@ -183,11 +208,12 @@ async function ensureRuntime(key: RuntimeKey, logger?: (message: string) => void
   const endpoint = `http://127.0.0.1:${port}`;
   const runtime = { key, process: child, endpoint };
   try {
-    await waitForServer(endpoint, child, stderr, () => spawnError);
+    await waitForServer(endpoint, child, stderr, () => spawnError, abortSignal);
   } catch (error) {
     child.kill();
+    abortSignal.throwIfAborted();
     const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(getStrings(DEFAULT_LANGUAGE).msgLocalServerStartFailed.replace('{detail}', detail));
+    throw new Error(getStrings(DEFAULT_LANGUAGE).msgLocalServerStartFailed.replace('{detail}', detail), { cause: error });
   }
 
   child.once('exit', () => {
@@ -214,10 +240,12 @@ async function waitForServer(
   endpoint: string,
   child: ChildProcessWithoutNullStreams,
   stderr: string[],
-  getSpawnError: () => Error | undefined
+  getSpawnError: () => Error | undefined,
+  abortSignal: AbortSignal
 ): Promise<void> {
   const startedAt = Date.now();
   while (Date.now() - startedAt < 120000) {
+    abortSignal.throwIfAborted();
     const spawnError = getSpawnError();
     if (spawnError) {
       throw spawnError;
@@ -225,7 +253,7 @@ async function waitForServer(
     if (child.exitCode !== null) {
       throw new Error(stderr.slice(-5).join('\n') || `process exited with code ${child.exitCode}`);
     }
-    if (await canReachServer(endpoint)) {
+    if (await canReachServer(endpoint, abortSignal)) {
       return;
     }
     await delay(500);
@@ -233,15 +261,19 @@ async function waitForServer(
   throw new Error('startup timeout');
 }
 
-async function canReachServer(endpoint: string): Promise<boolean> {
+async function canReachServer(endpoint: string, abortSignal: AbortSignal): Promise<boolean> {
   for (const pathName of ['/health', '/v1/models']) {
+    const { controller, dispose } = createAbortController(abortSignal, 2000);
     try {
-      const res = await fetch(`${endpoint}${pathName}`);
+      const res = await fetch(`${endpoint}${pathName}`, { signal: controller.signal });
       if (res.ok) {
         return true;
       }
     } catch {
-      // Server is still starting.
+      abortSignal.throwIfAborted();
+      // 接続拒否や起動途中の応答では次の確認を続ける。
+    } finally {
+      dispose();
     }
   }
   return false;
@@ -251,7 +283,7 @@ function cleanupLocalOutput(value: string): string {
   return value
     .replace(/```(?:text|markdown)?/gi, '')
     .replace(/```/g, '')
-    .replace(/<\|channel\>thought[\s\S]*?<channel\|>/g, '')
+    .replace(/<\|channel>thought[\s\S]*?<channel\|>/g, '')
     .replace(/<think>[\s\S]*?<\/think>/gi, '')
     .replace(/<\|(?:startoftext|endoftext|im_start|im_end)\|>/g, '')
     .replace(/^\s*(?:assistant|final)\s*[:：]\s*/i, '')

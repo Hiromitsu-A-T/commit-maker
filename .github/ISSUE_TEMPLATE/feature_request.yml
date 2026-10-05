@@ -39,6 +39,7 @@ body:
         - Gemini provider
         - OpenAI provider
         - Claude provider
+        - Codex provider
         - Local provider
         - Localization / 多言語対応
         - Documentation / ドキュメント

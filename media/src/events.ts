@@ -10,16 +10,15 @@ function onChange(el: HTMLElement | null, handler: (ev: Event) => void): void {
   }
 }
 
-function bindCheckbox(el: HTMLInputElement | null, messageType: string, send: (msg: any) => void): void {
+function bindCheckbox(el: HTMLInputElement | null, messageType: string, send: (msg: { type: string; value: boolean }) => void): void {
   onChange(el, ev => send({ type: messageType, value: (ev.target as HTMLInputElement).checked }));
 }
 
-function bindSelectValue(el: HTMLSelectElement | null, messageType: string, send: (msg: any) => void): void {
+function bindSelectValue(el: HTMLSelectElement | null, messageType: string, send: (msg: { type: string; value: string }) => void): void {
   onChange(el, ev => send({ type: messageType, value: (ev.target as HTMLSelectElement).value }));
 }
 
-// expose for panel.js (no bundler)
-// @ts-ignore
+// classic script の入口を公開し、イベント登録を panel.js に集約する。
 window.CommitMakerEvents = {
   onInput,
   onChange,

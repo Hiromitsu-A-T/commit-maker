@@ -1,5 +1,6 @@
-import { ProviderId, ReasoningEffort, CodexReasoningEffort, VerbositySetting, PromptPreset, LanguageCode, LocalModelState } from './types';
+import { ProviderId, ReasoningEffort, CodexReasoningEffort, VerbositySetting, PromptPreset, LanguageCode, LocalModelState, CommitStatus, MaxPromptMode } from './types';
 
+/** 保存値を復元・正規化した後の状態。生成と画面更新の所有者は controller に揃える。 */
 export interface CommitState {
   prompt: string;
   promptPresets: PromptPreset[];
@@ -11,9 +12,9 @@ export interface CommitState {
   includeUnstaged: boolean;
   includeUntracked: boolean;
   includeBinary: boolean;
-  maxPromptChars?: number | null;
-  maxPromptMode?: 'unlimited' | 'limited';
-  status: 'idle' | 'loading' | 'ready' | 'error';
+  maxPromptChars: number | null;
+  maxPromptMode: MaxPromptMode;
+  status: CommitStatus;
   result?: string;
   lastError?: string;
   progressMessage?: string;
@@ -22,6 +23,6 @@ export interface CommitState {
   verbosity: VerbositySetting;
   promptToast?: string;
   language: LanguageCode;
-  localModelId?: string;
-  localModel?: LocalModelState;
+  localModelId: string;
+  localModel: LocalModelState;
 }

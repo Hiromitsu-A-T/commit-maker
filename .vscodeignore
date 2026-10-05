@@ -30,3 +30,12 @@ media/tsconfig.json
 tsconfig.json
 out/**/*.test.js*
 out/testRunner.js
+out/testSupport.js
+
+# Development validation and review records
+eslint.config.cjs
+tsconfig.scripts.json
+docs/
+output/
+.playwright-cli/
+.gitattributes

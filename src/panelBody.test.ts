@@ -1,4 +1,6 @@
 import assert from 'assert';
+import fs from 'fs';
+import path from 'path';
 import { renderPanelBody } from './panelBody';
 import ja from './i18n/locales/ja';
 
@@ -23,7 +25,10 @@ export async function runPanelBodyTests(): Promise<void> {
   assert.ok(html.includes('<select id="localModelName">'), 'local model should be selected with a dropdown');
   assert.ok(html.includes('id="localModelGuidance"'), 'local model guidance should be available');
   assert.ok(html.includes('id="localModelGuidanceBadge"'), 'local model guidance should include a badge');
+  assert.ok(html.includes('id="localModelGuidanceSize"'), 'local model guidance should include model size');
   assert.ok(html.includes('id="localModelGuidanceText"'), 'local model guidance should include explanatory text');
+  assert.ok(html.includes('id="localModelGuidanceDetails"'), 'local model guidance should include technical details');
+  assert.ok(!html.includes('id="localModelGuidance" class="model-guidance hidden"'), 'local model guidance should stay in the layout');
   assert.ok(html.includes('id="promptSaved" class="pill hint" role="status"'), 'prompt feedback should be an overlay status');
   assert.ok(html.includes('id="reasoningLabel"'), 'reasoning label should be addressable for provider-specific text');
   assert.ok(html.includes('id="advancedModelControls"'), 'advanced controls should be grouped');
@@ -38,6 +43,12 @@ export async function runPanelBodyTests(): Promise<void> {
   const ids = [...html.matchAll(/id="([^"]+)"/g)].map(match => match[1]);
   const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
   assert.deepStrictEqual([...new Set(duplicates)], [], 'panel body should not contain duplicate ids');
+
+  const css = await fs.promises.readFile(path.join(__dirname, '..', 'media', 'panel.css'), 'utf8');
+  const guidanceRule = css.match(/\.model-guidance\s*\{([^}]*)\}/)?.[1] ?? '';
+  assert.ok(guidanceRule.includes('display: grid'), 'local model guidance should use a stable grid');
+  assert.ok(guidanceRule.includes('height: 122px'), 'local model guidance should reserve a consistent card height');
+  assert.ok(css.includes('-webkit-line-clamp: 3'), 'local model guidance copy should stay within the fixed card');
 
   console.log('panelBody.test.ts passed');
 }

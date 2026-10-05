@@ -1,7 +1,7 @@
 {
   "command.commitMaker.showPanel.title": "Commit Maker: Mở bảng",
   "command.commitMaker.generateCommitFromSCM.title": "Commit Maker: Tạo thông điệp commit",
-  "command.commitMaker.cancelCommitFromSCM.title": "Commit Maker: Hủy tạo",
+  "command.commitMaker.cancelCommitFromSCM.title": "Commit Maker: Hủy tạo thông điệp commit",
   "command.commitMaker.saveApiKey.title": "Commit Maker: Lưu khóa API",
   "command.commitMaker.category": "Commit Maker",
   "configuration.commitMaker.title": "Commit Maker",

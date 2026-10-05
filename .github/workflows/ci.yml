@@ -17,7 +17,7 @@ env:
 
 jobs:
   test:
-    name: Compile and test
+    name: Lint, typecheck, build and test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -28,7 +28,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -37,11 +37,23 @@ jobs:
       - name: Check commit email metadata
         run: npm run check:commit-emails
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck all maintained TypeScript
+        run: npm run typecheck
+
+      - name: Build webview helpers
+        run: npm run build:media
+
       - name: Compile
         run: npm run compile
 
       - name: Test
         run: npm test
+
+      - name: Isolated integration test
+        run: npm run test:integration
 
       - name: Audit
         run: npm audit --audit-level=moderate

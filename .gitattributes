@@ -1,0 +1,4 @@
+# 既存の CRLF 行を保ち、差分検査で行末 CR を空白として扱わない。
+* whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Markdown の行末2スペースは意図した改行として許可する。
+*.md whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

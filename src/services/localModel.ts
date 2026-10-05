@@ -1,5 +1,5 @@
-import * as crypto from 'crypto';
 import * as fs from 'fs';
+import { downloadToFile, sha256File } from './fileDownload';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import {
@@ -11,10 +11,8 @@ import {
 import { LocalModelDefinition, LocalModelOption, LocalModelState } from '../types';
 import { getExplicitUserConfigurationString } from '../configScope';
 
-export interface DownloadProgress {
-  downloadedBytes: number;
-  totalBytes?: number;
-}
+import type { DownloadProgress } from './fileDownload';
+export type { DownloadProgress } from './fileDownload';
 
 export const LOCAL_MODELS: LocalModelDefinition[] = LOCAL_MODEL_DEFINITIONS;
 
@@ -23,7 +21,9 @@ export function getLocalModelOptions(): LocalModelOption[] {
     id: model.id,
     label: model.label,
     sizeLabel: formatBytes(model.sizeBytes),
-    uiProfile: model.uiProfile
+    uiProfile: model.uiProfile,
+    uiBadge: model.uiBadge,
+    uiDetails: model.uiDetails
   }));
 }
 
@@ -41,9 +41,9 @@ export function getLocalModelDefinition(
   modelId?: string
 ): LocalModelDefinition {
   const base = getCatalogModel(modelId);
-  const configuredUrl = getConfiguredString(config, 'localModelUrl');
-  const configuredSha256 = getConfiguredString(config, 'localModelSha256');
-  const configuredFilename = getConfiguredString(config, 'localModelFilename');
+  const configuredUrl = getExplicitUserConfigurationString(config, 'localModelUrl');
+  const configuredSha256 = getExplicitUserConfigurationString(config, 'localModelSha256');
+  const configuredFilename = getExplicitUserConfigurationString(config, 'localModelFilename');
   const url = configuredUrl?.trim() || base.url;
   const sha256 = configuredSha256 !== undefined
     ? configuredSha256.trim()
@@ -76,8 +76,9 @@ export async function inspectLocalModel(
   modelId?: string
 ): Promise<LocalModelState> {
   const model = getLocalModelDefinition(config, modelId);
-  const [modelPath] = getLocalModelPaths(context, model);
-  for (const candidatePath of getLocalModelPaths(context, model)) {
+  const modelPaths = getLocalModelPaths(context, model);
+  const [modelPath] = modelPaths;
+  for (const candidatePath of modelPaths) {
     try {
       const stat = await fs.promises.stat(candidatePath);
       if (stat.isFile() && stat.size > 0) {
@@ -91,10 +92,10 @@ export async function inspectLocalModel(
         };
       }
     } catch {
-      // Missing file is the normal first-run state.
+      // 読めない候補は次の保存場所へ進み、見つからなければ未取得として扱う。
     }
   }
-  for (const candidatePath of getLocalModelPaths(context, model)) {
+  for (const candidatePath of modelPaths) {
     try {
       const partialPath = `${candidatePath}.download`;
       const stat = await fs.promises.stat(partialPath);
@@ -111,7 +112,7 @@ export async function inspectLocalModel(
         };
       }
     } catch {
-      // Missing partial download is also normal.
+      // 部分ファイルも旧 ID の保存場所まで探してから未取得と判断する。
     }
   }
   return {
@@ -138,6 +139,7 @@ export async function downloadLocalModel(
   await removeIfExists(tmpPath);
 
   try {
+    validateDownloadUrl(model.url);
     await downloadToFile(model.url, tmpPath, abortSignal, progress => {
       onProgress({
         downloadedBytes: progress.downloadedBytes,
@@ -150,6 +152,7 @@ export async function downloadLocalModel(
         throw new Error(`SHA256 mismatch: expected ${model.sha256}, got ${actual}`);
       }
     }
+    // 検証できたファイルだけを正式な名前へ移し、途中の取得物と区別する。
     await fs.promises.rename(tmpPath, modelPath);
     return await inspectLocalModel(context, config, model.id);
   } catch (error) {
@@ -196,77 +199,8 @@ export function formatBytes(bytes: number | undefined): string {
   return `${value.toFixed(digits)} ${units[unitIndex]}`;
 }
 
-async function downloadToFile(
-  url: string,
-  filePath: string,
-  abortSignal: AbortSignal | undefined,
-  onProgress: (progress: DownloadProgress) => void
-): Promise<void> {
-  validateDownloadUrl(url);
-  const res = await fetch(url, { signal: abortSignal });
-  if (!res.ok || !res.body) {
-    const detail = await res.text().catch(() => res.statusText);
-    throw new Error(`HTTP ${res.status}: ${detail || res.statusText}`);
-  }
-
-  const totalHeader = res.headers.get('content-length');
-  const totalBytes = totalHeader ? Number(totalHeader) : undefined;
-  const out = fs.createWriteStream(filePath, { flags: 'w' });
-  let downloadedBytes = 0;
-
-  try {
-    const body = res.body as any;
-    if (typeof body.getReader === 'function') {
-      const reader = body.getReader();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = Buffer.from(value);
-        downloadedBytes += chunk.length;
-        await writeChunk(out, chunk);
-        onProgress({ downloadedBytes, totalBytes });
-      }
-    } else {
-      for await (const chunk of body) {
-        const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-        downloadedBytes += buffer.length;
-        await writeChunk(out, buffer);
-        onProgress({ downloadedBytes, totalBytes });
-      }
-    }
-  } finally {
-    await closeWriteStream(out);
-  }
-}
-
-function writeChunk(stream: fs.WriteStream, chunk: Buffer): Promise<void> {
-  return new Promise((resolve, reject) => {
-    stream.write(chunk, error => {
-      if (error) reject(error);
-      else resolve();
-    });
-  });
-}
-
-function closeWriteStream(stream: fs.WriteStream): Promise<void> {
-  return new Promise((resolve, reject) => {
-    stream.once('error', reject);
-    stream.end(() => resolve());
-  });
-}
-
-async function sha256File(filePath: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const hash = crypto.createHash('sha256');
-    const input = fs.createReadStream(filePath);
-    input.on('error', reject);
-    input.on('data', chunk => hash.update(chunk));
-    input.on('end', () => resolve(hash.digest('hex')));
-  });
-}
-
 async function removeIfExists(filePath: string): Promise<void> {
-  await fs.promises.rm(filePath, { force: true }).catch(() => undefined);
+  await fs.promises.rm(filePath, { force: true });
 }
 
 function sanitizeFilename(value: string): string {
@@ -277,10 +211,6 @@ function sanitizeFilename(value: string): string {
 function getCatalogModel(modelId: string | undefined): LocalModelDefinition {
   const id = resolveLocalModelId(modelId);
   return LOCAL_MODELS.find(model => model.id === id) ?? DEFAULT_LOCAL_MODEL;
-}
-
-function getConfiguredString(config: vscode.WorkspaceConfiguration, key: string): string | undefined {
-  return getExplicitUserConfigurationString(config, key);
 }
 
 function validateDownloadUrl(value: string): void {

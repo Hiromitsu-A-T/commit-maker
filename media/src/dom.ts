@@ -22,10 +22,8 @@ function show(el: HTMLElement | null, visible: boolean, display: string = 'block
   }
 }
 
-function setDisabled(el: HTMLElement | null, disabled: boolean): void {
-  if (el) {
-    (el as HTMLInputElement | HTMLSelectElement).disabled = disabled;
-  }
+function setDisabled(el: HTMLInputElement | HTMLSelectElement | HTMLButtonElement | null, disabled: boolean): void {
+  if (el) el.disabled = disabled;
 }
 
 function updateBadges(container: HTMLElement | null, badges: BadgeSpec[]): void {
@@ -47,6 +45,5 @@ function updateBadges(container: HTMLElement | null, badges: BadgeSpec[]): void 
   }
 }
 
-// expose for panel.js (no bundler)
-// @ts-ignore
+// classic script として読み込み、panel.js から同じ DOM 処理を使用する。
 window.CommitMakerDom = { renderSelect, show, setDisabled, updateBadges };

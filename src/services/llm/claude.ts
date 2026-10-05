@@ -1,5 +1,5 @@
 import { ANTHROPIC_API_VERSION, DEFAULT_CLAUDE_MAX_TOKENS } from '../../constants';
-import { callLlmJson } from './shared';
+import { asRecord, callLlmJson } from './shared';
 import { getStrings, DEFAULT_LANGUAGE } from '../../i18n/strings';
 
 export interface ClaudeCallParams {
@@ -38,7 +38,7 @@ export async function callClaude({
       body: buildClaudeBody(model, prompt)
     }),
     parse: raw => {
-      const data = raw ? JSON.parse(raw) as any : {};
+      const data: unknown = raw ? JSON.parse(raw) : undefined;
       const text = extractClaudeText(data);
       if (!text) {
         throw new Error(strings.msgLlmEmptyClaude);
@@ -71,13 +71,16 @@ function isClaudeTemperatureDeprecated(model: string): boolean {
   ].some(prefix => normalized === prefix || normalized.startsWith(`${prefix}-`));
 }
 
-function extractClaudeText(payload: any): string | undefined {
-  if (!Array.isArray(payload?.content)) {
+function extractClaudeText(payload: unknown): string | undefined {
+  const content = asRecord(payload).content;
+  if (!Array.isArray(content)) {
     return undefined;
   }
-  const text = payload.content
-    .filter((block: any) => typeof block?.text === 'string' && block.text.trim())
-    .map((block: any) => block.text.trim())
+  const text = content
+    .flatMap(block => {
+      const text = asRecord(block).text;
+      return typeof text === 'string' && text.trim() ? [text.trim()] : [];
+    })
     .join('\n');
   return text || undefined;
 }

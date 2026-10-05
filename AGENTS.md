@@ -74,16 +74,19 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 - アイコンは `media/commit-maker.png`（512px 正方形、透過推奨）。
 
 ## テスト
-- 型チェック: `npm run compile`
+- 静的検査: `npm run lint`（手書き JS/TS）、`npm run typecheck`（拡張・画面・スクリプト）
+- 型チェック・本番用ビルド: `npm run compile` → `npm run build:media`
+- 統合テスト: `npm run test:integration`（一時 Git/SecretStorage/Codex/Local 環境、クラウド応答は fixture）
+- 実ブラウザー確認: `npm run smoke:webview` の localhost URL を開く。操作の再現は別ターミナルで `node scripts/webview-smoke.cjs <URL>`（同じ隔離環境と本番画面コード、Playwright CLI が必要）
 - ユニットテスト（軽量）: `npm test` で ts-node 実行（`src/testRunner.ts` が一括実行）
 - スモーク（実API最小トークン検証）
   - OpenAI 全許容組合せ: `npm run smoke:openai:matrix`
-  - Gemini 2.5 系（pro/flash/flash-lite）: `npm run smoke:gemini:matrix`
-  - Claude の現行候補（Haiku / Sonnet / Opus / Fable）: `npm run smoke:claude:matrix`
+  - Gemini の推奨モデル候補: `npm run smoke:gemini:matrix`
+  - Claude の推奨モデル候補: `npm run smoke:claude:matrix`
   - Local llama.cpp runtime 自動取得: `npm run smoke:local:runtime`
 
 ## チェックリスト
-- `npm run compile` と `npm test` が通る
+- `npm run lint`、`npm run typecheck`、`npm run compile`、`npm run build:media`、`npm test`、`npm run test:integration` が通る
 - VSIX 生成→`vsix/commit-maker-<version>.vsix` へ移動→`npm run clean:vsix` 実行（`vsix/` は最新含む最大5個、ルートに VSIX なし）
 - README（機能・スクショ・対応言語）と `package.json`（version / engines / categories / displayName / description）が整合
 - `package.nls.*.json` のキー一致を確認し、`npm run clean:nls` 済み
@@ -92,11 +95,12 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 - stable はワークツリー clean、`v<version>` タグ付与・`main` とタグを push、`Publish Extension (Stable)` 成功。preview は奇数 MINOR の commit を push し、`Publish Extension (Preview)` 成功
 
 ## 開発メモ
+- 全ファイルのレビューと検証記録は `docs/maintenance-review.md` を参照する。
 - Webview CSP は nonce 付き。スタイル/スクリプトは同梱のみ。
-- プロバイダー並びとデフォルト: 「Gemini → OpenAI → Claude → Local」。Local は API キー不要で、ユーザーが明示的にモデルをダウンロードした場合のみ利用する。llama.cpp runtime は未指定なら OS/CPU 別に自動取得し、SHA-256 検証後に globalStorage へ展開する。`commitMaker.localRuntimePath` は開発・検証用の上書き設定として扱う。
+- プロバイダー並びとデフォルト: 「Gemini → OpenAI → Claude → Codex → Local」。Local は API キー不要で、ユーザーが明示的にモデルをダウンロードした場合のみ利用する。llama.cpp runtime は未指定なら OS/CPU 別に自動取得し、SHA-256 検証後に globalStorage へ展開する。`commitMaker.localRuntimePath` は開発・検証用の上書き設定として扱う。
 - Local モデル固有の sampling / runtime 調整は `services/localModelProfiles.ts` の profile に集約し、モデル名で分岐しない。新規モデルは `LOCAL_MODEL_DEFINITIONS` で profile を選ぶ。
 - 差分取得は Git API 優先、フォールバックで `git diff` / `git status --porcelain`。
-- API キー未保存のクラウド provider は選択可能だが生成ボタンを無効化し、Reasoning/Verbosity を非表示。Local はモデル未ダウンロード時に生成ボタンを無効化。
+- API キー未保存のクラウド provider は選択可能だが生成ボタンを無効化し、Reasoning/Verbosity を無効化して「-」を表示。Local はモデル未ダウンロード時に生成ボタンを無効化。
 - Webview スクリプトはプレーン JS。`as` 型アサーションは禁止（ビルド後 JS でエラーを防ぐ）。
 - LLM 呼び出しは `services/llm/` に分割済み。新規プロバイダー追加時は `PROVIDER_CAPABILITIES` を更新し、各サービスを追加する。
 

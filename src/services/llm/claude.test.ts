@@ -1,25 +1,13 @@
 import assert from 'assert';
 import { callClaude } from './claude';
 
-type FetchMock = typeof fetch;
-
-function withMockFetch<T>(mock: FetchMock, fn: () => Promise<T>): Promise<T> {
-  const original = global.fetch;
-  global.fetch = mock;
-  return fn().finally(() => {
-    global.fetch = original;
-  });
-}
+import { withMockFetch } from '../../testSupport';
 
 async function testOpus48OmitsTemperature(): Promise<void> {
-  const bodies: any[] = [];
+  const bodies: Record<string, unknown>[] = [];
   await withMockFetch(async (_url, options) => {
     bodies.push(JSON.parse(String(options?.body)));
-    return {
-      ok: true,
-      status: 200,
-      text: async () => JSON.stringify({ content: [{ text: 'ok' }] })
-    } as any;
+    return new Response(JSON.stringify({ content: [{ text: 'ok' }] }));
   }, async () => {
     await callClaude({
       prompt: 'ping',
@@ -36,14 +24,10 @@ async function testOpus48OmitsTemperature(): Promise<void> {
 }
 
 async function testSonnet46KeepsTemperature(): Promise<void> {
-  const bodies: any[] = [];
+  const bodies: Record<string, unknown>[] = [];
   await withMockFetch(async (_url, options) => {
     bodies.push(JSON.parse(String(options?.body)));
-    return {
-      ok: true,
-      status: 200,
-      text: async () => JSON.stringify({ content: [{ text: 'ok' }] })
-    } as any;
+    return new Response(JSON.stringify({ content: [{ text: 'ok' }] }));
   }, async () => {
     await callClaude({
       prompt: 'ping',
@@ -59,14 +43,10 @@ async function testSonnet46KeepsTemperature(): Promise<void> {
 }
 
 async function testSonnet5OmitsTemperature(): Promise<void> {
-  const bodies: any[] = [];
+  const bodies: Record<string, unknown>[] = [];
   await withMockFetch(async (_url, options) => {
     bodies.push(JSON.parse(String(options?.body)));
-    return {
-      ok: true,
-      status: 200,
-      text: async () => JSON.stringify({ content: [{ type: 'text', text: 'ok' }] })
-    } as any;
+    return new Response(JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }));
   }, async () => {
     await callClaude({
       prompt: 'ping',
@@ -82,19 +62,15 @@ async function testSonnet5OmitsTemperature(): Promise<void> {
 }
 
 async function testFable5ReadsTextAfterThinkingBlock(): Promise<void> {
-  const bodies: any[] = [];
+  const bodies: Record<string, unknown>[] = [];
   const result = await withMockFetch(async (_url, options) => {
     bodies.push(JSON.parse(String(options?.body)));
-    return {
-      ok: true,
-      status: 200,
-      text: async () => JSON.stringify({
+    return new Response(JSON.stringify({
         content: [
           { type: 'thinking', thinking: '' },
           { type: 'text', text: 'ok' }
         ]
-      })
-    } as any;
+      }));
   }, async () => callClaude({
     prompt: 'ping',
     model: 'claude-fable-5',

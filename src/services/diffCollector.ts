@@ -10,10 +10,20 @@ const strings = getStrings(DEFAULT_LANGUAGE);
 const MAX_UNTRACKED_FILE_BYTES = 256 * 1024;
 export const DEFAULT_DIFF_COLLECTION_LIMIT_CHARS = 32 * 1024 * 1024;
 
+const BINARY_EXTENSIONS = new Set([
+  '.png', '.jpg', '.jpeg', '.gif', '.webp', '.avif', '.ico', '.svgz',
+  '.pdf', '.zip', '.gz', '.tgz', '.bz2', '.xz', '.7z', '.rar',
+  '.mp3', '.mp4', '.mov', '.avi', '.mkv', '.wav', '.flac', '.ogg',
+  '.wasm', '.class', '.jar', '.keystore', '.jks', '.p12', '.pem', '.key', '.crt', '.der',
+  '.db', '.sqlite', '.sqlite3', '.dex'
+]);
+const SENSITIVE_UNTRACKED_EXTENSIONS = new Set(['.pem', '.key', '.p12', '.pfx', '.jks', '.keystore']);
+
 export interface GitRepositoryLike {
   rootUri: { fsPath: string };
-  diffWithHEAD?(uri?: unknown): Promise<string>;
-  diffIndexWithHEAD?(uri?: unknown): Promise<string>;
+  diff?(cached?: boolean): Promise<string>;
+  diffWithHEAD?(uri?: unknown): Promise<unknown>;
+  diffIndexWithHEAD?(uri?: unknown): Promise<unknown>;
 }
 
 export interface DiffCollectOptions {
@@ -40,51 +50,26 @@ export async function collectDiff(
     mockUntrackedFiles
   }: DiffCollectOptions
 ): Promise<string> {
-  const strings = getStrings(DEFAULT_LANGUAGE);
   const parts: string[] = [];
+  const collectionLimit = normalizeDiffCollectionLimit(maxCollectedChars);
   const budget: DiffCollectionBudget = {
-    remaining: normalizeDiffCollectionLimit(maxCollectedChars),
+    remaining: collectionLimit,
     truncated: false
   };
 
-  // Prefer VS Code Git API when available
-  if (typeof repo.diffIndexWithHEAD === 'function') {
-    try {
-      const staged = await repo.diffIndexWithHEAD();
-      if (staged?.trim()) {
-        appendCollectedPart(parts, `${strings.diffSectionStaged}\n${staged.trim()}`, budget, logger);
-      }
-    } catch (error) {
-      logger?.appendLine(strings.msgGitDiffFailed.replace('{detail}', String(error)));
-    }
+  // 片方の API が失敗しても、その区分だけ CLI で取得して差分を欠落させない。
+  const staged = await readRepositoryDiff(repo, 'staged', collectionLimit, logger);
+  if (staged.trim()) {
+    appendCollectedPart(parts, `${strings.diffSectionStaged}\n${staged.trim()}`, budget, logger);
   }
-  if (includeUnstaged && typeof repo.diffWithHEAD === 'function') {
-    try {
-      const working = await repo.diffWithHEAD();
-      if (working?.trim()) {
-        appendCollectedPart(parts, `${strings.diffSectionUnstaged}\n${working.trim()}`, budget, logger);
-      }
-    } catch (error) {
-      logger?.appendLine(strings.msgGitDiffFailed.replace('{detail}', String(error)));
+  if (includeUnstaged && budget.remaining > 0) {
+    const unstaged = await readRepositoryDiff(repo, 'unstaged', collectionLimit, logger);
+    if (unstaged.trim()) {
+      appendCollectedPart(parts, `${strings.diffSectionUnstaged}\n${unstaged.trim()}`, budget, logger);
     }
   }
 
-  // Fall back to git CLI if Git API is unavailable
-  if (!parts.length) {
-    const repoPath = repo.rootUri.fsPath;
-    const staged = await runGitDiff(['diff', '--cached'], repoPath, logger);
-    if (staged.trim()) {
-      appendCollectedPart(parts, `${strings.diffSectionStaged}\n${staged.trim()}`, budget, logger);
-    }
-    if (includeUnstaged) {
-      const unstaged = await runGitDiff(['diff'], repoPath, logger);
-      if (unstaged.trim()) {
-        appendCollectedPart(parts, `${strings.diffSectionUnstaged}\n${unstaged.trim()}`, budget, logger);
-      }
-    }
-  }
-
-  // Include untracked files
+  // 未追跡ファイルは未ステージの変更と一緒に扱う。
   if (includeUnstaged && includeUntracked && budget.remaining > 0) {
     const untracked = await collectUntrackedFiles(repo, includeBinary, logger, budget, mockStatusOutput, mockUntrackedFiles);
     if (untracked.trim()) {
@@ -95,9 +80,28 @@ export async function collectDiff(
   return parts.join('\n\n');
 }
 
-async function runGitDiff(args: string[], cwd: string, logger?: { appendLine(message: string): void }): Promise<string> {
+async function readRepositoryDiff(
+  repo: GitRepositoryLike,
+  section: 'staged' | 'unstaged',
+  collectionLimit: number,
+  logger?: { appendLine(message: string): void }
+): Promise<string> {
+  // 引数なしの diffWithHEAD / diffIndexWithHEAD は変更一覧を返す API もある。
+  const cached = section === 'staged';
+  const legacyMethod = cached ? 'diffIndexWithHEAD' : 'diffWithHEAD';
+  const read = repo.diff?.bind(repo, cached) ?? repo[legacyMethod]?.bind(repo);
+  if (read) {
+    try {
+      const result = await read();
+      if (typeof result === 'string') return result;
+    } catch (error) {
+      logger?.appendLine(strings.msgGitDiffFailed.replace('{detail}', String(error)));
+    }
+  }
+  const cwd = repo.rootUri.fsPath;
   try {
-    const { stdout } = await execFileAsync('git', args, { cwd, maxBuffer: 4 * 1024 * 1024 });
+    const args = cached ? ['diff', '--cached'] : ['diff'];
+    const { stdout } = await execFileAsync('git', args, { cwd, maxBuffer: Math.max(DEFAULT_DIFF_COLLECTION_LIMIT_CHARS, collectionLimit) * 4 });
     return stdout;
   } catch (error) {
     logger?.appendLine(strings.msgGitDiffFailed.replace('{detail}', String(error)));
@@ -114,12 +118,12 @@ async function collectUntrackedFiles(
   mockUntrackedFiles?: Record<string, Buffer>
 ): Promise<string> {
   const repoPath = repo.rootUri.fsPath;
-  let status = '';
+  let status: string;
   if (mockStatusOutput !== undefined) {
     status = mockStatusOutput;
   } else {
     try {
-      const { stdout } = await execFileAsync('git', ['status', '--porcelain'], {
+      const { stdout } = await execFileAsync('git', ['status', '--porcelain', '-z', '--untracked-files=all'], {
         cwd: repoPath,
         maxBuffer: 4 * 1024 * 1024
       });
@@ -134,53 +138,53 @@ async function collectUntrackedFiles(
     return '';
   }
   const parts: string[] = [];
-  for (const rel of paths) {
+  for (const relativePath of paths) {
     if (budget.remaining <= 0) {
       markDiffTruncated(budget, logger);
       break;
     }
-    const abs = resolveInsideRoot(repoPath, rel);
-    if (!abs) {
-      logger?.appendLine(`Skipped untracked file outside repository: ${rel}`);
+    const absolutePath = resolveInsideRoot(repoPath, relativePath);
+    if (!absolutePath) {
+      logger?.appendLine(`Skipped untracked file outside repository: ${relativePath}`);
       continue;
     }
-    if (isSensitiveUntrackedPath(rel)) {
-      logger?.appendLine(`Skipped sensitive untracked file: ${rel}`);
+    if (isSensitiveUntrackedPath(relativePath)) {
+      logger?.appendLine(`Skipped sensitive untracked file: ${relativePath}`);
       continue;
     }
     try {
-      let buf: Buffer;
-      if (mockUntrackedFiles && mockUntrackedFiles[rel] !== undefined) {
-        buf = mockUntrackedFiles[rel];
+      let buffer: Buffer;
+      if (mockUntrackedFiles && mockUntrackedFiles[relativePath] !== undefined) {
+        buffer = mockUntrackedFiles[relativePath];
       } else {
-        const stat = await fs.promises.lstat(abs);
+        const stat = await fs.promises.lstat(absolutePath);
         if (stat.isSymbolicLink()) {
-          logger?.appendLine(`Skipped untracked symlink: ${rel}`);
+          logger?.appendLine(`Skipped untracked symlink: ${relativePath}`);
           continue;
         }
         if (!stat.isFile()) {
           continue;
         }
         if (stat.size > MAX_UNTRACKED_FILE_BYTES) {
-          logger?.appendLine(`Skipped large untracked file: ${rel}`);
+          logger?.appendLine(`Skipped large untracked file: ${relativePath}`);
           continue;
         }
-        buf = await fs.promises.readFile(abs);
+        buffer = await fs.promises.readFile(absolutePath);
       }
-      const isBinary = isBinaryBuffer(buf, rel);
+      const isBinary = isBinaryBuffer(buffer, relativePath);
       if (!includeBinary && isBinary) {
-        logger?.appendLine(strings.msgUntrackedSkipBinary.replace('{path}', rel));
+        logger?.appendLine(strings.msgUntrackedSkipBinary.replace('{path}', relativePath));
         continue;
       }
-      const content = buf.toString('utf8');
+      const content = buffer.toString('utf8');
       appendCollectedPart(
         parts,
-        strings.diffSectionUntracked.replace('{path}', rel) + '\n' + content.trim(),
+        strings.diffSectionUntracked.replace('{path}', relativePath) + '\n' + content.trim(),
         budget,
         logger
       );
     } catch (error) {
-      logger?.appendLine(strings.msgUntrackedReadFailed.replace('{path}', rel).replace('{detail}', String(error)));
+      logger?.appendLine(strings.msgUntrackedReadFailed.replace('{path}', relativePath).replace('{detail}', String(error)));
     }
   }
   return parts.join('\n\n');
@@ -229,26 +233,19 @@ function normalizeDiffCollectionLimit(value: number | undefined): number {
   return DEFAULT_DIFF_COLLECTION_LIMIT_CHARS;
 }
 
-export function isBinaryBuffer(buf: Buffer, filename: string): boolean {
-  if (buf.includes(0)) {
+export function isBinaryBuffer(buffer: Buffer, filename: string): boolean {
+  if (buffer.includes(0)) {
     return true;
   }
   const ext = path.extname(filename).toLowerCase();
-  const binaryExts = new Set([
-    '.png', '.jpg', '.jpeg', '.gif', '.webp', '.avif', '.ico', '.svgz',
-    '.pdf', '.zip', '.gz', '.tgz', '.bz2', '.xz', '.7z', '.rar',
-    '.mp3', '.mp4', '.mov', '.avi', '.mkv', '.wav', '.flac', '.ogg',
-    '.wasm', '.class', '.jar', '.keystore', '.jks', '.p12', '.pem', '.key', '.crt', '.der',
-    '.db', '.sqlite', '.sqlite3', '.dex'
-  ]);
-  return binaryExts.has(ext);
+  return BINARY_EXTENSIONS.has(ext);
 }
 
-function resolveInsideRoot(root: string, rel: string): string | undefined {
+function resolveInsideRoot(root: string, relativePath: string): string | undefined {
   const resolvedRoot = path.resolve(root);
-  const resolved = path.resolve(resolvedRoot, rel);
+  const resolved = path.resolve(resolvedRoot, relativePath);
   const relative = path.relative(resolvedRoot, resolved);
-  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+  if (relative === '..' || relative.startsWith('..' + path.sep) || path.isAbsolute(relative)) {
     return undefined;
   }
   return resolved;
@@ -270,5 +267,5 @@ export function isSensitiveUntrackedPath(filename: string): boolean {
   if (base === 'id_rsa' || base === 'id_dsa' || base === 'id_ecdsa' || base === 'id_ed25519') {
     return true;
   }
-  return new Set(['.pem', '.key', '.p12', '.pfx', '.jks', '.keystore']).has(ext);
+  return SENSITIVE_UNTRACKED_EXTENSIONS.has(ext);
 }

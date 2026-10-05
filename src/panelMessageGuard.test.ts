@@ -1,12 +1,12 @@
 import assert from 'assert';
 import { sanitizeMessage } from './panelMessageGuard';
 
-function shouldPass(msg: any) {
+function shouldPass(msg: unknown) {
   const res = sanitizeMessage(msg);
   assert.ok(res, `should sanitize: ${JSON.stringify(msg)}`);
 }
 
-function shouldFail(msg: any) {
+function shouldFail(msg: unknown) {
   const res = sanitizeMessage(msg);
   assert.strictEqual(res, undefined, `should reject: ${JSON.stringify(msg)}`);
 }
@@ -17,6 +17,13 @@ export async function runPanelMessageGuardTests(): Promise<void> {
   shouldPass({ type: 'commitProviderChanged', value: 'gemini' });
   shouldPass({ type: 'commitIncludeBinaryChanged', value: true });
   shouldPass({ type: 'commitMaxPromptChanged', value: { mode: 'limited', value: 12000.8 } });
+  for (const value of [0, null]) {
+    assert.deepStrictEqual(sanitizeMessage({ type: 'commitMaxPromptChanged', value: { mode: 'limited', value } }),
+      { type: 'commitMaxPromptChanged', value: { mode: 'limited', value: null } }, '0 / 空欄は入力モードを維持して上限を解除する');
+  }
+  for (const value of [-1, 0.5, NaN, Infinity]) {
+    shouldFail({ type: 'commitMaxPromptChanged', value: { mode: 'limited', value } });
+  }
   shouldPass({ type: 'commitReasoningChanged', value: 'medium' });
   shouldPass({ type: 'commitCodexReasoningChanged', value: 'high' });
   shouldPass({ type: 'commitVerbosityChanged', value: 'high' });
@@ -30,6 +37,9 @@ export async function runPanelMessageGuardTests(): Promise<void> {
   shouldPass({ type: 'codexLogin' });
   shouldPass({ type: 'codexLogout' });
   shouldPass({ type: 'codexRefresh' });
+  shouldFail(null);
+  shouldFail({ type: 'commitMaxPromptChanged', value: 'limited' });
+  shouldFail({ type: 'commitMaxPromptChanged', value: null });
   shouldFail({});
   shouldFail({ type: 'commitPromptChanged', value: 1 });
   shouldFail({ type: 'commitProviderChanged', value: 'command:evil' });

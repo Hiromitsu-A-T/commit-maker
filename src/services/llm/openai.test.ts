@@ -1,40 +1,25 @@
 import assert from 'assert';
 import { callOpenAi } from './openai';
 import { MODEL_SUGGESTIONS_BY_PROVIDER } from '../../constants';
+import { DEFAULT_LANGUAGE, getStrings } from '../../i18n/strings';
 
-type FetchMock = typeof fetch;
-
-function withMockFetch(mock: FetchMock, fn: () => Promise<void>): Promise<void> {
-  const original = global.fetch;
-  global.fetch = mock;
-  return fn().finally(() => {
-    global.fetch = original;
-  });
-}
+import { withMockFetch } from '../../testSupport';
 
 async function testGpt54ReasoningBody(): Promise<void> {
-  const bodies: any[] = [];
+  const bodies: Record<string, unknown>[] = [];
   await withMockFetch(async (url, options) => {
     const target = String(url);
     if (target.endsWith('/v1/models')) {
-      return {
-        ok: true,
-        status: 200,
-        json: async () => ({
+      return new Response(JSON.stringify({
           data: [
             ...MODEL_SUGGESTIONS_BY_PROVIDER.openai,
             'gpt-5.2-pro',
             'gpt-5.2-codex'
           ].map(id => ({ id }))
-        })
-      } as any;
+        }));
     }
     bodies.push(JSON.parse(String(options?.body)));
-    return {
-      ok: true,
-      status: 200,
-      text: async () => JSON.stringify({ output_text: 'ok' })
-    } as any;
+    return new Response(JSON.stringify({ output_text: 'ok' }));
   }, async () => {
     await callOpenAi({
       prompt: 'ping',
@@ -56,14 +41,10 @@ async function testGpt54ReasoningBody(): Promise<void> {
 }
 
 async function testGpt56MaxReasoningBody(): Promise<void> {
-  const bodies: any[] = [];
+  const bodies: Record<string, unknown>[] = [];
   await withMockFetch(async (_url, options) => {
     bodies.push(JSON.parse(String(options?.body)));
-    return {
-      ok: true,
-      status: 200,
-      text: async () => JSON.stringify({ output_text: 'ok' })
-    } as any;
+    return new Response(JSON.stringify({ output_text: 'ok' }));
   }, async () => {
     await callOpenAi({
       prompt: 'ping',
@@ -85,14 +66,10 @@ async function testGpt56MaxReasoningBody(): Promise<void> {
 }
 
 async function testGpt54InvalidReasoningFallsBack(): Promise<void> {
-  const bodies: any[] = [];
+  const bodies: Record<string, unknown>[] = [];
   await withMockFetch(async (_url, options) => {
     bodies.push(JSON.parse(String(options?.body)));
-    return {
-      ok: true,
-      status: 200,
-      text: async () => JSON.stringify({ output_text: 'ok' })
-    } as any;
+    return new Response(JSON.stringify({ output_text: 'ok' }));
   }, async () => {
     await callOpenAi({
       prompt: 'ping',
@@ -112,14 +89,10 @@ async function testGpt54InvalidReasoningFallsBack(): Promise<void> {
 }
 
 async function testIntermediateModelConstraints(): Promise<void> {
-  const bodies: any[] = [];
+  const bodies: Record<string, unknown>[] = [];
   await withMockFetch(async (_url, options) => {
     bodies.push(JSON.parse(String(options?.body)));
-    return {
-      ok: true,
-      status: 200,
-      text: async () => JSON.stringify({ output_text: 'ok' })
-    } as any;
+    return new Response(JSON.stringify({ output_text: 'ok' }));
   }, async () => {
     await callOpenAi({
       prompt: 'ping',
@@ -202,5 +175,69 @@ export async function runOpenAiLlmTests(): Promise<void> {
   await testGpt54InvalidReasoningFallsBack();
   await testIntermediateModelConstraints();
   await testRejectsHttpEndpointBeforeModelFetch();
+  await testModelCacheIsolation();
+  await testModelPreflightCancellation();
+  await testResponseContracts();
   console.log('openai.test.ts passed');
+}
+
+async function testResponseContracts(): Promise<void> {
+  const params = { prompt: 'ping', model: 'custom-model', apiKey: 'fixture-formats',
+    endpoint: 'https://fixture-formats.example/v1/responses', maxOutputTokens: 8, timeoutMs: 1000 };
+  let payload: unknown;
+  await withMockFetch(async url => new Response(JSON.stringify(String(url).endsWith('/v1/models')
+    ? { data: [null, {}, { id: 42 }, { id: 'custom-model' }] } : payload)), async () => {
+    const formats: [unknown, string][] = [
+      [{ output_text: 'direct' }, 'direct'],
+      [{ output: [null, { content: [null, { text: 'one' }, { output_text: 'two' }, 'three'] }] }, 'one\ntwo\nthree'],
+      [{ outputs: [{ message: { content: [{ text: 'message' }] } }] }, 'message'],
+      [{ output: [{ message: { content: 'message-string' } }] }, 'message-string'],
+      [{ response_text: 'legacy' }, 'legacy'],
+      [{ choices: [{ message: { content: 'chat' } }] }, 'chat']
+    ];
+    for (const [response, expected] of formats) {
+      payload = response;
+      assert.strictEqual(await callOpenAi(params), expected);
+    }
+    for (const response of [null, [], { output_text: 42 }, { output: [{ content: [{ text: 42 }] }] },
+      { response_text: 42 }, { choices: [null] }, { choices: [{ message: { content: 42 } }] }]) {
+      payload = response;
+      await assert.rejects(() => callOpenAi(params), { message: getStrings(DEFAULT_LANGUAGE).msgLlmEmptyOpenAi });
+    }
+  });
+}
+
+async function testModelCacheIsolation(): Promise<void> {
+  const requests: string[] = [];
+  await withMockFetch(async (url, options) => {
+    if (String(url).endsWith('/v1/models')) {
+      requests.push(`${url}:${(options?.headers as Record<string, string>).Authorization}`);
+      return new Response(JSON.stringify({ data: [{ id: 'custom-model' }] }));
+    }
+    return new Response(JSON.stringify({ output_text: 'ok' }));
+  }, async () => {
+    const params = { prompt: 'ping', model: 'custom-model', apiKey: 'fixture-a',
+      endpoint: 'https://fixture-a.example/v1/responses', maxOutputTokens: 8, timeoutMs: 1000 };
+    await callOpenAi(params);
+    await callOpenAi(params);
+    await callOpenAi({ ...params, apiKey: 'fixture-b' });
+    await callOpenAi({ ...params, endpoint: 'https://fixture-b.example/v1/responses' });
+    assert.strictEqual(requests.length, 3, '同じ認証・接続先だけがキャッシュを共有する');
+  });
+}
+
+async function testModelPreflightCancellation(): Promise<void> {
+  let calls = 0;
+  await withMockFetch(async (_url, options) => {
+    calls += 1;
+    return new Promise((_resolve, reject) => {
+      options?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+    });
+  }, async () => {
+    await assert.rejects(() => callOpenAi({
+      prompt: 'ping', model: 'custom-model', apiKey: 'fixture-timeout',
+      endpoint: 'https://fixture-timeout.example/v1/responses', maxOutputTokens: 8, timeoutMs: 10
+    }), { name: 'AbortError' });
+    assert.strictEqual(calls, 1, 'モデル一覧取得の中止後に生成を送信しない');
+  });
 }

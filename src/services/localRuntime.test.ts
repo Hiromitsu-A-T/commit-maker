@@ -1,8 +1,9 @@
+import type * as vscode from 'vscode';
 import assert from 'assert';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { DEFAULT_LOCAL_RUNTIME_VERSION } from '../constants';
+import { DEFAULT_LOCAL_MODEL, DEFAULT_LOCAL_RUNTIME_VERSION } from '../constants';
 import {
   ensureLocalRuntime,
   findBundledRuntime,
@@ -17,7 +18,7 @@ function createRuntimePathConfig(value: string | undefined, scope: 'globalValue'
   return {
     inspect: (key: string) => key === 'localRuntimePath' && value !== undefined ? { [scope]: value } : undefined,
     get: () => undefined
-  } as any;
+  } as unknown as vscode.WorkspaceConfiguration;
 }
 
 export async function runLocalRuntimeTests(): Promise<void> {
@@ -35,7 +36,7 @@ export async function runLocalRuntimeTests(): Promise<void> {
   assert.strictEqual(getLocalRuntimeAsset('win32', 'x64')?.archiveName, 'llama-b8967-bin-win-cpu-x64.zip');
   assert.strictEqual(getLocalRuntimeAsset('win32', 'arm64')?.archiveName, 'llama-b8967-bin-win-cpu-arm64.zip');
   assert.strictEqual(getLocalRuntimeAsset('freebsd' as NodeJS.Platform, 'x64'), undefined);
-  assert.strictEqual(resolveLocalRuntimeVersion({} as any), DEFAULT_LOCAL_RUNTIME_VERSION);
+  assert.strictEqual(resolveLocalRuntimeVersion({ ...DEFAULT_LOCAL_MODEL, runtimeVersion: undefined }), DEFAULT_LOCAL_RUNTIME_VERSION);
 
   const tmpRoot = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'commit-maker-runtime-test-'));
   try {
@@ -51,8 +52,8 @@ export async function runLocalRuntimeTests(): Promise<void> {
     );
     await fs.promises.mkdir(path.dirname(versionedPath), { recursive: true });
     await fs.promises.writeFile(versionedPath, '');
-    assert.strictEqual(findBundledRuntime({ fsPath: tmpRoot } as any), versionedPath);
-    assert.strictEqual(findBundledRuntime({ fsPath: tmpRoot } as any, 'b9441'), undefined);
+    assert.strictEqual(findBundledRuntime({ fsPath: tmpRoot } as vscode.Uri), versionedPath);
+    assert.strictEqual(findBundledRuntime({ fsPath: tmpRoot } as vscode.Uri, 'b9441'), undefined);
   } finally {
     await fs.promises.rm(tmpRoot, { recursive: true, force: true });
   }
@@ -64,7 +65,7 @@ export async function runLocalRuntimeTests(): Promise<void> {
     const alternatePath = path.join(alternateRoot, 'bin', 'llama.cpp', 'b9441', platform, executable);
     await fs.promises.mkdir(path.dirname(alternatePath), { recursive: true });
     await fs.promises.writeFile(alternatePath, '');
-    assert.strictEqual(findBundledRuntime({ fsPath: alternateRoot } as any, 'b9441'), alternatePath);
+    assert.strictEqual(findBundledRuntime({ fsPath: alternateRoot } as vscode.Uri, 'b9441'), alternatePath);
   } finally {
     await fs.promises.rm(alternateRoot, { recursive: true, force: true });
   }
@@ -76,8 +77,8 @@ export async function runLocalRuntimeTests(): Promise<void> {
     const legacyPath = path.join(legacyRoot, 'bin', 'llama.cpp', platform, executable);
     await fs.promises.mkdir(path.dirname(legacyPath), { recursive: true });
     await fs.promises.writeFile(legacyPath, '');
-    assert.strictEqual(findBundledRuntime({ fsPath: legacyRoot } as any), legacyPath);
-    assert.strictEqual(findBundledRuntime({ fsPath: legacyRoot } as any, 'b9441'), undefined);
+    assert.strictEqual(findBundledRuntime({ fsPath: legacyRoot } as vscode.Uri), legacyPath);
+    assert.strictEqual(findBundledRuntime({ fsPath: legacyRoot } as vscode.Uri, 'b9441'), undefined);
   } finally {
     await fs.promises.rm(legacyRoot, { recursive: true, force: true });
   }
@@ -87,15 +88,15 @@ export async function runLocalRuntimeTests(): Promise<void> {
     const configuredPath = path.join(configuredRoot, process.platform === 'win32' ? 'llama-server.exe' : 'llama-server');
     await fs.promises.writeFile(configuredPath, '');
     const resolved = await ensureLocalRuntime(
-      { globalStorageUri: { fsPath: configuredRoot } } as any,
-      { fsPath: configuredRoot } as any,
+      { globalStorageUri: { fsPath: configuredRoot } } as unknown as vscode.ExtensionContext,
+      { fsPath: configuredRoot } as vscode.Uri,
       createRuntimePathConfig(configuredPath)
     );
     assert.strictEqual(resolved, configuredPath);
     await assert.rejects(
       () => ensureLocalRuntime(
-        { globalStorageUri: { fsPath: configuredRoot } } as any,
-        { fsPath: configuredRoot } as any,
+        { globalStorageUri: { fsPath: configuredRoot } } as unknown as vscode.ExtensionContext,
+        { fsPath: configuredRoot } as vscode.Uri,
         createRuntimePathConfig('./llama-server')
       ),
       /runtime|llama/i
@@ -112,8 +113,8 @@ export async function runLocalRuntimeTests(): Promise<void> {
     await fs.promises.mkdir(path.dirname(bundledPath), { recursive: true });
     await fs.promises.writeFile(bundledPath, '');
     const workspaceOnly = await ensureLocalRuntime(
-      { globalStorageUri: { fsPath: configuredRoot } } as any,
-      { fsPath: configuredRoot } as any,
+      { globalStorageUri: { fsPath: configuredRoot } } as unknown as vscode.ExtensionContext,
+      { fsPath: configuredRoot } as vscode.Uri,
       createRuntimePathConfig(configuredPath, 'workspaceValue')
     );
     assert.strictEqual(workspaceOnly, bundledPath);

@@ -1,16 +1,9 @@
-type DomApi = {
-  renderSelect: (el: HTMLSelectElement | null, options: string[], selected?: string) => void;
-  show: (el: HTMLElement | null, visible: boolean, display?: string) => void;
-  setDisabled: (el: HTMLElement | null, disabled: boolean) => void;
-  updateBadges: (container: HTMLElement | null, badges: { text: string; className?: string; title?: string }[]) => void;
-};
+const Dom = window.CommitMakerDom;
 
-const Dom = (window as any).CommitMakerDom as DomApi;
-
-function renderStatus(els: any, state: any, strings: any): void {
+function renderStatus(els: PanelElements, state: PanelStateSnapshot, strings: Record<string, string>): void {
   if (!els.statusRow) return;
   const t = strings || {};
-  const badges = [] as { text: string; className?: string; title?: string }[];
+  const badges: { text: string; className?: string; title?: string }[] = [];
   const statusClass = state.commitStatus === 'ready' ? 'success' : state.commitStatus === 'error' ? 'danger' : '';
   const statusText =
     state.commitStatus === 'loading'
@@ -34,14 +27,14 @@ function renderStatus(els: any, state: any, strings: any): void {
   Dom.updateBadges(els.statusRow, badges);
 }
 
-function renderApiKeyBadges(els: any, providerOptions: any[], state: any, strings: any): void {
+function renderApiKeyBadges(els: PanelElements, providerOptions: { id: string; badge: string; setupMode?: string; requiresApiKey: boolean }[], state: PanelStateSnapshot, strings: Record<string, string>): void {
   if (!els.apiKeyStatusRow) return;
   const t = strings || {};
   const activeProvider = state.apiKeyProvider || state.commitProvider;
   const badges = providerOptions.map(opt => {
     const setupMode = opt.setupMode || (opt.id === 'local' ? 'localModel' : opt.requiresApiKey === false ? 'codexAuth' : 'apiKey');
     if (setupMode === 'localModel') {
-      const model = state.localModel || {};
+      const model = state.localModel;
       const status = getLocalModelStatus(model, t);
       const text = opt.badge + ': ' + status.text;
       return {
@@ -81,21 +74,21 @@ function getProviderBadgeClass(
   return providerId === activeProvider ? statusClass : undefined;
 }
 
-function getCodexBadgeText(ready: boolean, strings: any): string {
+function getCodexBadgeText(ready: boolean, strings: Record<string, string>): string {
   if (ready) {
     return strings.codexAuthReadyShort || strings.codexAuthReady || 'Codex signed in';
   }
   return strings.codexAuthMissingShort || strings.codexAuthMissing || 'Codex not signed in';
 }
 
-function getLocalModelStatus(model: any, strings: any): { text: string; className?: string } {
+function getLocalModelStatus(model: PanelStateSnapshot['localModel'], strings: Record<string, string>): { text: string; className?: string } {
   const status = model?.status;
   if (status === 'ready') {
     return { text: strings.localModelStatusReady || 'Ready', className: 'success' };
   }
   if (status === 'downloading') {
-    const downloaded = Number(model.downloadedBytes || 0);
-    const total = Number(model.totalBytes || 0);
+    const downloaded = Number(model?.downloadedBytes || 0);
+    const total = Number(model?.totalBytes || 0);
     const percent = downloaded > 0 && total > 0 ? ` ${Math.floor((downloaded / total) * 100)}%` : '';
     return { text: (strings.localModelStatusDownloading || 'Downloading') + percent, className: 'warn' };
   }
@@ -108,18 +101,5 @@ function getLocalModelStatus(model: any, strings: any): { text: string; classNam
   return { text: strings.localModelStatusNotDownloaded || 'Not downloaded', className: 'warn' };
 }
 
-function renderReasoning(els: any, options: string[], state: any, allow: boolean): void {
-  Dom.renderSelect(els.reasoning, options, state.commitReasoning);
-  Dom.show(els.reasoningRow, allow, 'block');
-  Dom.setDisabled(els.reasoning, !allow);
-}
-
-function renderVerbosity(els: any, options: string[], state: any, allow: boolean): void {
-  Dom.renderSelect(els.verbosity, options, state.commitVerbosity);
-  Dom.show(els.verbosityRow, allow, 'block');
-  Dom.setDisabled(els.verbosity, !allow);
-}
-
-// expose for panel.js (no bundler)
-// @ts-ignore
-window.CommitMakerRender = { renderStatus, renderApiKeyBadges, renderReasoning, renderVerbosity };
+// panel.js から、読み込み後に描画処理を呼び出す。
+window.CommitMakerRender = { renderStatus, renderApiKeyBadges };

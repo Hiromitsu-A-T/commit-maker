@@ -17,6 +17,7 @@ import {
 } from './constants';
 import {
   ProviderId,
+  ApiKeySubmission,
   ProviderOption,
   CodexReasoningEffort,
   ReasoningEffort,
@@ -30,8 +31,7 @@ import { sanitizeMessage } from './panelMessageGuard';
 import { renderPanelBody } from './panelBody';
 import {
   getAllowedReasoningMap,
-  getAllowedVerbosityMap,
-  getVerbosityBlocklistPatterns
+  getAllowedVerbosityMap
 } from './modelCapabilities';
 import { DEFAULT_INCLUDE_FLAGS, DEFAULT_PROMPT_LIMIT, getDefaultModelForProvider } from './defaults';
 import { DEFAULT_LANGUAGE, STRINGS } from './i18n/strings';
@@ -53,7 +53,6 @@ interface RenderContext {
   promptPresets: PromptPreset[];
   providerSupportsReasoning: Record<ProviderId, boolean>;
   providerSupportsVerbosity: Record<ProviderId, boolean>;
-  verbosityBlocklistPatterns: string[];
   styleUri: vscode.Uri;
   scriptUri: vscode.Uri;
   strings: UiStrings;
@@ -130,8 +129,6 @@ function createDefaultState(language: LanguageCode = DEFAULT_LANGUAGE): PanelSta
   };
 }
 
-const DEFAULT_STATE: PanelState = createDefaultState();
-
 export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.Disposable {
   private view?: vscode.WebviewView;
   private ready = false;
@@ -139,7 +136,7 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
 
   private readonly viewDisposables: vscode.Disposable[] = [];
   private readonly onApiKeyProviderEmitter = new vscode.EventEmitter<ProviderId>();
-  private readonly onApiKeySubmitEmitter = new vscode.EventEmitter<{ value: string; provider: ProviderId }>();
+  private readonly onApiKeySubmitEmitter = new vscode.EventEmitter<ApiKeySubmission>();
   private readonly onCommitPromptEmitter = new vscode.EventEmitter<string>();
   private readonly onCommitProviderEmitter = new vscode.EventEmitter<ProviderId>();
   private readonly onCommitModelEmitter = new vscode.EventEmitter<string>();
@@ -166,7 +163,6 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
   private readonly onSavePromptPresetEmitter = new vscode.EventEmitter<{ title: string; body: string }>();
   private readonly onApplyPromptPresetEmitter = new vscode.EventEmitter<{ id: string }>();
   private readonly onDeletePromptPresetEmitter = new vscode.EventEmitter<{ id: string }>();
-  private readonly messageHandlers: Partial<Record<WebviewInboundMessage['type'], (message: WebviewInboundMessage) => void>>;
 
   public readonly onDidChangeCommitPrompt = this.onCommitPromptEmitter.event;
   public readonly onDidChangeApiKeyProvider = this.onApiKeyProviderEmitter.event;
@@ -197,60 +193,7 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
   public readonly onDidApplyPromptPreset = this.onApplyPromptPresetEmitter.event;
   public readonly onDidDeletePromptPreset = this.onDeletePromptPresetEmitter.event;
 
-  constructor(private readonly extensionUri: vscode.Uri) {
-    this.messageHandlers = {
-      ready: () => this.handleReady(),
-      apiKeyProviderChanged: message =>
-        this.handleApiKeyProviderChanged((message as Extract<WebviewInboundMessage, { type: 'apiKeyProviderChanged' }>).value),
-      submitApiKey: message =>
-        this.handleSubmitApiKey(message as Extract<WebviewInboundMessage, { type: 'submitApiKey' }>),
-      commitPromptChanged: message =>
-        this.handleCommitPromptChanged((message as Extract<WebviewInboundMessage, { type: 'commitPromptChanged' }>).value),
-      savePromptPreset: message =>
-        this.handleSavePromptPreset(message as Extract<WebviewInboundMessage, { type: 'savePromptPreset' }>),
-      applyPromptPreset: message =>
-        this.handleApplyPromptPreset(message as Extract<WebviewInboundMessage, { type: 'applyPromptPreset' }>),
-      deletePromptPreset: message =>
-        this.handleDeletePromptPreset(message as Extract<WebviewInboundMessage, { type: 'deletePromptPreset' }>),
-      commitProviderChanged: message =>
-        this.handleCommitProviderChanged((message as Extract<WebviewInboundMessage, { type: 'commitProviderChanged' }>).value),
-      commitModelChanged: message =>
-        this.handleCommitModelChanged((message as Extract<WebviewInboundMessage, { type: 'commitModelChanged' }>).value),
-      commitCustomModelChanged: message =>
-        this.handleCommitCustomModelChanged((message as Extract<WebviewInboundMessage, { type: 'commitCustomModelChanged' }>).value),
-      commitIncludeUnstagedChanged: message =>
-        this.handleCommitIncludeUnstagedChanged((message as Extract<WebviewInboundMessage, { type: 'commitIncludeUnstagedChanged' }>).value),
-      commitIncludeUntrackedChanged: message =>
-        this.handleCommitIncludeUntrackedChanged((message as Extract<WebviewInboundMessage, { type: 'commitIncludeUntrackedChanged' }>).value),
-      commitIncludeBinaryChanged: message =>
-        this.handleCommitIncludeBinaryChanged((message as Extract<WebviewInboundMessage, { type: 'commitIncludeBinaryChanged' }>).value),
-      commitMaxPromptChanged: message =>
-        this.handleCommitMaxPromptChanged((message as Extract<WebviewInboundMessage, { type: 'commitMaxPromptChanged' }>).value),
-      commitReasoningChanged: message =>
-        this.handleCommitReasoningChanged((message as Extract<WebviewInboundMessage, { type: 'commitReasoningChanged' }>).value),
-      commitCodexReasoningChanged: message =>
-        this.handleCommitCodexReasoningChanged((message as Extract<WebviewInboundMessage, { type: 'commitCodexReasoningChanged' }>).value),
-      commitVerbosityChanged: message =>
-        this.handleCommitVerbosityChanged((message as Extract<WebviewInboundMessage, { type: 'commitVerbosityChanged' }>).value),
-      localModelDownload: () => this.handleLocalModelDownload(),
-      localModelChanged: message =>
-        this.handleLocalModelChanged((message as Extract<WebviewInboundMessage, { type: 'localModelChanged' }>).value),
-      localModelCancelDownload: () => this.handleLocalModelCancelDownload(),
-      localModelDelete: () => this.handleLocalModelDelete(),
-      localModelTest: () => this.handleLocalModelTest(),
-      localModelRefresh: () => this.handleLocalModelRefresh(),
-      codexLogin: () => this.handleCodexLogin(),
-      codexLogout: () => this.handleCodexLogout(),
-      codexRefresh: () => this.handleCodexRefresh(),
-      languageChanged: message =>
-        this.handleLanguageChanged((message as Extract<WebviewInboundMessage, { type: 'languageChanged' }>).value),
-      commitGenerate: message =>
-        this.handleCommitGenerate((message as Extract<WebviewInboundMessage, { type: 'commitGenerate' }>).value),
-      commitApply: () => this.handleCommitApply(),
-      openExternal: message =>
-        this.handleOpenExternal((message as Extract<WebviewInboundMessage, { type: 'openExternal' }>).url)
-    };
-  }
+  constructor(private readonly extensionUri: vscode.Uri) {}
 
   public resolveWebviewView(webviewView: vscode.WebviewView): void {
     this.view = webviewView;
@@ -288,6 +231,10 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
     this.onCommitIncludeUnstagedEmitter.dispose();
     this.onCommitIncludeUntrackedEmitter.dispose();
     this.onCommitIncludeBinaryEmitter.dispose();
+    this.onCommitMaxPromptEmitter.dispose();
+    this.onSavePromptPresetEmitter.dispose();
+    this.onApplyPromptPresetEmitter.dispose();
+    this.onDeletePromptPresetEmitter.dispose();
     this.onCommitReasoningEmitter.dispose();
     this.onCommitCodexReasoningEmitter.dispose();
     this.onCommitVerbosityEmitter.dispose();
@@ -305,7 +252,7 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
 
   private attach(webviewView: vscode.WebviewView): void {
     this.disposeViewDisposables();
-      webviewView.webview.html = this.renderHtml(webviewView.webview);
+    webviewView.webview.html = this.renderHtml(webviewView.webview);
 
     this.viewDisposables.push(
       webviewView.webview.onDidReceiveMessage((msg: unknown) => {
@@ -326,9 +273,72 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
   }
 
   private handleMessage(message: WebviewInboundMessage): void {
-    const handler = this.messageHandlers[message.type];
-    if (handler) {
-      handler(message);
+    // 受信値の検査は sanitizeMessage、種類ごとの処理はここで担当する。
+    switch (message.type) {
+      case 'ready':
+        return this.handleReady();
+      case 'apiKeyProviderChanged':
+        return this.handleApiKeyProviderChanged(message.value);
+      case 'submitApiKey':
+        return this.handleSubmitApiKey(message);
+      case 'commitPromptChanged':
+        return this.handleCommitPromptChanged(message.value);
+      case 'savePromptPreset':
+        return this.handleSavePromptPreset(message);
+      case 'applyPromptPreset':
+        return this.handleApplyPromptPreset(message);
+      case 'deletePromptPreset':
+        return this.handleDeletePromptPreset(message);
+      case 'commitProviderChanged':
+        return this.handleCommitProviderChanged(message.value);
+      case 'commitModelChanged':
+        return this.handleCommitModelChanged(message.value);
+      case 'commitCustomModelChanged':
+        return this.handleCommitCustomModelChanged(message.value);
+      case 'commitIncludeUnstagedChanged':
+        return this.handleCommitIncludeUnstagedChanged(message.value);
+      case 'commitIncludeUntrackedChanged':
+        return this.handleCommitIncludeUntrackedChanged(message.value);
+      case 'commitIncludeBinaryChanged':
+        return this.handleCommitIncludeBinaryChanged(message.value);
+      case 'commitMaxPromptChanged':
+        return this.handleCommitMaxPromptChanged(message.value);
+      case 'commitReasoningChanged':
+        return this.handleCommitReasoningChanged(message.value);
+      case 'commitCodexReasoningChanged':
+        return this.handleCommitCodexReasoningChanged(message.value);
+      case 'commitVerbosityChanged':
+        return this.handleCommitVerbosityChanged(message.value);
+      case 'localModelChanged':
+        return this.handleLocalModelChanged(message.value);
+      case 'localModelDownload':
+        return this.onLocalModelDownloadEmitter.fire();
+      case 'localModelCancelDownload':
+        return this.onLocalModelCancelDownloadEmitter.fire();
+      case 'localModelDelete':
+        return this.onLocalModelDeleteEmitter.fire();
+      case 'localModelTest':
+        return this.onLocalModelTestEmitter.fire();
+      case 'localModelRefresh':
+        return this.onLocalModelRefreshEmitter.fire();
+      case 'codexLogin':
+        return this.onCodexLoginEmitter.fire();
+      case 'codexLogout':
+        return this.onCodexLogoutEmitter.fire();
+      case 'codexRefresh':
+        return this.onCodexRefreshEmitter.fire();
+      case 'languageChanged':
+        return this.handleLanguageChanged(message.value);
+      case 'commitGenerate':
+        return this.onCommitGenerateEmitter.fire(message.value);
+      case 'commitApply':
+        return this.onCommitApplyEmitter.fire();
+      case 'openExternal':
+        return this.handleOpenExternal(message.url);
+      default: {
+        const unhandled: never = message;
+        throw new Error(`Unhandled webview message: ${String(unhandled)}`);
+      }
     }
   }
 
@@ -419,10 +429,6 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
     this.onCommitVerbosityEmitter.fire(value);
   }
 
-  private handleLocalModelDownload(): void {
-    this.onLocalModelDownloadEmitter.fire();
-  }
-
   private handleLocalModelChanged(value: string | undefined): void {
     if (!value) return;
     this.state.localModel = {
@@ -432,48 +438,12 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
     this.onLocalModelEmitter.fire(value);
   }
 
-  private handleLocalModelCancelDownload(): void {
-    this.onLocalModelCancelDownloadEmitter.fire();
-  }
-
-  private handleLocalModelDelete(): void {
-    this.onLocalModelDeleteEmitter.fire();
-  }
-
-  private handleLocalModelTest(): void {
-    this.onLocalModelTestEmitter.fire();
-  }
-
-  private handleLocalModelRefresh(): void {
-    this.onLocalModelRefreshEmitter.fire();
-  }
-
-  private handleCodexLogin(): void {
-    this.onCodexLoginEmitter.fire();
-  }
-
-  private handleCodexLogout(): void {
-    this.onCodexLogoutEmitter.fire();
-  }
-
-  private handleCodexRefresh(): void {
-    this.onCodexRefreshEmitter.fire();
-  }
-
   private handleLanguageChanged(value: LanguageCode): void {
     const lang = value || DEFAULT_LANGUAGE;
     this.state.language = lang;
     this.state.strings = STRINGS[lang] ?? STRINGS[DEFAULT_LANGUAGE];
     this.onLanguageEmitter.fire(this.state.language);
     this.rerenderWebview();
-  }
-
-  private handleCommitGenerate(value: { includeUnstaged: boolean; includeUntracked: boolean; includeBinary: boolean } | undefined): void {
-    this.onCommitGenerateEmitter.fire(value ?? { includeUnstaged: true, includeUntracked: false, includeBinary: true });
-  }
-
-  private handleCommitApply(): void {
-    this.onCommitApplyEmitter.fire();
   }
 
   private handleOpenExternal(url: string | undefined): void {
@@ -526,7 +496,6 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
       providerIssueUrls: ctx.providerIssueUrls,
       providerSupportsReasoning: ctx.providerSupportsReasoning,
       providerSupportsVerbosity: ctx.providerSupportsVerbosity,
-      verbosityBlocklistPatterns: ctx.verbosityBlocklistPatterns,
       promptPresets: ctx.promptPresets,
       localModelOptions: ctx.localModelOptions,
       allowedStateKeys: ctx.allowedStateKeys,
@@ -543,6 +512,7 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
     <body class="app-pending" aria-busy="true">
       ${renderPanelBody(ctx.strings)}
       <script nonce="${ctx.nonce}">window.CommitMakerBootstrap = ${serializeForInlineScript(bootstrap)};</script>
+      <script src="${webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'ui', 'elements.js'))}" nonce="${ctx.nonce}"></script>
       <script src="${webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'ui', 'dom.js'))}" nonce="${ctx.nonce}"></script>
       <script src="${webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'ui', 'render.js'))}" nonce="${ctx.nonce}"></script>
       <script src="${webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'ui', 'events.js'))}" nonce="${ctx.nonce}"></script>
@@ -576,12 +546,11 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
       promptPresets: getDefaultPromptPresets(language),
       providerSupportsReasoning,
       providerSupportsVerbosity,
-      verbosityBlocklistPatterns: getVerbosityBlocklistPatterns(),
       styleUri: webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'panel.css')),
       scriptUri: webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'panel.js')),
       strings,
       languageOptions: SUPPORTED_LANG_CODES.map(code => ({
-        code: code as LanguageCode,
+        code,
         label: STRINGS[code]?.languageName ?? code
       })),
       localModelOptions: getLocalModelOptions(),

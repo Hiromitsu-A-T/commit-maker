@@ -1,4 +1,9 @@
 import { getStrings, DEFAULT_LANGUAGE } from '../../i18n/strings';
+import { setTimeout as wait } from 'timers/promises';
+
+class HttpError extends Error {
+  constructor(message: string, readonly status: number) { super(message); }
+}
 
 export interface PostJsonOptions {
   headers: Record<string, string>;
@@ -30,7 +35,9 @@ export function createAbortController(
   let timer: ReturnType<typeof setTimeout> | undefined;
   let externalListener: (() => void) | undefined;
 
-  if (abortSignal) {
+  if (abortSignal?.aborted) {
+    controller.abort();
+  } else if (abortSignal) {
     externalListener = () => controller.abort();
     abortSignal.addEventListener('abort', externalListener, { once: true });
   }
@@ -79,7 +86,7 @@ export function validateHttps(endpoint: string | undefined, label: string): void
   try {
     url = new URL(endpoint);
   } catch (error) {
-    throw new Error(strings.msgHttpsInvalid.replace('{label}', label));
+    throw new Error(strings.msgHttpsInvalid.replace('{label}', label), { cause: error });
   }
   if (url.protocol !== 'https:') {
     throw new Error(strings.msgHttpsRequired.replace('{label}', label));
@@ -96,6 +103,7 @@ export async function postJsonWithBackoff(
   let lastError: unknown;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
+      controller.signal.throwIfAborted();
       logger?.(
         strings.logLlmAttempt
           .replace('{label}', label)
@@ -110,11 +118,12 @@ export async function postJsonWithBackoff(
       });
       if (!res.ok) {
         const text = await res.text();
-        throw new Error(
+        throw new HttpError(
           strings.msgHttpError
             .replace('{label}', label)
             .replace('{status}', String(res.status))
-            .replace('{text}', sanitizeLlmErrorText(text || res.statusText))
+            .replace('{text}', sanitizeLlmErrorText(text || res.statusText)),
+          res.status
         );
       }
       const raw = await res.text();
@@ -132,7 +141,7 @@ export async function postJsonWithBackoff(
           .replace('{delay}', String(delayMs))
           .replace('{error}', sanitizeLlmErrorText(String(error)))
       );
-      await new Promise(resolve => setTimeout(resolve, delayMs));
+      await wait(delayMs, undefined, { signal: controller.signal });
     }
   }
   throw lastError instanceof Error ? lastError : new Error(String(lastError));
@@ -142,9 +151,18 @@ function isRetryable(error: unknown): boolean {
   if (error instanceof Error && 'name' in error && error.name === 'AbortError') {
     return false;
   }
-  // Retry only transient network errors
+  if (error instanceof HttpError) return error.status === 429;
+  // fetch の通信エラーは cause.code に入る場合もある。本文の数字で HTTP 再試行を判定しない。
+  const cause = error instanceof Error ? error.cause : undefined;
+  const code = cause && typeof cause === 'object' && 'code' in cause ? cause.code : undefined;
   const msg = String(error);
-  return msg.includes('ECONNRESET') || msg.includes('ENOTFOUND') || msg.includes('ETIMEDOUT') || msg.includes('429');
+  return ['ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT'].some(value => code === value || msg.includes(value));
+}
+
+/** 外部 JSON のオブジェクトだけを扱い、各フィールドは利用箇所で型を絞る。 */
+export function asRecord(value: unknown): Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown> : {};
 }
 
 export function sanitizeLlmErrorText(text: string): string {

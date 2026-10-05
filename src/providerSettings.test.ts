@@ -1,14 +1,15 @@
+import type * as vscode from 'vscode';
 import assert from 'assert';
 import { DEFAULT_PROVIDER_ENDPOINTS, DEFAULT_PROVIDER_SECRETS } from './constants';
 import { getApiKeySecretName, getEndpoint } from './providerSettings';
 
-function createConfig(values: Record<string, any>) {
+function createConfig(values: Record<string, unknown>) {
   return {
     inspect: (key: string) => values[key],
     get: () => {
       throw new Error('workspace-scoped get() must not be used for trusted settings');
     }
-  } as any;
+  } as unknown as vscode.WorkspaceConfiguration;
 }
 
 export async function runProviderSettingsTests(): Promise<void> {

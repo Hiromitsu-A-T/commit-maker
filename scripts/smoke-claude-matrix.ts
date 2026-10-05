@@ -12,12 +12,12 @@ if (!key) {
 
 const models = MODEL_SUGGESTIONS_BY_PROVIDER.claude;
 
-async function call(model: string): Promise<void> {
+async function call(model: string, apiKey: string): Promise<void> {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': key,
+      'x-api-key': apiKey,
       'anthropic-version': ANTHROPIC_API_VERSION
     },
     body: JSON.stringify({
@@ -35,7 +35,7 @@ async function call(model: string): Promise<void> {
 
 async function main(): Promise<void> {
   for (const m of models) {
-    await call(m);
+    await call(m, key!);
     await new Promise(r => setTimeout(r, 100));
   }
   console.log(`\nClaude matrix OK (${models.length} models)`);

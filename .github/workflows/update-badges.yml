@@ -32,10 +32,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Use Node.js 20
+      - name: Use Node.js 22
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Update badge JSON
         run: npm run update:badges

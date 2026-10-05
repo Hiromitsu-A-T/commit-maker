@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { CommitPanelProvider } from './panel';
 import { CommitController } from './commitController';
-import { ProviderId, LanguageCode, isLanguageCode, isProviderId } from './types';
-import { getApiKeySecretName } from './providerSettings';
+import { ProviderId, ApiKeyState, LanguageCode, isLanguageCode, isProviderId } from './types';
+import { getApiKeySecretName, getApiKeyEnvironmentNames } from './providerSettings';
 import { buildProviderCapabilities, COMMIT_LANGUAGE_STORAGE_KEY } from './constants';
 import { getStrings, DEFAULT_LANGUAGE } from './i18n/strings';
 import {
@@ -14,7 +14,7 @@ import {
   logoutCodexCli
 } from './services/codexCli';
 
-type ApiKeyPanelState = Record<ProviderId, { ready: boolean; preview?: string; length?: number }>;
+type ApiKeyPanelState = Record<ProviderId, ApiKeyState>;
 
 const CODEX_LOGIN_POLL_INTERVAL_MS = 3000;
 const CODEX_LOGIN_POLL_TIMEOUT_MS = 5 * 60 * 1000;
@@ -22,11 +22,10 @@ const CODEX_LOGIN_POLL_TIMEOUT_MS = 5 * 60 * 1000;
 let codexLoginPollTimer: ReturnType<typeof setInterval> | undefined;
 let codexLoginPollUntil = 0;
 let codexLoginPollRunning = false;
+let apiKeyRefreshRevision = 0;
 let codexLoginFocusDisposable: vscode.Disposable | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
-  const language = getLanguage(context);
-  const strings = getStrings(language);
   const output = vscode.window.createOutputChannel('Commit Maker');
   const viewProvider = new CommitPanelProvider(context.extensionUri);
   const commitController = new CommitController(context, viewProvider, output);
@@ -41,33 +40,39 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     }),
     vscode.commands.registerCommand('commitMaker.showPanel', () => viewProvider.reveal()),
-    vscode.commands.registerCommand('commitMaker.saveApiKey', () => saveApiKey(context))
+    vscode.commands.registerCommand('commitMaker.saveApiKey', async () => {
+      await saveApiKey(context);
+      await refreshApiKeyState(context, viewProvider);
+    })
   );
 
-  // Webview からの API キー保存要求を処理
-  viewProvider.onDidSubmitApiKey(async payload => {
-    await storeApiKey(context, payload.provider, payload.value);
-    await refreshApiKeyState(context, viewProvider);
-    void vscode.window.showInformationMessage(strings.msgApiKeySaved);
-  });
-  viewProvider.onDidChangeApiKeyProvider(async () => {
-    await refreshApiKeyState(context, viewProvider);
-  });
-  viewProvider.onDidRequestCodexLogin(async () => {
-    await openCodexLoginTerminal(context, viewProvider);
-  });
-  viewProvider.onDidRequestCodexLogout(async () => {
-    await logoutCodex(context, viewProvider);
-  });
-  viewProvider.onDidRequestCodexRefresh(async () => {
-    await refreshApiKeyState(context, viewProvider);
-  });
+  context.subscriptions.push(
+    // 認証イベントも拡張の寿命に合わせて登録・解除する。
+    viewProvider.onDidSubmitApiKey(async payload => {
+      await storeApiKey(context, payload.provider, payload.value);
+      await refreshApiKeyState(context, viewProvider);
+      void vscode.window.showInformationMessage(getStrings(getLanguage(context)).msgApiKeySaved);
+    }),
+    viewProvider.onDidChangeApiKeyProvider(async () => {
+      await refreshApiKeyState(context, viewProvider);
+    }),
+    viewProvider.onDidRequestCodexLogin(async () => {
+      await openCodexLoginTerminal(context, viewProvider);
+    }),
+    viewProvider.onDidRequestCodexLogout(async () => {
+      await logoutCodex(context, viewProvider);
+    }),
+    viewProvider.onDidRequestCodexRefresh(async () => {
+      await refreshApiKeyState(context, viewProvider);
+    })
+  );
 
   // 初期状態で保存済みキーを反映
   void refreshApiKeyState(context, viewProvider);
 }
 
 export function deactivate(): void {
+  apiKeyRefreshRevision++;
   stopCodexLoginAutoRefresh();
 }
 
@@ -82,7 +87,7 @@ async function saveApiKey(context: vscode.ExtensionContext): Promise<void> {
   if (!provider) {
     return;
   }
-  const providerId = provider.value as ProviderId;
+  const providerId = provider.value;
   if (providerId === 'local' || providerId === 'codex') {
     return;
   }
@@ -126,7 +131,8 @@ function maskKey(value: string | undefined): string | undefined {
   return value.slice(0, 2) + '...' + value.slice(-4);
 }
 
-async function refreshApiKeyState(context: vscode.ExtensionContext, panel: CommitPanelProvider): Promise<ApiKeyPanelState> {
+async function refreshApiKeyState(context: vscode.ExtensionContext, panel: CommitPanelProvider): Promise<ApiKeyPanelState | undefined> {
+  const revision = ++apiKeyRefreshRevision;
   const config = vscode.workspace.getConfiguration('commitMaker');
   const keys: Record<ProviderId, string | undefined> = {
     openai: getApiKeySecretName(config, 'openai'),
@@ -143,7 +149,7 @@ async function refreshApiKeyState(context: vscode.ExtensionContext, panel: Commi
     local: { ready: false }
   };
   for (const provider of Object.keys(keys) as ProviderId[]) {
-    const envValue = getEnvVarNames(provider).map(name => process.env[name]).find(Boolean);
+    const envValue = getApiKeyEnvironmentNames(provider).map(name => process.env[name]).find(Boolean);
     const secretKey = keys[provider];
     const secretValue = secretKey ? await context.secrets.get(secretKey) : undefined;
     const value = secretValue ?? envValue;
@@ -171,6 +177,8 @@ async function refreshApiKeyState(context: vscode.ExtensionContext, panel: Commi
       length: undefined
     };
   }
+  // 遅い認証確認が、後から保存・削除したキーの状態を上書きしないようにする。
+  if (revision !== apiKeyRefreshRevision) return undefined;
   panel.updateState({ apiKeys });
   return apiKeys;
 }
@@ -251,19 +259,12 @@ async function refreshCodexLoginUntilReady(context: vscode.ExtensionContext, pan
   codexLoginPollRunning = true;
   try {
     const apiKeys = await refreshApiKeyState(context, panel);
-    if (apiKeys.codex?.ready) {
+    if (apiKeys?.codex.ready) {
       stopCodexLoginAutoRefresh();
     }
   } finally {
     codexLoginPollRunning = false;
   }
-}
-
-function getEnvVarNames(provider: ProviderId): string[] {
-  if (provider === 'openai') return ['COMMIT_MAKER_OPENAI_API_KEY', 'OPENAI_API_KEY', 'openai_api_key'];
-  if (provider === 'gemini') return ['COMMIT_MAKER_GEMINI_API_KEY', 'GEMINI_API_KEY', 'GOOGLE_API_KEY', 'google_api_key'];
-  if (provider === 'claude') return ['COMMIT_MAKER_CLAUDE_API_KEY', 'ANTHROPIC_API_KEY', 'CLAUDE_API_KEY', 'anthropic_api_key'];
-  return [];
 }
 
 function getLanguage(context: vscode.ExtensionContext): LanguageCode {

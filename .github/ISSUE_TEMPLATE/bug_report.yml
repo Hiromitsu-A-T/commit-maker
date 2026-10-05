@@ -37,6 +37,7 @@ body:
         - Gemini
         - OpenAI
         - Claude
+        - Codex
         - Local
         - Not provider-specific / プロバイダー非依存
     validations:

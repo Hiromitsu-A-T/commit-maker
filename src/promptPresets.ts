@@ -1,10 +1,7 @@
 import { PROMPT_PRESETS } from './constants';
 import { PromptPreset } from './types';
 
-export interface UpsertResult {
-  presets: PromptPreset[];
-  activeId: string;
-  prompt: string;
+export interface UpsertResult extends ApplyResult {
   action: 'created' | 'updated';
 }
 
@@ -16,7 +13,7 @@ export interface ApplyResult {
 
 export function normalizePresets(list: PromptPreset[], defaults: PromptPreset[] = PROMPT_PRESETS): PromptPreset[] {
   const defaultIds = defaults.map(d => d.id);
-  // 既存の旧デフォルト (default-ja など) を除去
+  // 言語変更時は旧既定プリセットを除き、現行の文言で置き換える。
   const filtered = list.filter(p => {
     if (p.isDefault && !defaultIds.includes(p.id)) return false;
     if (p.id.startsWith('default-') && !defaultIds.includes(p.id)) return false;
@@ -31,12 +28,10 @@ export function normalizePresets(list: PromptPreset[], defaults: PromptPreset[] 
   });
   const hasDefault = merged.some(p => defaultIds.includes(p.id));
   const withDefault = hasDefault ? merged : [...defaults, ...merged];
-  // ensure default comes first
   const sorted = withDefault.sort((a, b) => {
     const aDefault = defaultIds.includes(a.id) ? 0 : 1;
     const bDefault = defaultIds.includes(b.id) ? 0 : 1;
-    if (aDefault !== bDefault) return aDefault - bDefault;
-    return 0;
+    return aDefault - bDefault;
   });
   return sorted;
 }

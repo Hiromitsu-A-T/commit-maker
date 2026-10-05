@@ -1,4 +1,4 @@
-// Remove generated localized package.nls.*.json files from repo root (keeps base package.nls.json).
+// 生成した翻訳コピーを除去し、英語の編集元 package.nls.json は保持する。
 
 const fs = require('fs');
 const path = require('path');

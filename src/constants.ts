@@ -29,7 +29,6 @@ export function getDefaultPromptPresets(language: LanguageCode = DEFAULT_LANGUAG
   ];
 }
 
-export const DEFAULT_COMMIT_PROMPT = getDefaultCommitPrompt();
 export const PROMPT_PRESETS: PromptPreset[] = getDefaultPromptPresets();
 
 export const COMMIT_PROMPT_STORAGE_KEY = 'commitMaker.commitPrompt';
@@ -66,6 +65,7 @@ export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
     generationProfile: 'deterministic',
     runtimeProfile: 'qwen35',
     uiProfile: 'recommended',
+    uiDetails: 'Qwen3.5 4B · Dense · 256K ctx · Q4_K_M',
     legacyIds: [
       LEGACY_DEFAULT_LOCAL_MODEL_ID,
       'Qwen3-4B-Instruct-2507-Q4_K_M',
@@ -83,7 +83,8 @@ export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
     runtimeVersion: 'b9441',
     generationProfile: 'deterministic',
     runtimeProfile: 'qwen35',
-    uiProfile: 'lowMemory'
+    uiProfile: 'lowMemory',
+    uiDetails: 'Qwen3.5 2B · Dense · 256K ctx · Q4_K_M'
   },
   {
     id: GEMMA4_LOCAL_MODEL_ID,
@@ -95,7 +96,9 @@ export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
     contextSize: 32_768,
     runtimeVersion: DEFAULT_LOCAL_RUNTIME_VERSION,
     generationProfile: 'gemma4',
-    runtimeProfile: 'gemma4'
+    runtimeProfile: 'gemma4',
+    uiBadge: 'Dense',
+    uiDetails: 'Gemma 4 E4B IT · 32K ctx · Q4_K_M'
   },
   {
     id: LFM25_LOCAL_MODEL_ID,
@@ -107,14 +110,15 @@ export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
     contextSize: 131_072,
     runtimeVersion: 'b9441',
     generationProfile: 'lfm25',
-    runtimeProfile: 'lfm25'
+    runtimeProfile: 'lfm25',
+    uiBadge: 'MoE',
+    uiDetails: 'LFM2.5 8B-A1B · 128K ctx · Q4_K_M'
   }
 ];
 export const DEFAULT_LOCAL_MODEL = LOCAL_MODEL_DEFINITIONS[0];
 export const DEFAULT_LOCAL_MODEL_FILENAME = DEFAULT_LOCAL_MODEL.filename;
 export const DEFAULT_LOCAL_MODEL_URL = DEFAULT_LOCAL_MODEL.url;
 export const DEFAULT_LOCAL_MODEL_SHA256 = DEFAULT_LOCAL_MODEL.sha256;
-export const DEFAULT_LOCAL_MODEL_SIZE_BYTES = DEFAULT_LOCAL_MODEL.sizeBytes;
 export const DEFAULT_LOCAL_CONTEXT_SIZE = 32768;
 export const DEFAULT_LOCAL_GPU_LAYERS = 99;
 export const DEFAULT_LOCAL_KEEP_ALIVE_MS = 300000;
@@ -261,7 +265,7 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
 
 export const PROVIDER_CAPABILITIES: ProviderCapability[] = buildProviderCapabilities(getStrings(DEFAULT_LANGUAGE));
 
-// 派生データ（既存 API 互換のまま残す）
+// 能力表から表示・設定用の索引を作り、候補と既定値の重複定義を避ける。
 export function buildProviderOptions(capabilities: ProviderCapability[] = PROVIDER_CAPABILITIES): ProviderOption[] {
   return capabilities.map(({ id, label, badge, description, apiKeyPlaceholder, requiresApiKey, setupMode }) => ({
     id,
@@ -308,9 +312,7 @@ export function buildDefaultProviderSecrets(
   return entries as unknown as Record<ProviderId, string>;
 }
 
-export const PROVIDER_OPTIONS: ProviderOption[] = buildProviderOptions();
 
-export const PROVIDER_ISSUE_URLS: Record<ProviderId, string> = buildProviderIssueUrls();
 
 export const MODEL_SUGGESTIONS_BY_PROVIDER: Record<ProviderId, readonly string[]> =
   buildModelSuggestionsByProvider();

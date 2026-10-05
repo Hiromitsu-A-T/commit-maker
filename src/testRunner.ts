@@ -1,4 +1,6 @@
-import './commitController.test';
+import './promptLimit.test';
+import { runStringsTests } from './i18n/strings.test';
+import { runFileDownloadTests } from './services/fileDownload.test';
 import { runDiffCollectorTests } from './services/diffCollector.test';
 import { runClaudeLlmTests } from './services/llm/claude.test';
 import { runCodexLlmTests } from './services/llm/codex.test';
@@ -23,6 +25,7 @@ async function main() {
   await runOpenAiLlmTests();
   await runSharedLlmTests();
   await runCodexCliTests();
+  await runFileDownloadTests();
   await runLocalModelTests();
   await runLocalRuntimeTests();
   await runPromptPresetStorageTests();
@@ -31,6 +34,7 @@ async function main() {
   await runProviderSettingsTests();
   await runWebviewSerializationTests();
   runModelCapabilitiesTests();
+  runStringsTests();
   console.log('All tests completed');
 }
 

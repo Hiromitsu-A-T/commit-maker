@@ -1,3 +1,4 @@
+"use strict";
 const Dom = window.CommitMakerDom;
 function renderStatus(els, state, strings) {
     if (!els.statusRow)
@@ -33,7 +34,7 @@ function renderApiKeyBadges(els, providerOptions, state, strings) {
     const badges = providerOptions.map(opt => {
         const setupMode = opt.setupMode || (opt.id === 'local' ? 'localModel' : opt.requiresApiKey === false ? 'codexAuth' : 'apiKey');
         if (setupMode === 'localModel') {
-            const model = state.localModel || {};
+            const model = state.localModel;
             const status = getLocalModelStatus(model, t);
             const text = opt.badge + ': ' + status.text;
             return {
@@ -79,8 +80,8 @@ function getLocalModelStatus(model, strings) {
         return { text: strings.localModelStatusReady || 'Ready', className: 'success' };
     }
     if (status === 'downloading') {
-        const downloaded = Number(model.downloadedBytes || 0);
-        const total = Number(model.totalBytes || 0);
+        const downloaded = Number(model?.downloadedBytes || 0);
+        const total = Number(model?.totalBytes || 0);
         const percent = downloaded > 0 && total > 0 ? ` ${Math.floor((downloaded / total) * 100)}%` : '';
         return { text: (strings.localModelStatusDownloading || 'Downloading') + percent, className: 'warn' };
     }
@@ -92,16 +93,5 @@ function getLocalModelStatus(model, strings) {
     }
     return { text: strings.localModelStatusNotDownloaded || 'Not downloaded', className: 'warn' };
 }
-function renderReasoning(els, options, state, allow) {
-    Dom.renderSelect(els.reasoning, options, state.commitReasoning);
-    Dom.show(els.reasoningRow, allow, 'block');
-    Dom.setDisabled(els.reasoning, !allow);
-}
-function renderVerbosity(els, options, state, allow) {
-    Dom.renderSelect(els.verbosity, options, state.commitVerbosity);
-    Dom.show(els.verbosityRow, allow, 'block');
-    Dom.setDisabled(els.verbosity, !allow);
-}
-// expose for panel.js (no bundler)
-// @ts-ignore
-window.CommitMakerRender = { renderStatus, renderApiKeyBadges, renderReasoning, renderVerbosity };
+// panel.js から、読み込み後に描画処理を呼び出す。
+window.CommitMakerRender = { renderStatus, renderApiKeyBadges };

@@ -12,13 +12,13 @@ if (!key) {
 
 const models = MODEL_SUGGESTIONS_BY_PROVIDER.gemini;
 
-async function call(model: string): Promise<void> {
+async function call(model: string, apiKey: string): Promise<void> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-goog-api-key': key
+      'x-goog-api-key': apiKey
     },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: 'ping' }] }],
@@ -34,7 +34,7 @@ async function call(model: string): Promise<void> {
 
 async function main(): Promise<void> {
   for (const m of models) {
-    await call(m);
+    await call(m, key!);
     await new Promise(r => setTimeout(r, 100));
   }
   console.log(`\nGemini matrix OK (${models.length} models)`);

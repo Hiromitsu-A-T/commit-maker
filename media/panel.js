@@ -2,8 +2,7 @@
   const bootstrap = window.CommitMakerBootstrap;
   if (!bootstrap) return;
 
-  const Dom = window.CommitMakerDom;
-  const Elements = window.CommitMakerElements;
+  const { renderSelect, show, setDisabled } = window.CommitMakerDom;
   const Render = window.CommitMakerRender;
   const Events = window.CommitMakerEvents;
   const StateUtil = window.CommitMakerState;
@@ -17,15 +16,23 @@
   const providerIssueUrls = bootstrap.providerIssueUrls || {};
   const providerSupportsReasoning = bootstrap.providerSupportsReasoning || {};
   const providerSupportsVerbosity = bootstrap.providerSupportsVerbosity || {};
-  const verbosityBlocklistPatterns = bootstrap.verbosityBlocklistPatterns || [];
   const codexReasoningOptions = Array.isArray(bootstrap.codexReasoningOptions) ? bootstrap.codexReasoningOptions : ['low', 'medium', 'high', 'xhigh'];
   const localModelOptions = Array.isArray(bootstrap.localModelOptions) ? bootstrap.localModelOptions : [];
   const basePresets = Array.isArray(bootstrap.promptPresets) ? bootstrap.promptPresets : [];
   const defaultPreset = basePresets[0];
+  const allowedStateKeys = Array.isArray(bootstrap.allowedStateKeys) ? bootstrap.allowedStateKeys : [];
   let state = StateUtil.cloneState(bootstrap.defaultState);
 
-  /** @type {Elements} */
-  const els = queryElements();
+  let apiKeyInputProvider;
+  let apiKeyInputDirty = false;
+  let promptDraft;
+  let presetNameDirty = false;
+  let renderedPresetId;
+  let customModelProvider;
+  let customModelDraft;
+  let promptToastTimer;
+  let renderedPromptToast;
+  const els = window.CommitMakerElements.queryElements();
   const send = msg => vscode.postMessage(msg);
 
   window.addEventListener('message', handleMessage);
@@ -41,79 +48,6 @@
     document.body.classList.remove('app-pending');
     document.body.setAttribute('aria-busy', 'false');
     send({ type: 'ready' });
-  }
-
-  function queryElements() {
-    const get = id => document.getElementById(id);
-    return {
-      language: get('language'),
-      apiKeySection: get('apiKeySection'),
-      apiKeyCloudPanel: get('apiKeyCloudPanel'),
-      apiKeyProvider: get('apiKeyProvider'),
-      apiKeyInput: get('apiKeyInput'),
-      apiKeyPreview: get('apiKeyPreview'),
-      apiKeySave: get('apiKeySave'),
-      apiKeyClear: get('apiKeyClear'),
-      apiKeyIssue: get('apiKeyIssue'),
-      apiKeyStatusRow: get('apiKeyStatusRow'),
-      generate: get('generate'),
-      apply: get('apply'),
-      includeUnstaged: get('includeUnstaged'),
-      includeUntracked: get('includeUntracked'),
-      includeBinary: get('includeBinary'),
-      maxPromptMode: get('maxPromptMode'),
-      maxPromptValue: get('maxPromptValue'),
-      prompt: get('prompt'),
-      promptSaved: get('promptSaved'),
-      promptPreset: get('promptPreset'),
-      presetName: get('presetName'),
-      presetAdd: get('presetAdd'),
-      presetDelete: get('presetDelete'),
-      provider: get('provider'),
-      providerRow: get('providerRow'),
-      model: get('model'),
-      modelGroup: get('modelGroup'),
-      customModelRow: get('customModelRow'),
-      customModel: get('customModel'),
-      localModelPanel: get('localModelPanel'),
-      localModelName: get('localModelName'),
-      localModelStatus: get('localModelStatus'),
-      localModelGuidance: get('localModelGuidance'),
-      localModelGuidanceBadge: get('localModelGuidanceBadge'),
-      localModelGuidanceText: get('localModelGuidanceText'),
-      localModelDownload: get('localModelDownload'),
-      localModelCancel: get('localModelCancel'),
-      localModelDelete: get('localModelDelete'),
-      localModelTest: get('localModelTest'),
-      localModelHint: get('localModelHint'),
-      codexAuthPanel: get('codexAuthPanel'),
-      codexAuthStatus: get('codexAuthStatus'),
-      codexAuthHint: get('codexAuthHint'),
-      codexAuthLogin: get('codexAuthLogin'),
-      codexAuthRefresh: get('codexAuthRefresh'),
-      codexAuthLogout: get('codexAuthLogout'),
-      reasoningLabel: get('reasoningLabel'),
-      reasoning: get('reasoning'),
-      verbosity: get('verbosity'),
-      reasoningRow: get('reasoningRow'),
-      verbosityRow: get('verbosityRow'),
-      statusRow: get('statusRow'),
-      result: get('result'),
-      errorSection: get('errorSection'),
-      errorBox: get('errorBox')
-    };
-  }
-
-  function renderSelect(selectEl, options, selected) {
-    Dom.renderSelect(selectEl, options, selected);
-  }
-
-  function show(el, visible, display = 'block') {
-    Dom.show(el, visible, display);
-  }
-
-  function setDisabled(el, disabled) {
-    Dom.setDisabled(el, disabled);
   }
 
   function providerAllowsReasoning(provider) {
@@ -136,20 +70,8 @@
     return verbosityOptionsByModel[key] || verbosityOptions;
   }
 
-  function isVerbosityBlocked(modelId) {
-    const normalized = (modelId || '').toString().trim().toLowerCase();
-    if (!normalized) return false;
-    return verbosityBlocklistPatterns.some(pattern => {
-      try {
-        return new RegExp(pattern, 'i').test(normalized);
-      } catch (e) {
-        return false;
-      }
-    });
-  }
-
-  function providerAllowsVerbosity(provider, modelId) {
-    return Boolean(providerSupportsVerbosity?.[provider]) && !isVerbosityBlocked(modelId);
+  function providerAllowsVerbosity(provider) {
+    return Boolean(providerSupportsVerbosity?.[provider]);
   }
 
   function providerRequiresApiKey(provider) {
@@ -164,14 +86,6 @@
     return opt.requiresApiKey === false ? 'codexAuth' : 'apiKey';
   }
 
-  function getSelectableProviders() {
-    return providerOptions;
-  }
-
-  function hasAnyProvider() {
-    return getSelectableProviders().length > 0;
-  }
-
   function isLocalProvider(provider) {
     return providerSetupMode(provider) === 'localModel';
   }
@@ -184,6 +98,12 @@
     return state.localModel?.status === 'ready';
   }
 
+  function isLocalModelBusy() {
+    const status = state.localModel?.status;
+    return status === 'downloading' || status === 'loading' ||
+      (isLocalProvider(state.commitProvider) && state.commitStatus === 'loading');
+  }
+
   function isProviderConfigured(provider) {
     if (isLocalProvider(provider)) return true;
     if (isCodexProvider(provider)) return Boolean(state.apiKeys?.[provider]?.ready);
@@ -192,44 +112,29 @@
 
   function handleMessage(event) {
     const msg = event.data;
-    if (!msg || msg.type !== 'state' || typeof msg.state !== 'object') return;
-    state = StateUtil.mergeState(state, sanitizeState(msg.state));
+    if (!msg || msg.type !== 'state' || !msg.state || typeof msg.state !== 'object' || Array.isArray(msg.state)) return;
+    const next = sanitizeState(msg.state);
+    if (next.commitProvider && next.commitProvider !== state.commitProvider) {
+      customModelProvider = undefined;
+      customModelDraft = undefined;
+    }
+    // 非同期の host 更新が追い付くまで、入力途中の値を描画に使う。
+    if (customModelDraft !== undefined) {
+      if (next.commitCustomModel === customModelDraft) customModelDraft = undefined;
+      else next.commitCustomModel = customModelDraft;
+    }
+    if (promptDraft !== undefined) {
+      if (next.commitPrompt === promptDraft) promptDraft = undefined;
+      else next.commitPrompt = promptDraft;
+    }
+    state = StateUtil.mergeState(state, next);
     render();
   }
 
   function sanitizeState(next) {
-    const allowed = Array.isArray(bootstrap.allowedStateKeys) && bootstrap.allowedStateKeys.length
-      ? bootstrap.allowedStateKeys
-      : [
-          'language',
-          'apiKeyProvider',
-          'apiKeys',
-          'commitPrompt',
-          'promptPresets',
-          'activePromptPresetId',
-          'commitProvider',
-          'commitModel',
-          'commitCustomModel',
-          'commitModelSuggestions',
-          'commitRecommendedModelsLabel',
-          'commitStatus',
-          'commitResult',
-          'commitLastError',
-          'commitProgress',
-          'commitIncludeUnstaged',
-          'commitIncludeUntracked',
-          'commitIncludeBinary',
-          'commitMaxPromptChars',
-          'commitMaxPromptMode',
-          'commitReasoning',
-          'commitCodexReasoning',
-          'commitVerbosity',
-          'localModel',
-          'strings',
-          'promptToast'
-        ];
+    // 許可するキーは host が一元管理する。渡されなければ更新を受け付けない。
     const sanitized = {};
-    for (const key of allowed) {
+    for (const key of allowedStateKeys) {
       if (Object.prototype.hasOwnProperty.call(next, key)) {
         sanitized[key] = next[key];
       }
@@ -238,26 +143,38 @@
   }
 
   function bindEvents() {
+    bindPromptEvents();
+    bindApiKeyEvents();
+    bindGenerationEvents();
+    bindModelEvents();
+    bindLocalModelEvents();
+    bindCodexAuthEvents();
+    bindReasoningEvents();
+  }
+
+  function bindPromptEvents() {
     if (els.language) {
       Events.onChange(els.language, ev => {
         const value = String(ev.target.value || 'ja');
         send({ type: 'languageChanged', value });
-        // 言語変更は静的文言を再レンダリングするためにリロード
-        setTimeout(() => {
-          window.location.reload();
-        }, 10);
       });
     }
     Events.onInput(els.prompt, ev => {
-      send({ type: 'commitPromptChanged', value: ev.target.value });
+      promptDraft = ev.target.value;
+      send({ type: 'commitPromptChanged', value: promptDraft });
       updatePresetButtons();
     });
-    Events.onInput(els.presetName, () => updatePresetButtons());
+    Events.onInput(els.presetName, () => {
+      presetNameDirty = true;
+      updatePresetButtons();
+    });
     if (els.promptPreset) {
       els.promptPreset.addEventListener('change', ev => {
         const value = ev.target.value;
         const preset = getPresets().find(p => p.id === value);
         if (!preset) return;
+        promptDraft = undefined;
+        presetNameDirty = false;
         setPromptFromPreset(preset);
         send({ type: 'applyPromptPreset', id: preset.id });
         updatePresetButtons();
@@ -268,6 +185,7 @@
         const promptText = els.prompt?.value || '';
         const label = (els.presetName?.value || '').trim();
         if (!promptText.trim() || !label) return;
+        presetNameDirty = false;
         send({ type: 'savePromptPreset', title: label, body: promptText });
         if (els.presetName) els.presetName.value = '';
       });
@@ -276,15 +194,26 @@
       els.presetDelete.addEventListener('click', () => {
         const value = els.promptPreset?.value;
         if (!value || value === defaultPreset?.id) return;
+        promptDraft = undefined;
+        presetNameDirty = false;
         send({ type: 'deletePromptPreset', id: value });
       });
     }
+  }
+
+  function bindApiKeyEvents() {
     Events.bindSelectValue(els.apiKeyProvider, 'apiKeyProviderChanged', send);
+    Events.onInput(els.apiKeyInput, () => {
+      apiKeyInputDirty = true;
+      setDisabled(els.apiKeySave, !els.apiKeyInput.value);
+    });
     if (els.apiKeySave) {
       els.apiKeySave.addEventListener('click', () => {
         const value = els.apiKeyInput ? (els.apiKeyInput.value || '') : '';
         const provider = els.apiKeyProvider ? (els.apiKeyProvider.value || state.apiKeyProvider) : state.apiKeyProvider;
-        if (value) {
+        if (apiKeyInputDirty && value) {
+          apiKeyInputDirty = false;
+          setDisabled(els.apiKeySave, true);
           send({ type: 'submitApiKey', value, provider });
         }
       });
@@ -299,9 +228,13 @@
     if (els.apiKeyClear) {
       els.apiKeyClear.addEventListener('click', () => {
         const provider = els.apiKeyProvider ? (els.apiKeyProvider.value || state.apiKeyProvider) : state.apiKeyProvider;
+        apiKeyInputDirty = false;
         send({ type: 'submitApiKey', value: '', provider });
       });
     }
+  }
+
+  function bindGenerationEvents() {
     Events.bindCheckbox(els.includeUnstaged, 'commitIncludeUnstagedChanged', send);
     Events.bindCheckbox(els.includeUntracked, 'commitIncludeUntrackedChanged', send);
     Events.bindCheckbox(els.includeBinary, 'commitIncludeBinaryChanged', send);
@@ -329,14 +262,22 @@
     if (els.apply) {
       els.apply.addEventListener('click', () => send({ type: 'commitApply' }));
     }
+  }
+
+  function bindModelEvents() {
     Events.bindSelectValue(els.provider, 'commitProviderChanged', send);
     if (els.model) {
       els.model.addEventListener('change', ev => {
         const value = String(ev.target.value || '').trim();
         if (value === '__custom__') {
-          const custom = (els.customModel?.value || state.commitCustomModel || state.commitModel || '').trim();
+          const custom = (state.commitCustomModel || state.commitModel || '').trim();
+          customModelProvider = state.commitProvider;
+          customModelDraft = custom;
+          renderModels();
           send({ type: 'commitCustomModelChanged', value: custom });
         } else if (value) {
+          customModelProvider = undefined;
+          customModelDraft = undefined;
           send({ type: 'commitModelChanged', value });
         }
       });
@@ -344,16 +285,15 @@
     if (els.customModel) {
       els.customModel.addEventListener('input', ev => {
         const value = String(ev.target.value || '').trim();
+        customModelDraft = value.slice(0, 128);
         if (!value) return;
-        if (value.length > 128) {
-          const trimmed = value.slice(0, 128);
-          els.customModel.value = trimmed;
-          send({ type: 'commitCustomModelChanged', value: trimmed });
-        } else {
-          send({ type: 'commitCustomModelChanged', value });
-        }
+        if (value.length > 128) els.customModel.value = customModelDraft;
+        send({ type: 'commitCustomModelChanged', value: customModelDraft });
       });
     }
+  }
+
+  function bindLocalModelEvents() {
     if (els.localModelDownload) {
       els.localModelDownload.addEventListener('click', () => send({ type: 'localModelDownload' }));
     }
@@ -375,6 +315,9 @@
     if (els.localModelTest) {
       els.localModelTest.addEventListener('click', () => send({ type: 'localModelTest' }));
     }
+  }
+
+  function bindCodexAuthEvents() {
     if (els.codexAuthLogin) {
       els.codexAuthLogin.addEventListener('click', () => send({ type: 'codexLogin' }));
     }
@@ -384,6 +327,9 @@
     if (els.codexAuthLogout) {
       els.codexAuthLogout.addEventListener('click', () => send({ type: 'codexLogout' }));
     }
+  }
+
+  function bindReasoningEvents() {
     Events.onChange(els.reasoning, ev => {
       const value = String(ev.target.value);
       const codexProvider = isCodexProvider(state.commitProvider);
@@ -507,7 +453,11 @@
     }
     if (els.presetName) {
       const target = activePreset || defaultPreset;
-      els.presetName.value = target?.isDefault ? '' : (target?.label || '');
+      if (!presetNameDirty || renderedPresetId !== target?.id) {
+        els.presetName.value = target?.isDefault ? '' : (target?.label || '');
+        presetNameDirty = false;
+      }
+      renderedPresetId = target?.id;
     }
     updatePresetButtons();
   }
@@ -536,16 +486,14 @@
       els.presetAdd.textContent = t.presetButtonNew || '';
       els.presetAdd.title = t.presetTitleNew || '';
       els.presetAdd.disabled = !(nameInput && body);
+    } else if (!dirty) {
+      els.presetAdd.textContent = t.presetButtonSaved || '';
+      els.presetAdd.title = t.presetTitleNoChange || '';
+      els.presetAdd.disabled = true;
     } else {
-      if (!dirty) {
-        els.presetAdd.textContent = t.presetButtonSaved || '';
-        els.presetAdd.title = t.presetTitleNoChange || '';
-        els.presetAdd.disabled = true;
-      } else {
-        els.presetAdd.textContent = t.presetButtonOverwrite || '';
-        els.presetAdd.title = t.presetTitleOverwrite || '';
-        els.presetAdd.disabled = false;
-      }
+      els.presetAdd.textContent = t.presetButtonOverwrite || '';
+      els.presetAdd.title = t.presetTitleOverwrite || '';
+      els.presetAdd.disabled = false;
     }
   }
 
@@ -580,7 +528,13 @@
         els.apiKeyPreview.style.color = '#b4b4b4';
       }
     }
-    if (els.apiKeyInput) {
+    // 伏せ字は表示専用。別の状態更新で入力途中のキーを消さない。
+    if (apiKeyInputProvider !== active) {
+      apiKeyInputProvider = active;
+      apiKeyInputDirty = false;
+    }
+    setDisabled(els.apiKeySave, !apiKeyInputDirty || !els.apiKeyInput?.value);
+    if (els.apiKeyInput && !apiKeyInputDirty) {
       if (selectedState?.ready) {
         const len = selectedState.length && selectedState.length > 0 ? selectedState.length : 8;
         els.apiKeyInput.value = '*'.repeat(len);
@@ -588,6 +542,10 @@
         els.apiKeyInput.value = '';
       }
     }
+    renderCodexAuth(selectedState, t);
+  }
+
+  function renderCodexAuth(selectedState, t) {
     if (els.codexAuthStatus) {
       els.codexAuthStatus.textContent = selectedState?.ready
         ? (t.codexAuthReady || 'Codex signed in')
@@ -617,8 +575,8 @@
     if (!els.provider) return;
     const t = getStrings();
     els.provider.innerHTML = '';
-    const selectableProviders = getSelectableProviders();
-    const hasProvider = hasAnyProvider();
+    const selectableProviders = providerOptions;
+    const hasProvider = (providerOptions.length > 0);
 
     if (!hasProvider) {
       const placeholder = document.createElement('option');
@@ -653,10 +611,12 @@
     els.model.innerHTML = '';
     const suggestions = state.commitModelSuggestions ?? [];
     const providerId = state.commitProvider || providerOptions[0]?.id;
-    const hasProvider = Boolean(providerId) && getSelectableProviders().some(opt => opt.id === providerId);
+    const hasProvider = Boolean(providerId) && providerOptions.some(opt => opt.id === providerId);
     const providerConfigured = isProviderConfigured(providerId);
     const localProvider = isLocalProvider(providerId);
     const codexProvider = isCodexProvider(providerId);
+
+    setDisabled(els.model, localProvider && isLocalModelBusy());
 
     if (!hasProvider || !providerConfigured) {
       const placeholder = document.createElement('option');
@@ -686,13 +646,13 @@
       const customOpt = document.createElement('option');
       customOpt.value = '__custom__';
       customOpt.textContent = t.customModelOption || 'Custom…';
-      customOpt.selected = !suggestions.includes(state.commitModel ?? '');
+      customOpt.selected = customModelProvider === providerId || !suggestions.includes(state.commitModel ?? '');
       els.model.appendChild(customOpt);
       isCustom = customOpt.selected;
     }
     show(els.customModelRow, isCustom, 'block');
     if (isCustom && els.customModel) {
-      els.customModel.value = state.commitCustomModel || state.commitModel || '';
+      els.customModel.value = customModelDraft ?? (state.commitCustomModel || state.commitModel || '');
     }
   }
 
@@ -704,7 +664,7 @@
     const model = state.localModel || {};
     const statusLabel = getLocalModelStatusLabel(model.status, t);
     const downloading = model.status === 'downloading';
-    const busy = downloading || model.status === 'loading';
+    const busy = isLocalModelBusy();
     const selected = model.id || state.commitModel || localModelOptions[0]?.id || '';
     if (els.localModelName) {
       els.localModelName.innerHTML = '';
@@ -793,18 +753,38 @@
     const option = localModelOptions.find(item => item.id === modelId);
     const recommended = option?.uiProfile === 'recommended';
     const lowMemory = option?.uiProfile === 'lowMemory';
-    show(els.localModelGuidance, recommended || lowMemory, 'flex');
-    if (!recommended && !lowMemory) return;
+    const badgeText = recommended
+      ? (t.localModelRecommendedBadge || 'Recommended')
+      : lowMemory
+        ? (t.localModelLowMemoryBadge || 'Low memory')
+        : (option?.uiBadge || option?.label || modelId || '-');
+    const description = recommended
+      ? (t.localModelRecommendedHint || 'Recommended for the best balance of quality and local performance.')
+      : lowMemory
+        ? (t.localModelLowMemoryHint || 'Uses less memory, but accuracy may drop on long or complex diffs.')
+        : (option?.label || modelId || '-');
+    const sizeText = option?.sizeLabel || '-';
+    const detailsText = option?.uiDetails || option?.label || modelId || '-';
+    show(els.localModelGuidance, true, 'grid');
     if (els.localModelGuidanceBadge) {
-      els.localModelGuidanceBadge.textContent = recommended
-        ? (t.localModelRecommendedBadge || 'Recommended')
-        : (t.localModelLowMemoryBadge || 'Low memory');
-      els.localModelGuidanceBadge.className = 'pill ' + (recommended ? 'success' : 'warn');
+      els.localModelGuidanceBadge.textContent = badgeText;
+      els.localModelGuidanceBadge.title = badgeText;
+      els.localModelGuidanceBadge.className = 'pill' + (recommended ? ' success' : lowMemory ? ' warn' : '');
+    }
+    if (els.localModelGuidanceSize) {
+      els.localModelGuidanceSize.textContent = sizeText;
+      els.localModelGuidanceSize.title = sizeText;
     }
     if (els.localModelGuidanceText) {
-      els.localModelGuidanceText.textContent = recommended
-        ? (t.localModelRecommendedHint || 'Recommended for the best balance of quality and local performance.')
-        : (t.localModelLowMemoryHint || 'Uses less memory, but accuracy may drop on long or complex diffs.');
+      els.localModelGuidanceText.textContent = description;
+      els.localModelGuidanceText.title = description;
+    }
+    if (els.localModelGuidanceDetails) {
+      els.localModelGuidanceDetails.textContent = detailsText;
+      els.localModelGuidanceDetails.title = detailsText;
+    }
+    if (els.localModelGuidance) {
+      els.localModelGuidance.setAttribute('aria-label', [badgeText, sizeText, description, detailsText].join(' · '));
     }
   }
 
@@ -854,7 +834,7 @@
   function renderVerbosity() {
     if (!els.verbosity) return;
     const allowed = getAllowedVerbosityOptions(getCurrentModelId());
-    const enabled = isProviderConfigured(state.commitProvider) && providerAllowsVerbosity(state.commitProvider, state.commitModel) && allowed.length > 0;
+    const enabled = isProviderConfigured(state.commitProvider) && providerAllowsVerbosity(state.commitProvider) && allowed.length > 0;
     const value = enabled && allowed.includes(state.commitVerbosity) ? state.commitVerbosity : allowed[0];
     renderSelect(els.verbosity, enabled ? allowed : ['-'], enabled ? value : '-');
     show(els.verbosityRow, true, 'block');
@@ -879,21 +859,19 @@
   }
 
   function renderPromptSaved() {
-    if (!els.promptSaved) return;
-    if (state.promptToast) {
-      const text = state.promptToast;
-      els.promptSaved.textContent = text;
-      els.promptSaved.style.visibility = 'visible';
-      setTimeout(() => {
-        if (els.promptSaved && els.promptSaved.textContent === text) {
-          els.promptSaved.style.visibility = 'hidden';
-          els.promptSaved.textContent = '';
-        }
-      }, 2500);
-    } else {
-      els.promptSaved.textContent = '';
+    if (!els.promptSaved || renderedPromptToast === state.promptToast) return;
+    renderedPromptToast = state.promptToast;
+    if (promptToastTimer) clearTimeout(promptToastTimer);
+    promptToastTimer = undefined;
+    els.promptSaved.textContent = state.promptToast || '';
+    els.promptSaved.style.visibility = state.promptToast ? 'visible' : 'hidden';
+    if (!state.promptToast) return;
+    // 再描画ごとにタイマーを増やさず、同じ通知は最初の表示から 2.5 秒で隠す。
+    promptToastTimer = setTimeout(() => {
+      promptToastTimer = undefined;
       els.promptSaved.style.visibility = 'hidden';
-    }
+      els.promptSaved.textContent = '';
+    }, 2500);
   }
 
   function renderBadges() {

@@ -1,5 +1,5 @@
 import { GEMINI_GENERATE_SUFFIX } from '../../constants';
-import { callLlmJson } from './shared';
+import { asRecord, callLlmJson } from './shared';
 import { getStrings, DEFAULT_LANGUAGE } from '../../i18n/strings';
 
 export interface GeminiCallParams {
@@ -44,8 +44,10 @@ export async function callGemini({
       }
     }),
     parse: raw => {
-      const data = raw ? JSON.parse(raw) as any : {};
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      const data = asRecord(raw ? JSON.parse(raw) : undefined);
+      const candidate = asRecord(Array.isArray(data.candidates) ? data.candidates[0] : undefined);
+      const parts = asRecord(candidate.content).parts;
+      const text = asRecord(Array.isArray(parts) ? parts[0] : undefined).text;
       if (!text || typeof text !== 'string') {
         throw new Error(strings.msgLlmEmptyGemini);
       }
@@ -55,11 +57,11 @@ export async function callGemini({
 }
 
 function buildGeminiEndpoint(base: string, model: string): string {
-  const u = new URL(base);
-  const path = u.pathname.replace(/\/$/, '');
-  u.pathname = path.endsWith(GEMINI_GENERATE_SUFFIX)
+  const url = new URL(base);
+  const path = url.pathname.replace(/\/$/, '');
+  url.pathname = path.endsWith(GEMINI_GENERATE_SUFFIX)
     ? path
     : `${path}/${model}${GEMINI_GENERATE_SUFFIX}`;
-  u.searchParams.delete('key');
-  return u.toString();
+  url.searchParams.delete('key');
+  return url.toString();
 }

@@ -1,3 +1,4 @@
+"use strict";
 function onInput(el, handler) {
     if (el) {
         el.addEventListener('input', handler);
@@ -14,8 +15,7 @@ function bindCheckbox(el, messageType, send) {
 function bindSelectValue(el, messageType, send) {
     onChange(el, ev => send({ type: messageType, value: ev.target.value }));
 }
-// expose for panel.js (no bundler)
-// @ts-ignore
+// classic script の入口を公開し、イベント登録を panel.js に集約する。
 window.CommitMakerEvents = {
     onInput,
     onChange,

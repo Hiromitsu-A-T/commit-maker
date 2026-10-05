@@ -3,7 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { spawn } from 'child_process';
 import { CodexReasoningEffort } from '../../types';
-import { sanitizeLlmErrorText } from './shared';
+import { asRecord, sanitizeLlmErrorText } from './shared';
 import { buildCodexEnvironment } from '../codexCli';
 
 export interface CodexCallParams {
@@ -123,14 +123,14 @@ export function parseCodexOutput(raw: string): string {
   const text = cleanupCommitMessage(raw);
   if (!text) return '';
   try {
-    const data = JSON.parse(text) as { message?: unknown };
+    const data = asRecord(JSON.parse(text));
     if (typeof data.message === 'string') {
       return cleanupCommitMessage(data.message);
     }
   } catch {
-    // Some older Codex versions may return plain text even with an output schema.
+    // 古い CLI が schema 指定時にも返すプレーンテキストを受け入れる。
   }
-  return cleanupCommitMessage(text);
+  return text;
 }
 
 function buildCodexPrompt(prompt: string): string {
@@ -159,7 +159,7 @@ async function readOutputFile(outputPath: string, fallback: string): Promise<str
     const raw = await fs.promises.readFile(outputPath, 'utf8');
     if (raw.trim()) return raw;
   } catch {
-    // Fall back to stdout when Codex did not create the last-message file.
+    // 最終メッセージのファイルを読めない場合は stdout の互換応答を使う。
   }
   return fallback;
 }

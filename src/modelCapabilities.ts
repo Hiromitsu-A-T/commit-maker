@@ -1,28 +1,7 @@
-// GPT-5 系は codex も含め text.verbosity をサポートしているためブロックしない。
+// モデル固有の許可値と既定値を、画面と API 呼び出しで共有する。
 import { ReasoningEffort, VerbositySetting } from './types';
 
-export const VERBOSITY_BLOCKLIST: RegExp[] = [];
-
-export function isVerbosityBlocked(model: string | undefined): boolean {
-  const normalized = normalizeModelName(model);
-  if (!normalized) {
-    return false;
-  }
-  return VERBOSITY_BLOCKLIST.some(pattern => pattern.test(normalized));
-}
-
-function normalizeModelName(model: string | undefined): string {
-  return (model ?? '').trim().toLowerCase();
-}
-
-export function supportsVerbosity(model: string): boolean {
-  return !isVerbosityBlocked(model);
-}
-
-export function getVerbosityBlocklistPatterns(): string[] {
-  return VERBOSITY_BLOCKLIST.map(pattern => pattern.source);
-}
-
+// 空配列は Responses API 非対応、未登録はカスタムモデルの指定を通す。
 const ALLOWED_REASONING_BY_MODEL: Record<string, ReasoningEffort[]> = {
   'gpt-5.6': ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
   'gpt-5.6-sol': ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
@@ -44,11 +23,11 @@ const ALLOWED_REASONING_BY_MODEL: Record<string, ReasoningEffort[]> = {
   'gpt-5': ['minimal', 'low', 'medium', 'high'],
   'gpt-5-mini': ['minimal', 'low', 'medium', 'high'],
   'gpt-5-nano': ['minimal', 'low', 'medium', 'high'],
-  'gpt-5.1-chat-latest': ['medium'], // 実測: reasoning=medium 固定
-  'gpt-5-chat-latest': [], // Responses では reasoning.effort 非対応
+  'gpt-5.1-chat-latest': ['medium'],
+  'gpt-5-chat-latest': [],
   'gpt-5-pro': ['high'],
-  'gpt-5-codex': ['low', 'medium', 'high'], // minimal不可
-  'gpt-5.1-codex-mini': ['low', 'medium', 'high'] // none/minimal不可
+  'gpt-5-codex': ['low', 'medium', 'high'],
+  'gpt-5.1-codex-mini': ['low', 'medium', 'high']
 };
 
 const DEFAULT_REASONING_BY_MODEL: Record<string, ReasoningEffort> = {
@@ -106,8 +85,7 @@ const ALLOWED_VERBOSITY_BY_MODEL: Record<string, VerbositySetting[]> = {
   'gpt-5-codex': ['medium'],
   'gpt-5.1-codex-mini': ['medium'],
   'gpt-5.1-chat-latest': ['medium'],
-  'gpt-5-chat-latest': [] // Responses では text.verbosity も非対応（全400）
-  // それ以外は low/medium/high を許容
+  'gpt-5-chat-latest': []
 };
 
 export function getAllowedVerbosityOptions(model: string | undefined): VerbositySetting[] | undefined {

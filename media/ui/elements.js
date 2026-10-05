@@ -1,4 +1,6 @@
-export function queryElements() {
+"use strict";
+function queryElements() {
+    // HTML の ID と要素の型をここで対応付け、イベント処理では型を断定しない。
     const get = (id) => document.getElementById(id);
     return {
         language: get('language'),
@@ -33,6 +35,11 @@ export function queryElements() {
         localModelPanel: get('localModelPanel'),
         localModelName: get('localModelName'),
         localModelStatus: get('localModelStatus'),
+        localModelGuidance: get('localModelGuidance'),
+        localModelGuidanceBadge: get('localModelGuidanceBadge'),
+        localModelGuidanceSize: get('localModelGuidanceSize'),
+        localModelGuidanceText: get('localModelGuidanceText'),
+        localModelGuidanceDetails: get('localModelGuidanceDetails'),
         localModelDownload: get('localModelDownload'),
         localModelCancel: get('localModelCancel'),
         localModelDelete: get('localModelDelete'),
@@ -55,3 +62,4 @@ export function queryElements() {
         errorBox: get('errorBox')
     };
 }
+window.CommitMakerElements = { queryElements };

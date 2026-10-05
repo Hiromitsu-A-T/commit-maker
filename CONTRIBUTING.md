@@ -33,7 +33,7 @@ English and Japanese issues and pull requests are both welcome.
 
 Requirements:
 
-- Node.js 20
+- Node.js 22.13 以上 / 22.13 or later
 - npm
 - VS Code 1.94 or later
 
@@ -46,14 +46,25 @@ npm ci
 Compile:
 
 ```bash
+npm run lint
+npm run typecheck
 npm run compile
+npm run build:media
 ```
 
 Run tests:
 
 ```bash
 npm test
+npm run test:integration
 ```
+
+`npm run test:integration` は専用の一時ディレクトリーと架空の認証情報を使います。
+ブラウザーで画面を確認する場合は `npm run smoke:webview` が表示するローカル URL を開きます。
+操作の自動確認は別ターミナルで `node scripts/webview-smoke.cjs <URL>` を実行します（Playwright CLI を使用）。
+macOS / Linux の実 VS Code 確認は `node scripts/run-vscode-smoke.cjs [code のパス] [VSIX のパス]` で実行できます。
+検証は専用プロファイルを作成し、終了時に削除します。
+構造、配布、検証の詳細は [`AGENTS.md`](AGENTS.md) を参照してください。
 
 Optional smoke checks:
 
@@ -75,13 +86,13 @@ locally or in CI secrets. Never commit them.
 - 解決する問題とユーザーに見える挙動の変更を説明してください。
 - バグ修正や共有ロジックの変更では、可能な範囲でテストを追加してください。
 - ユーザーに見える機能を変えた場合は、README や package metadata も更新してください。
-- Pull Request 前に `npm run compile` と `npm test` を実行してください。
+- Pull Request 前に lint・型検査・ビルド・単体/統合テスト を実行してください。
 - 生成物、ローカル VSIX、ログ、個人メモはリポジトリに含めないでください。
 
 - Explain the problem and the user-facing behavior change.
 - Add focused tests for bug fixes and shared behavior when practical.
 - Update README or package metadata when user-visible features change.
-- Run `npm run compile` and `npm test` before opening a pull request.
+- Run lint, typecheck, build, and unit/integration tests before opening a pull request.
 - Keep generated artifacts, local VSIX files, logs, and private notes out of the
   repository.
 

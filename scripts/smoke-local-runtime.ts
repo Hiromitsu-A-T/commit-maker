@@ -1,3 +1,4 @@
+import type * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -12,10 +13,7 @@ async function main(): Promise<void> {
   };
   const extensionUri = { fsPath: process.cwd() };
   const config = {
-    get(key: string): string | undefined {
-      if (key === 'localRuntimePath') return undefined;
-      return undefined;
-    },
+    get(): undefined { return undefined; },
     inspect(): undefined {
       return undefined;
     }
@@ -24,7 +22,7 @@ async function main(): Promise<void> {
   try {
     const runtimeVersions = [...new Set(LOCAL_MODEL_DEFINITIONS.map(resolveLocalRuntimeVersion))];
     for (const runtimeVersion of runtimeVersions) {
-      const runtimePath = await ensureLocalRuntime(context as any, extensionUri as any, config as any, {
+      const runtimePath = await ensureLocalRuntime(context as unknown as vscode.ExtensionContext, extensionUri as vscode.Uri, config as unknown as vscode.WorkspaceConfiguration, {
         runtimeVersion,
         onProgress: createProgressLogger(),
         logger: message => console.log(message)

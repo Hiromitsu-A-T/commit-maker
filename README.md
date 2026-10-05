@@ -9,14 +9,14 @@
 **Git の差分を読み取り、最適なコミットメッセージを自動生成して SCM 入力欄へ反映する VS Code 拡張（コミットメーカー / commit message generator）です。**  
 Gemini / OpenAI / Claude の API キー（BYOK）に加えて、Commit Maker 専用の Codex ログイン連携と API キー不要のローカル LLM にも対応。Local では Qwen3.5 / Gemma 4 / LFM2.5 の GGUF モデルを選択でき、必要な llama.cpp runtime とモデル別 profile を自動で使い分けます。
 Cursor や Copilot では実現しにくい、完全カスタマイズ可能な AI コミットメッセージ生成ツール。Git commit を効率化し、チーム全体のコミット品質を向上させます。
-キーはすべてローカルの SecretStorage に保存され、サーバー側に記録を残しません。
-SecretStorage とは VS Code が提供するローカル暗号化ストレージで、APIキーはPCをまたいで同期されません（Settings Sync も無効）。API キーはこの領域からのみ読み書きします。
+画面から保存した API キーは VS Code の SecretStorage に保存します。クラウド生成時は、選択したプロバイダーに認証情報と差分を送信します。
+SecretStorage とは VS Code が提供するローカル暗号化ストレージで、APIキーはPCをまたいで同期されません（Settings Sync も無効）。保存済みキーがない場合は、対応する環境変数からも読み取れます。
 
 (English) **VS Code extension that reads your Git diff and auto-fills the SCM commit box with a generated message.**  
 Use your own Gemini / OpenAI / Claude API key (BYOK), connect through Commit Maker dedicated Codex sign-in, or use the Local LLM provider without an API key. Local supports Qwen3.5, Gemma 4, and LFM2.5 GGUF models and automatically uses the matching llama.cpp runtime and model profile.
 Fully customizable AI commit message generator beyond what Cursor or Copilot commonly offer. Streamline your Git commits and elevate your team's commit quality with professional commit messages.
-API keys stay in local SecretStorage; nothing is sent to the server side.
-SecretStorage is VS Code’s local encrypted store; API keys are not synced across machines (Settings Sync disabled) and are read/written only from there.
+API keys saved from the panel are stored in VS Code SecretStorage. Cloud generation sends credentials and Git diffs to the selected provider.
+SecretStorage is VS Code’s local encrypted store; API keys are not synced across machines (Settings Sync disabled). Supported environment variables are used when no saved key exists.
 
 ## 🎬 デモ / Demo
 差分読み込みからメッセージ生成、SCM反映までの一連の流れを確認できます  
@@ -144,8 +144,8 @@ Local は大きな差分を拡張機能内でファイル別の構造化ダイ�
 (Recommended: **Gemini** `gemini-3.5-flash-lite` for speed & cost; add custom instructions if needed)
 
 **4. コミットメッセージを生成**  
-「変更を読み込んで提案」ボタンをクリックして、プロフェッショナルな commit メッセージを生成  
-(Click "Load changes & propose" to generate professional commit messages)
+「生成」ボタンをクリックして、プロフェッショナルな commit メッセージを生成  
+(Click "Generate" to generate professional commit messages)
 
 **5. SCMに反映**  
 生成されたメッセージを確認し、「SCM へ反映」で適用  
@@ -229,9 +229,10 @@ UIから切り替え可能（Switchable from UI）:
 
 **保存範囲 / Storage Scope:**
 - プロンプト本体・プリセット → PC内共通（globalState）
-- その他の設定 → ワークスペース単位
+- プロバイダー・モデル・差分範囲 → ワークスペース単位
+- API キー → SecretStorage、エンドポイント・実行ファイル・モデル取得 URL → ユーザー設定
 
-(Prompts/presets: globally on local machine; other settings: per workspace)
+(Prompts/presets: local globalState; provider/model/diff selection: per workspace; credentials: SecretStorage; endpoints/runtime paths/download URLs: user settings)
 
 </details>
 

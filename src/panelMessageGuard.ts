@@ -7,8 +7,6 @@ import {
   isVerbositySetting
 } from './types';
 
-type Validator<T> = (value: unknown) => value is T;
-
 function isString(value: unknown): value is string {
   return typeof value === 'string';
 }
@@ -19,7 +17,7 @@ function isBoolean(value: unknown): value is boolean {
 
 export function sanitizeMessage(message: unknown): WebviewInboundMessage | undefined {
   if (!message || typeof message !== 'object') return undefined;
-  const candidate = message as { type?: unknown };
+  const candidate = message as Record<string, unknown>;
   if (!isString(candidate.type)) return undefined;
 
   switch (candidate.type) {
@@ -27,61 +25,66 @@ export function sanitizeMessage(message: unknown): WebviewInboundMessage | undef
       return { type: 'ready' };
     case 'apiKeyProviderChanged':
     case 'commitProviderChanged':
-      return isProviderId((candidate as any).value)
-        ? { type: candidate.type, value: (candidate as any).value }
+      return isProviderId(candidate.value)
+        ? { type: candidate.type, value: candidate.value }
         : undefined;
     case 'submitApiKey':
-      return isString((candidate as any).value) && isProviderId((candidate as any).provider)
-        ? { type: 'submitApiKey', value: (candidate as any).value, provider: (candidate as any).provider }
+      return isString(candidate.value) && isProviderId(candidate.provider)
+        ? { type: 'submitApiKey', value: candidate.value, provider: candidate.provider }
         : undefined;
     case 'commitPromptChanged':
-      return isString((candidate as any).value) ? { type: 'commitPromptChanged', value: (candidate as any).value } : undefined;
+      return isString(candidate.value) ? { type: 'commitPromptChanged', value: candidate.value } : undefined;
     case 'savePromptPreset':
-      return isString((candidate as any).title) && isString((candidate as any).body)
-        ? { type: 'savePromptPreset', title: (candidate as any).title, body: (candidate as any).body }
+      return isString(candidate.title) && isString(candidate.body)
+        ? { type: 'savePromptPreset', title: candidate.title, body: candidate.body }
         : undefined;
     case 'applyPromptPreset':
     case 'deletePromptPreset':
-      return isString((candidate as any).id)
-        ? { type: candidate.type, id: (candidate as any).id }
+      return isString(candidate.id)
+        ? { type: candidate.type, id: candidate.id }
         : undefined;
     case 'commitModelChanged':
     case 'commitCustomModelChanged':
-      return isString((candidate as any).value)
-        ? { type: candidate.type, value: (candidate as any).value }
+      return isString(candidate.value)
+        ? { type: candidate.type, value: candidate.value }
         : undefined;
     case 'commitIncludeUnstagedChanged':
     case 'commitIncludeUntrackedChanged':
     case 'commitIncludeBinaryChanged':
-      return isBoolean((candidate as any).value)
-        ? { type: candidate.type, value: (candidate as any).value }
+      return isBoolean(candidate.value)
+        ? { type: candidate.type, value: candidate.value }
         : undefined;
     case 'commitMaxPromptChanged': {
-      const value = (candidate as any).value;
-      if (!value || (value.mode !== 'unlimited' && value.mode !== 'limited')) return undefined;
+      if (!candidate.value || typeof candidate.value !== 'object') return undefined;
+      const value = candidate.value as Record<string, unknown>;
+      if (value.mode !== 'unlimited' && value.mode !== 'limited') return undefined;
       if (value.mode === 'unlimited') {
         return { type: 'commitMaxPromptChanged', value: { mode: 'unlimited', value: null } };
       }
-      if (typeof value.value !== 'number' || !Number.isFinite(value.value) || value.value <= 0) {
+      if (value.value === null || value.value === 0) {
+        // 入力モードは維持し、文字数の上限だけ解除する。
+        return { type: 'commitMaxPromptChanged', value: { mode: 'limited', value: null } };
+      }
+      if (typeof value.value !== 'number' || !Number.isFinite(value.value) || value.value < 1) {
         return undefined;
       }
       return { type: 'commitMaxPromptChanged', value: { mode: 'limited', value: Math.floor(value.value) } };
     }
     case 'commitReasoningChanged':
-      return isReasoningEffort((candidate as any).value)
-        ? { type: candidate.type, value: (candidate as any).value }
+      return isReasoningEffort(candidate.value)
+        ? { type: candidate.type, value: candidate.value }
         : undefined;
     case 'commitCodexReasoningChanged':
-      return isCodexReasoningEffort((candidate as any).value)
-        ? { type: candidate.type, value: (candidate as any).value }
+      return isCodexReasoningEffort(candidate.value)
+        ? { type: candidate.type, value: candidate.value }
         : undefined;
     case 'commitVerbosityChanged':
-      return isVerbositySetting((candidate as any).value)
-        ? { type: candidate.type, value: (candidate as any).value }
+      return isVerbositySetting(candidate.value)
+        ? { type: candidate.type, value: candidate.value }
         : undefined;
     case 'localModelChanged':
-      return isString((candidate as any).value)
-        ? { type: candidate.type, value: (candidate as any).value }
+      return isString(candidate.value)
+        ? { type: candidate.type, value: candidate.value }
         : undefined;
     case 'localModelDownload':
     case 'localModelCancelDownload':
@@ -93,7 +96,8 @@ export function sanitizeMessage(message: unknown): WebviewInboundMessage | undef
     case 'codexRefresh':
       return { type: candidate.type };
     case 'commitGenerate': {
-      const value = (candidate as any).value || {};
+      const value = candidate.value && typeof candidate.value === 'object'
+        ? candidate.value as Record<string, unknown> : {};
       return {
         type: 'commitGenerate',
         value: {
@@ -106,10 +110,10 @@ export function sanitizeMessage(message: unknown): WebviewInboundMessage | undef
     case 'commitApply':
       return { type: 'commitApply' };
     case 'openExternal':
-      return isString((candidate as any).url) ? { type: 'openExternal', url: (candidate as any).url } : undefined;
+      return isString(candidate.url) ? { type: 'openExternal', url: candidate.url } : undefined;
     case 'languageChanged':
-      return isLanguageCode((candidate as any).value)
-        ? { type: 'languageChanged', value: (candidate as any).value }
+      return isLanguageCode(candidate.value)
+        ? { type: 'languageChanged', value: candidate.value }
         : undefined;
     default:
       return undefined;

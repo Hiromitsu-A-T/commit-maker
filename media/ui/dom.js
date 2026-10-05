@@ -1,3 +1,4 @@
+"use strict";
 function renderSelect(selectEl, options, selected) {
     if (!selectEl)
         return;
@@ -16,9 +17,8 @@ function show(el, visible, display = 'block') {
     }
 }
 function setDisabled(el, disabled) {
-    if (el) {
+    if (el)
         el.disabled = disabled;
-    }
 }
 function updateBadges(container, badges) {
     if (!container)
@@ -42,6 +42,5 @@ function updateBadges(container, badges) {
         container.lastElementChild?.remove();
     }
 }
-// expose for panel.js (no bundler)
-// @ts-ignore
+// classic script として読み込み、panel.js から同じ DOM 処理を使用する。
 window.CommitMakerDom = { renderSelect, show, setDisabled, updateBadges };

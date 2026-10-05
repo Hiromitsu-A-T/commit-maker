@@ -1,12 +1,20 @@
 import assert from 'assert';
-import { applyPromptLimit, buildLocalDiffDigest, getLocalPromptCharLimit, splitTextIntoChunks } from './promptLimit';
+import { applyPromptLimit, buildLocalDiffDigest, getLocalPromptCharLimit } from './promptLimit';
 
-// applyPromptLimit tests
 {
   const text = 'a'.repeat(120);
   const limited = applyPromptLimit(text, 'limited', 50);
   assert(limited.includes('chars omitted'), 'omitted marker should appear when truncated');
   assert(limited.length < text.length, 'should shorten the text when over limit');
+}
+
+{
+  const text = '0123456789';
+  assert.strictEqual(applyPromptLimit(text, 'limited', 1), '\n\n[...10 chars omitted...]\n\n');
+  assert.strictEqual(applyPromptLimit(text, 'limited', 2), '\n\n[...9 chars omitted...]\n\n9');
+  assert.strictEqual(applyPromptLimit(text, 'limited', 6), '0\n\n[...5 chars omitted...]\n\n6789');
+  assert.strictEqual(applyPromptLimit(text, 'limited', 0), text);
+  assert.strictEqual(applyPromptLimit(text, 'limited', null), text);
 }
 
 {
@@ -21,17 +29,8 @@ import { applyPromptLimit, buildLocalDiffDigest, getLocalPromptCharLimit, splitT
 }
 
 {
-  const text = 'b'.repeat(50000);
-  const chunks = splitTextIntoChunks(text, getLocalPromptCharLimit(32768, 2048));
-  assert(chunks.length > 1, 'large local diffs should be split into chunks');
-  assert.strictEqual(chunks.join(''), text, 'chunking should preserve all input text');
-}
-
-{
-  const text = `diff --git a/a.ts b/a.ts\n${'a'.repeat(1200)}\n\ndiff --git a/b.ts b/b.ts\n${'b'.repeat(1200)}`;
-  const chunks = splitTextIntoChunks(text, 1400);
-  assert(chunks.length > 1, 'chunking should split near diff boundaries');
-  assert.strictEqual(chunks.join(''), text, 'boundary chunking should preserve text');
+  assert(getLocalPromptCharLimit(32768, 2048) >= 16000);
+  assert.strictEqual(getLocalPromptCharLimit(1_000_000, 2048), 96000);
 }
 
 {
@@ -61,4 +60,4 @@ import { applyPromptLimit, buildLocalDiffDigest, getLocalPromptCharLimit, splitT
   assert(digest.includes('+ hello'), 'digest should sample untracked content');
 }
 
-console.log('commitController.test.ts passed');
+console.log('promptLimit.test.ts passed');

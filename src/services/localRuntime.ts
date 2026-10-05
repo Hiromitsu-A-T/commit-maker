@@ -1,5 +1,5 @@
-import * as crypto from 'crypto';
 import * as fs from 'fs';
+import { downloadToFile, sha256File } from './fileDownload';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
@@ -8,10 +8,8 @@ import { DEFAULT_LANGUAGE, getStrings } from '../i18n/strings';
 import { LocalModelDefinition, LocalRuntimeVersionId } from '../types';
 import { getExplicitUserConfigurationString } from '../configScope';
 
-export interface RuntimeDownloadProgress {
-  downloadedBytes: number;
-  totalBytes?: number;
-}
+export type { DownloadProgress as RuntimeDownloadProgress } from './fileDownload';
+import type { DownloadProgress } from './fileDownload';
 
 interface LocalRuntimeAsset {
   runtimeVersion: LocalRuntimeVersionId;
@@ -29,7 +27,7 @@ export const LOCAL_RUNTIME_VERSION = DEFAULT_LOCAL_RUNTIME_VERSION;
 export interface EnsureLocalRuntimeOptions {
   runtimeVersion?: LocalRuntimeVersionId;
   abortSignal?: AbortSignal;
-  onProgress?: (progress: RuntimeDownloadProgress) => void;
+  onProgress?: (progress: DownloadProgress) => void;
   logger?: (message: string) => void;
 }
 
@@ -42,54 +40,42 @@ const LOCAL_RUNTIME_ASSET_CATALOG: Record<LocalRuntimeVersionId, LocalRuntimeAss
       'darwin',
       'arm64',
       'llama-b8967-bin-macos-arm64.tar.gz',
-      'be6c8e08305b1986a88174a6aec8b33d11e9a926e2c7fff59c216978b44b2617',
-      'tar.gz',
-      'llama-server'
+      'be6c8e08305b1986a88174a6aec8b33d11e9a926e2c7fff59c216978b44b2617'
     ),
     createLlamaRuntimeAsset(
       'b8967',
       'darwin',
       'x64',
       'llama-b8967-bin-macos-x64.tar.gz',
-      'b39de389651e8fc61b9aa7f8efd06a2c7e70d125bc494f4cd31b668c331ce383',
-      'tar.gz',
-      'llama-server'
+      'b39de389651e8fc61b9aa7f8efd06a2c7e70d125bc494f4cd31b668c331ce383'
     ),
     createLlamaRuntimeAsset(
       'b8967',
       'linux',
       'x64',
       'llama-b8967-bin-ubuntu-x64.tar.gz',
-      'f73bf8f1ceb0d3c84302081b3272d48e6a3ddbfb218fb23957e8a1b87d6f0c84',
-      'tar.gz',
-      'llama-server'
+      'f73bf8f1ceb0d3c84302081b3272d48e6a3ddbfb218fb23957e8a1b87d6f0c84'
     ),
     createLlamaRuntimeAsset(
       'b8967',
       'linux',
       'arm64',
       'llama-b8967-bin-ubuntu-arm64.tar.gz',
-      '554e6efa4a8fd0e47e18cc28fa36bbacde88cf03a3f631334b5a674e2f777e5a',
-      'tar.gz',
-      'llama-server'
+      '554e6efa4a8fd0e47e18cc28fa36bbacde88cf03a3f631334b5a674e2f777e5a'
     ),
     createLlamaRuntimeAsset(
       'b8967',
       'win32',
       'x64',
       'llama-b8967-bin-win-cpu-x64.zip',
-      '56b8b306043c3facbc8682a42b8c423bf6d813be077f1bafbc91025b9d5a3314',
-      'zip',
-      'llama-server.exe'
+      '56b8b306043c3facbc8682a42b8c423bf6d813be077f1bafbc91025b9d5a3314'
     ),
     createLlamaRuntimeAsset(
       'b8967',
       'win32',
       'arm64',
       'llama-b8967-bin-win-cpu-arm64.zip',
-      'df6c4f9ed99f44450d6bff4a923d5a226b9190dab8bd20f76751a3e780e38725',
-      'zip',
-      'llama-server.exe'
+      'df6c4f9ed99f44450d6bff4a923d5a226b9190dab8bd20f76751a3e780e38725'
     )
   ],
   b9441: [
@@ -98,54 +84,42 @@ const LOCAL_RUNTIME_ASSET_CATALOG: Record<LocalRuntimeVersionId, LocalRuntimeAss
       'darwin',
       'arm64',
       'llama-b9441-bin-macos-arm64.tar.gz',
-      'f96656c029799aa0a9122c1ef59860c33de5e79a4fd85809ff27069c46d43e7b',
-      'tar.gz',
-      'llama-server'
+      'f96656c029799aa0a9122c1ef59860c33de5e79a4fd85809ff27069c46d43e7b'
     ),
     createLlamaRuntimeAsset(
       'b9441',
       'darwin',
       'x64',
       'llama-b9441-bin-macos-x64.tar.gz',
-      '77a150379997f5eba3a3db004d82e668559451e70ade60dc5b7eb65817c9748a',
-      'tar.gz',
-      'llama-server'
+      '77a150379997f5eba3a3db004d82e668559451e70ade60dc5b7eb65817c9748a'
     ),
     createLlamaRuntimeAsset(
       'b9441',
       'linux',
       'x64',
       'llama-b9441-bin-ubuntu-x64.tar.gz',
-      '3054bf7b3b38e20f7e48d508d56c5d871b09ea199bf470bf025440412f6fb18d',
-      'tar.gz',
-      'llama-server'
+      '3054bf7b3b38e20f7e48d508d56c5d871b09ea199bf470bf025440412f6fb18d'
     ),
     createLlamaRuntimeAsset(
       'b9441',
       'linux',
       'arm64',
       'llama-b9441-bin-ubuntu-arm64.tar.gz',
-      '152afc5db87a9c9ca6c981068e9912bc0145e2a9ecb09e332d7795edb0f56382',
-      'tar.gz',
-      'llama-server'
+      '152afc5db87a9c9ca6c981068e9912bc0145e2a9ecb09e332d7795edb0f56382'
     ),
     createLlamaRuntimeAsset(
       'b9441',
       'win32',
       'x64',
       'llama-b9441-bin-win-cpu-x64.zip',
-      'f14b45e660636ab5f0475da2a911eb466b227efbed46fec794b676ec7b55aa7f',
-      'zip',
-      'llama-server.exe'
+      'f14b45e660636ab5f0475da2a911eb466b227efbed46fec794b676ec7b55aa7f'
     ),
     createLlamaRuntimeAsset(
       'b9441',
       'win32',
       'arm64',
       'llama-b9441-bin-win-cpu-arm64.zip',
-      'e9efc745a24a74b0bfe459d33c3c76a6bf2413401f02161673b41236490c31c0',
-      'zip',
-      'llama-server.exe'
+      'e9efc745a24a74b0bfe459d33c3c76a6bf2413401f02161673b41236490c31c0'
     )
   ]
 };
@@ -157,9 +131,7 @@ function createLlamaRuntimeAsset(
   platform: NodeJS.Platform,
   arch: NodeJS.Architecture,
   archiveName: string,
-  sha256: string,
-  type: LocalRuntimeAsset['type'],
-  executable: string
+  sha256: string
 ): LocalRuntimeAsset {
   return {
     runtimeVersion,
@@ -168,8 +140,8 @@ function createLlamaRuntimeAsset(
     archiveName,
     url: `${RUNTIME_BASE_URL}/${runtimeVersion}/${archiveName}`,
     sha256,
-    type,
-    executable
+    type: platform === 'win32' ? 'zip' : 'tar.gz',
+    executable: platform === 'win32' ? 'llama-server.exe' : 'llama-server'
   };
 }
 
@@ -189,6 +161,7 @@ export async function ensureLocalRuntime(
     throw new Error(getStrings(DEFAULT_LANGUAGE).msgLocalRuntimeMissing);
   }
 
+  // 上書き指定 → 同梱 → 検証済みキャッシュ → 新規取得の順で解決する。
   const bundled = findBundledRuntime(extensionUri, runtimeVersion);
   if (bundled) return bundled;
 
@@ -337,76 +310,8 @@ function runCommand(command: string, args: string[]): Promise<void> {
   });
 }
 
-async function downloadToFile(
-  url: string,
-  filePath: string,
-  abortSignal: AbortSignal | undefined,
-  onProgress?: (progress: RuntimeDownloadProgress) => void
-): Promise<void> {
-  const res = await fetch(url, { signal: abortSignal });
-  if (!res.ok || !res.body) {
-    const detail = await res.text().catch(() => res.statusText);
-    throw new Error(`HTTP ${res.status}: ${detail || res.statusText}`);
-  }
-
-  const totalHeader = res.headers.get('content-length');
-  const totalBytes = totalHeader ? Number(totalHeader) : undefined;
-  const out = fs.createWriteStream(filePath, { flags: 'w' });
-  let downloadedBytes = 0;
-
-  try {
-    const body = res.body as any;
-    if (typeof body.getReader === 'function') {
-      const reader = body.getReader();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = Buffer.from(value);
-        downloadedBytes += chunk.length;
-        await writeChunk(out, chunk);
-        onProgress?.({ downloadedBytes, totalBytes });
-      }
-    } else {
-      for await (const chunk of body) {
-        const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-        downloadedBytes += buffer.length;
-        await writeChunk(out, buffer);
-        onProgress?.({ downloadedBytes, totalBytes });
-      }
-    }
-  } finally {
-    await closeWriteStream(out);
-  }
-}
-
-function writeChunk(stream: fs.WriteStream, chunk: Buffer): Promise<void> {
-  return new Promise((resolve, reject) => {
-    stream.write(chunk, error => {
-      if (error) reject(error);
-      else resolve();
-    });
-  });
-}
-
-function closeWriteStream(stream: fs.WriteStream): Promise<void> {
-  return new Promise((resolve, reject) => {
-    stream.once('error', reject);
-    stream.end(() => resolve());
-  });
-}
-
-async function sha256File(filePath: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const hash = crypto.createHash('sha256');
-    const input = fs.createReadStream(filePath);
-    input.on('error', reject);
-    input.on('data', chunk => hash.update(chunk));
-    input.on('end', () => resolve(hash.digest('hex')));
-  });
-}
-
 async function removeIfExists(filePath: string): Promise<void> {
-  await fs.promises.rm(filePath, { force: true }).catch(() => undefined);
+  await fs.promises.rm(filePath, { force: true });
 }
 
 function quotePowerShell(value: string): string {

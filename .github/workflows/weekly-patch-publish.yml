@@ -38,10 +38,10 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Use Node.js 20
+      - name: Use Node.js 22
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Check stable version line
@@ -99,10 +99,12 @@ jobs:
           git commit -m "chore: 週次パッチ ${VERSION} [skip ci]"
           git push --force-with-lease "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$BRANCH"
 
-          echo "base_sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
-          echo "release_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          {
+            echo "base_sha=$BASE_SHA"
+            echo "release_sha=$(git rev-parse HEAD)"
+            echo "tag=$TAG"
+            echo "version=$VERSION"
+          } >> "$GITHUB_OUTPUT"
 
   local-runtime-smoke:
     name: Local runtime smoke (${{ matrix.os }})
@@ -124,10 +126,10 @@ jobs:
           ref: ${{ needs.prepare.outputs.release_sha }}
           persist-credentials: false
 
-      - name: Use Node.js 20
+      - name: Use Node.js 22
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -157,14 +159,17 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Use Node.js 20
+      - name: Use Node.js 22
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Lint and typecheck
+        run: npm run lint && npm run typecheck
 
       - name: Build webview helpers
         run: npm run build:media
@@ -174,6 +179,9 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: Isolated integration test
+        run: npm run test:integration
 
       - name: Check main has not changed
         env:
@@ -204,33 +212,6 @@ jobs:
           name: commit-maker-weekly-vsix
           path: vsix/*.vsix
 
-      - name: Push main and tag release
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          TAG="${{ needs.prepare.outputs.tag }}"
-          BASE_SHA="${{ needs.prepare.outputs.base_sha }}"
-          git fetch "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" main:refs/remotes/origin/main --tags
-          CURRENT_MAIN=$(git rev-parse origin/main)
-          if [ "$CURRENT_MAIN" != "$BASE_SHA" ]; then
-            echo "::error::main moved from $BASE_SHA to $CURRENT_MAIN before publishing."
-            exit 1
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
-
-          if git ls-remote --exit-code --tags "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists."
-            exit 0
-          fi
-
-          git tag "$TAG"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TAG"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" --delete codex/weekly-patch-release || true
-
       - name: Publish to VS Marketplace
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
@@ -251,6 +232,33 @@ jobs:
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
           npx ovsx publish "vsix/commit-maker-${VERSION}.vsix" --skip-duplicate
+
+      - name: Push main and tag release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          TAG="${{ needs.prepare.outputs.tag }}"
+          BASE_SHA="${{ needs.prepare.outputs.base_sha }}"
+          git fetch "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" main:refs/remotes/origin/main --tags
+          CURRENT_MAIN=$(git rev-parse origin/main)
+          if [ "$CURRENT_MAIN" != "$BASE_SHA" ]; then
+            echo "::error::main moved from $BASE_SHA to $CURRENT_MAIN after publishing; main and tag were not updated."
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
+
+          if git ls-remote --exit-code --tags "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists."
+            exit 0
+          fi
+
+          git tag "$TAG"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TAG"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" --delete codex/weekly-patch-release || true
 
       - name: Clean stray VSIX and enforce limit
         if: always()

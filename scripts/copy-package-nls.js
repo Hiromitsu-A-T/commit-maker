@@ -1,5 +1,4 @@
-// Copy localized package.nls.*.json files from source directory to repo root for packaging.
-// Keeps the repository root tidy by generating localized NLS files only when needed.
+// VS Code が読む NLS を配布時だけルートへ生成し、翻訳の編集元を i18n/ に一本化する。
 
 const fs = require('fs');
 const path = require('path');

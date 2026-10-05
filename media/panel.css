@@ -286,11 +286,14 @@ button:disabled {
 }
 
 .model-guidance {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  display: grid;
+  grid-template-rows: 22px 3.45em 1.45em;
+  gap: 6px;
   margin: 8px 0 2px;
   padding: 9px 10px;
+  height: 122px;
+  box-sizing: border-box;
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--panel-soft);
@@ -299,13 +302,48 @@ button:disabled {
   line-height: 1.45;
 }
 
-.model-guidance .pill {
-  flex: 0 0 auto;
+.model-guidance-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
-.model-guidance > span:last-child {
+.model-guidance-head .pill {
+  justify-self: start;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.model-guidance-size {
+  color: var(--text);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.model-guidance-copy {
   min-width: 0;
   overflow-wrap: anywhere;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.model-guidance-details {
+  min-width: 0;
+  padding-top: 4px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  color: var(--text);
+  font-size: 11px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 pre {
@@ -569,10 +607,6 @@ pre {
 
   .checkbox-row {
     grid-template-columns: 1fr;
-  }
-
-  .model-guidance {
-    flex-direction: column;
   }
 
   .label-row.space-between {

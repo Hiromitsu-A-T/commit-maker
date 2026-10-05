@@ -7,7 +7,7 @@ import { getStrings, DEFAULT_LANGUAGE } from '../i18n/strings';
 
 const STR = getStrings(DEFAULT_LANGUAGE);
 
-// Mock repository using VS Code Git API shape
+// Git API の返却形式を再現し、CLI を使わず差分の区分と上限を検査する。
 const mockRepo = {
   rootUri: { fsPath: '/tmp/mock' },
   diffIndexWithHEAD: async () => 'staged-diff',
@@ -24,6 +24,20 @@ async function testCollectDiffIncludesSections() {
   assert(diff.includes(STR.diffSectionUnstaged), 'should include unstaged heading');
   assert(diff.includes('staged-diff'));
   assert(diff.includes('work-diff'));
+}
+
+async function testGitApiUsesTextDiff(): Promise<void> {
+  const calls: boolean[] = [];
+  const repo = {
+    ...mockRepo,
+    diff: async (cached = false) => { calls.push(cached); return cached ? 'staged-text' : 'working-text'; },
+    diffIndexWithHEAD: async () => [{ uri: 'staged-file' }],
+    diffWithHEAD: async () => [{ uri: 'working-file' }]
+  };
+  const result = await collectDiff(repo, { includeUnstaged: true, includeUntracked: false, includeBinary: false });
+  assert.deepStrictEqual(calls, [true, false]);
+  assert.match(result, /staged-text/);
+  assert.match(result, /working-text/);
 }
 
 async function testCollectDiffStagedOnly() {
@@ -160,6 +174,7 @@ async function testBinaryHeuristic() {
 
 export async function runDiffCollectorTests() {
   await testCollectDiffIncludesSections();
+  await testGitApiUsesTextDiff();
   await testCollectDiffStagedOnly();
   await testUntrackedSkipWhenDisabledBinary();
   await testUntrackedSkipsSensitiveAndLargeFiles();

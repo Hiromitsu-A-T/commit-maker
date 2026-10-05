@@ -1,4 +1,4 @@
-export interface PanelElements {
+interface PanelElements {
   language: HTMLSelectElement | null;
   apiKeySection: HTMLElement | null;
   apiKeyCloudPanel: HTMLElement | null;
@@ -31,6 +31,11 @@ export interface PanelElements {
   localModelPanel: HTMLElement | null;
   localModelName: HTMLSelectElement | null;
   localModelStatus: HTMLElement | null;
+  localModelGuidance: HTMLElement | null;
+  localModelGuidanceBadge: HTMLElement | null;
+  localModelGuidanceSize: HTMLElement | null;
+  localModelGuidanceText: HTMLElement | null;
+  localModelGuidanceDetails: HTMLElement | null;
   localModelDownload: HTMLButtonElement | null;
   localModelCancel: HTMLButtonElement | null;
   localModelDelete: HTMLButtonElement | null;
@@ -53,7 +58,7 @@ export interface PanelElements {
   errorBox: HTMLElement | null;
 }
 
-export interface PanelStateSnapshot {
+interface PanelStateSnapshot {
   commitStatus: string;
   commitProgress?: string;
   commitIncludeUnstaged: boolean;
@@ -68,4 +73,26 @@ export interface PanelStateSnapshot {
   apiKeyProvider?: string;
   apiKeys?: Record<string, { ready: boolean }>;
   localModel?: { id?: string; status: string; label: string; sizeLabel: string; downloadedBytes?: number; totalBytes?: number; hasPartialDownload?: boolean };
+}
+
+// 同梱スクリプトの読み込み順に対応するブラウザー側の型定義。
+interface Window {
+  CommitMakerElements: { queryElements: typeof queryElements };
+  CommitMakerDom: {
+    renderSelect: typeof renderSelect;
+    show: typeof show;
+    setDisabled: typeof setDisabled;
+    updateBadges: typeof updateBadges;
+  };
+  CommitMakerEvents: {
+    onInput: typeof onInput;
+    onChange: typeof onChange;
+    bindCheckbox: typeof bindCheckbox;
+    bindSelectValue: typeof bindSelectValue;
+  };
+  CommitMakerRender: {
+    renderStatus: typeof renderStatus;
+    renderApiKeyBadges: typeof renderApiKeyBadges;
+  };
+  CommitMakerState: { cloneState: typeof cloneState; mergeState: typeof mergeState };
 }

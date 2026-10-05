@@ -45,9 +45,13 @@ export function renderPanelBody(strings: UiStrings): string {
             <div class="api-inline">
               <select id="localModelName"></select>
             </div>
-            <div id="localModelGuidance" class="model-guidance hidden" role="note" aria-live="polite">
-              <span id="localModelGuidanceBadge" class="pill"></span>
-              <span id="localModelGuidanceText"></span>
+            <div id="localModelGuidance" class="model-guidance" role="note" aria-live="polite" aria-atomic="true">
+              <div class="model-guidance-head">
+                <span id="localModelGuidanceBadge" class="pill"></span>
+                <span id="localModelGuidanceSize" class="model-guidance-size"></span>
+              </div>
+              <span id="localModelGuidanceText" class="model-guidance-copy"></span>
+              <span id="localModelGuidanceDetails" class="model-guidance-details"></span>
             </div>
             <div class="buttons two-col">
               <button id="localModelDownload" class="primary" type="button">${strings.localModelDownloadButton}</button>

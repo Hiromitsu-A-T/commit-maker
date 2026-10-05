@@ -25,3 +25,7 @@ Thumbs.db
 # VS Code local settings (keep launch.json for debugging)
 .vscode/*
 !.vscode/launch.json
+
+# Local browser verification artifacts
+output/
+.playwright-cli/

@@ -1,3 +1,4 @@
+import type * as vscode from 'vscode';
 import assert from 'assert';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -24,7 +25,7 @@ function createConfig(values: Record<string, string | undefined> = {}) {
       return undefined;
     },
     get: (key: string, fallback: string) => values[key] ?? fallback
-  } as any;
+  } as unknown as vscode.WorkspaceConfiguration;
 }
 
 function createConfigWithPackageDefault(defaults: Record<string, string | undefined> = {}) {
@@ -36,7 +37,7 @@ function createConfigWithPackageDefault(defaults: Record<string, string | undefi
       return undefined;
     },
     get: (key: string, fallback: string) => defaults[key] ?? fallback
-  } as any;
+  } as unknown as vscode.WorkspaceConfiguration;
 }
 
 function createWorkspaceConfig(values: Record<string, string | undefined> = {}) {
@@ -48,7 +49,7 @@ function createWorkspaceConfig(values: Record<string, string | undefined> = {}) 
       return undefined;
     },
     get: (key: string, fallback: string) => values[key] ?? fallback
-  } as any;
+  } as unknown as vscode.WorkspaceConfiguration;
 }
 
 export async function runLocalModelTests(): Promise<void> {
@@ -63,6 +64,7 @@ export async function runLocalModelTests(): Promise<void> {
   assert.strictEqual(defaults.generationProfile, 'deterministic');
   assert.strictEqual(defaults.runtimeProfile, 'qwen35');
   assert.strictEqual(defaults.uiProfile, 'recommended');
+  assert.strictEqual(defaults.uiDetails, 'Qwen3.5 4B · Dense · 256K ctx · Q4_K_M');
   assert.strictEqual(resolveLocalGenerationSettings(defaults).temperature, 0);
   assert.deepStrictEqual(resolveLocalRuntimeArgs(defaults), ['--reasoning', 'off']);
 
@@ -76,6 +78,7 @@ export async function runLocalModelTests(): Promise<void> {
   assert.strictEqual(lowMemory.generationProfile, 'deterministic');
   assert.strictEqual(lowMemory.runtimeProfile, 'qwen35');
   assert.strictEqual(lowMemory.uiProfile, 'lowMemory');
+  assert.strictEqual(lowMemory.uiDetails, 'Qwen3.5 2B · Dense · 256K ctx · Q4_K_M');
   assert.strictEqual(resolveLocalGenerationSettings(lowMemory).temperature, 0);
   assert.deepStrictEqual(resolveLocalRuntimeArgs(lowMemory), ['--reasoning', 'off']);
 
@@ -87,6 +90,8 @@ export async function runLocalModelTests(): Promise<void> {
   assert.strictEqual(gemma.runtimeVersion, 'b8967');
   assert.strictEqual(gemma.generationProfile, 'gemma4');
   assert.strictEqual(gemma.runtimeProfile, 'gemma4');
+  assert.strictEqual(gemma.uiBadge, 'Dense');
+  assert.strictEqual(gemma.uiDetails, 'Gemma 4 E4B IT · 32K ctx · Q4_K_M');
   assert.deepStrictEqual(resolveLocalGenerationSettings(gemma), {
     temperature: 0,
     topP: 0.95,
@@ -104,6 +109,8 @@ export async function runLocalModelTests(): Promise<void> {
   assert.strictEqual(lfm.runtimeVersion, 'b9441');
   assert.strictEqual(lfm.generationProfile, 'lfm25');
   assert.strictEqual(lfm.runtimeProfile, 'lfm25');
+  assert.strictEqual(lfm.uiBadge, 'MoE');
+  assert.strictEqual(lfm.uiDetails, 'LFM2.5 8B-A1B · 128K ctx · Q4_K_M');
   assert.deepStrictEqual(resolveLocalGenerationSettings(lfm), {
     temperature: 0,
     topK: 80,
@@ -126,6 +133,12 @@ export async function runLocalModelTests(): Promise<void> {
   assert.strictEqual(options[0].uiProfile, 'recommended');
   assert.strictEqual(options[1].uiProfile, 'lowMemory');
   assert.strictEqual(options[2].uiProfile, undefined);
+  assert.deepStrictEqual(options.map(option => option.uiDetails), [
+    'Qwen3.5 4B · Dense · 256K ctx · Q4_K_M',
+    'Qwen3.5 2B · Dense · 256K ctx · Q4_K_M',
+    'Gemma 4 E4B IT · 32K ctx · Q4_K_M',
+    'LFM2.5 8B-A1B · 128K ctx · Q4_K_M'
+  ]);
   assert.strictEqual(resolveLocalModelId(LEGACY_DEFAULT_LOCAL_MODEL_ID), DEFAULT_LOCAL_MODEL_ID);
   assert.strictEqual(resolveLocalModelId('Qwen3-4B-Instruct-2507-Q4_K_M'), DEFAULT_LOCAL_MODEL_ID);
   assert.strictEqual(resolveLocalModelId('Qwen3-4B-Thinking-2507-Q4_K_M'), DEFAULT_LOCAL_MODEL_ID);
@@ -155,26 +168,32 @@ export async function runLocalModelTests(): Promise<void> {
   assert.strictEqual(customSha.filename, 'custom.gguf');
 
   const tmpRoot = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'commit-maker-local-model-'));
-  const legacyPath = path.join(tmpRoot, 'models', LEGACY_DEFAULT_LOCAL_MODEL_ID, DEFAULT_LOCAL_MODEL_FILENAME);
-  await fs.promises.mkdir(path.dirname(legacyPath), { recursive: true });
-  await fs.promises.writeFile(legacyPath, 'model');
-  const inspected = await inspectLocalModel({ globalStorageUri: { fsPath: tmpRoot } } as any, createConfig());
-  assert.strictEqual(inspected.id, DEFAULT_LOCAL_MODEL_ID);
-  assert.strictEqual(inspected.status, 'ready');
-  assert.strictEqual(inspected.path, legacyPath);
-  await fs.promises.rm(tmpRoot, { recursive: true, force: true });
+  try {
+    const legacyPath = path.join(tmpRoot, 'models', LEGACY_DEFAULT_LOCAL_MODEL_ID, DEFAULT_LOCAL_MODEL_FILENAME);
+    await fs.promises.mkdir(path.dirname(legacyPath), { recursive: true });
+    await fs.promises.writeFile(legacyPath, 'model');
+    const inspected = await inspectLocalModel({ globalStorageUri: { fsPath: tmpRoot } } as unknown as vscode.ExtensionContext, createConfig());
+    assert.strictEqual(inspected.id, DEFAULT_LOCAL_MODEL_ID);
+    assert.strictEqual(inspected.status, 'ready');
+    assert.strictEqual(inspected.path, legacyPath);
+  } finally {
+    await fs.promises.rm(tmpRoot, { recursive: true, force: true });
+  }
 
   const partialRoot = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'commit-maker-local-model-partial-'));
-  const partialPath = path.join(partialRoot, 'models', DEFAULT_LOCAL_MODEL_ID, `${DEFAULT_LOCAL_MODEL_FILENAME}.download`);
-  await fs.promises.mkdir(path.dirname(partialPath), { recursive: true });
-  await fs.promises.writeFile(partialPath, 'partial');
-  const partial = await inspectLocalModel({ globalStorageUri: { fsPath: partialRoot } } as any, createConfig());
-  assert.strictEqual(partial.status, 'notDownloaded');
-  assert.strictEqual(partial.hasPartialDownload, true);
-  assert.strictEqual(partial.downloadedBytes, 7);
-  await deleteLocalModel({ globalStorageUri: { fsPath: partialRoot } } as any, createConfig(), DEFAULT_LOCAL_MODEL_ID);
-  assert.strictEqual(fs.existsSync(partialPath), false);
-  await fs.promises.rm(partialRoot, { recursive: true, force: true });
+  try {
+    const partialPath = path.join(partialRoot, 'models', DEFAULT_LOCAL_MODEL_ID, `${DEFAULT_LOCAL_MODEL_FILENAME}.download`);
+    await fs.promises.mkdir(path.dirname(partialPath), { recursive: true });
+    await fs.promises.writeFile(partialPath, 'partial');
+    const partial = await inspectLocalModel({ globalStorageUri: { fsPath: partialRoot } } as unknown as vscode.ExtensionContext, createConfig());
+    assert.strictEqual(partial.status, 'notDownloaded');
+    assert.strictEqual(partial.hasPartialDownload, true);
+    assert.strictEqual(partial.downloadedBytes, 7);
+    await deleteLocalModel({ globalStorageUri: { fsPath: partialRoot } } as unknown as vscode.ExtensionContext, createConfig(), DEFAULT_LOCAL_MODEL_ID);
+    assert.strictEqual(fs.existsSync(partialPath), false);
+  } finally {
+    await fs.promises.rm(partialRoot, { recursive: true, force: true });
+  }
 
   console.log('localModel.test.ts passed');
 }

@@ -1,3 +1,4 @@
+import type * as vscode from 'vscode';
 import assert from 'assert';
 import * as path from 'path';
 import {
@@ -8,10 +9,10 @@ import {
   getCodexHomePath
 } from './codexCli';
 
-function createConfig(values: Record<string, any>) {
+function createConfig(values: Record<string, unknown>) {
   return {
     inspect: (key: string) => values[key]
-  } as any;
+  } as unknown as vscode.WorkspaceConfiguration;
 }
 
 export async function runCodexCliTests(): Promise<void> {
@@ -78,7 +79,7 @@ export async function runCodexCliTests(): Promise<void> {
     restoreEnv('PATH', originalPath);
   }
   assert.strictEqual(
-    getCodexHomePath({ globalStorageUri: { fsPath: '/tmp/commit-maker-storage' } } as any),
+    getCodexHomePath({ globalStorageUri: { fsPath: '/tmp/commit-maker-storage' } } as unknown as vscode.ExtensionContext),
     path.join('/tmp/commit-maker-storage', 'codex-home')
   );
   assert.strictEqual(

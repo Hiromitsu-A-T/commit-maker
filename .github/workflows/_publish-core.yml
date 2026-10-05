@@ -35,10 +35,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Use Node.js 20
+      - name: Use Node.js 22
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Validate channel, version, and tag
         shell: bash
@@ -115,10 +115,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Use Node.js 20
+      - name: Use Node.js 22
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -139,10 +139,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Use Node.js 20
+      - name: Use Node.js 22
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -153,6 +153,9 @@ jobs:
         run: |
           echo "Release channel: ${{ inputs.channel }}"
 
+      - name: Lint and typecheck
+        run: npm run lint && npm run typecheck
+
       - name: Build webview helpers
         run: npm run build:media
 
@@ -161,6 +164,9 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: Isolated integration test
+        run: npm run test:integration
 
       - name: Package VSIX
         shell: bash

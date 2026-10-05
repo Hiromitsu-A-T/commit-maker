@@ -1,7 +1,7 @@
 {
   "command.commitMaker.showPanel.title": "Commit Maker: Vis panel",
   "command.commitMaker.generateCommitFromSCM.title": "Commit Maker: Generer commit-melding",
-  "command.commitMaker.cancelCommitFromSCM.title": "Commit Maker: Avbryt generering",
+  "command.commitMaker.cancelCommitFromSCM.title": "Commit Maker: Avbryt generering av commit-melding",
   "command.commitMaker.saveApiKey.title": "Commit Maker: Lagre API-nøkkel",
   "command.commitMaker.category": "Commit Maker",
   "configuration.commitMaker.title": "Commit Maker",

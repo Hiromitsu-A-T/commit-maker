@@ -137,7 +137,7 @@
           "type": "string",
           "scope": "application",
           "default": "https://api.openai.com/v1/responses",
-          "description": "OpenAI (Responses/Chat Completions) 用エンドポイント"
+          "description": "OpenAI Responses API 用エンドポイント"
         },
         "commitMaker.endpointGemini": {
           "type": "string",
@@ -321,8 +321,10 @@
     "precompile": "npm run clean:out",
     "compile": "tsc -p .",
     "watch": "tsc -w -p .",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc -p . --noEmit && tsc -p media/tsconfig.json --noEmit && tsc -p tsconfig.scripts.json",
     "test": "ts-node --project tsconfig.json src/testRunner.ts",
-    "dev:prep": "npm run build:nls && npm run compile",
+    "dev:prep": "npm run build:nls && npm run compile && npm run build:media",
     "update:badges": "node scripts/update-badges.js",
     "build:nls": "node scripts/copy-package-nls.js",
     "clean:nls": "node scripts/clean-package-nls.js",
@@ -340,14 +342,25 @@
     "smoke:claude": "ts-node --transpile-only scripts/smoke-claude.ts",
     "smoke:claude:matrix": "ts-node --transpile-only scripts/smoke-claude-matrix.ts",
     "smoke:cloud:minimal": "ts-node --transpile-only scripts/smoke-cloud-minimal.ts",
-    "smoke:local:runtime": "ts-node --project tsconfig.json scripts/smoke-local-runtime.ts"
+    "smoke:local:runtime": "ts-node --project tsconfig.json scripts/smoke-local-runtime.ts",
+    "test:integration": "ts-node --project tsconfig.scripts.json scripts/test-integration.ts",
+    "smoke:webview": "npm run build:media && ts-node --project tsconfig.scripts.json scripts/serve-webview-smoke.ts"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^18.19.0",
     "@types/vscode": "1.94.0",
-    "@vscode/vsce": "^3.9.1",
-    "ovsx": "^0.10.12",
+    "@vscode/vsce": "^4.0.0",
+    "eslint": "^10.12.0",
+    "globals": "^17.13.0",
+    "ovsx": "^1.2.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.71.0"
+  },
+  "overrides": {
+    "ovsx": {
+      "@vscode/vsce": "$@vscode/vsce"
+    }
   }
 }
