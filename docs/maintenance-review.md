@@ -179,7 +179,7 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `README.md` | 利用者向けの機能・設定説明 | SecretStorage / 環境変数、データ送信、生成ボタン、設定範囲の説明を実装に合わせ修正。 公開統合: 最新のモデル候補・初期設定の説明を保持。 | V4–V6・V9・R1・R2・R3 |
 | `SECURITY.md` | 脆弱性の連絡・公開方針 | 変更なし。公開窓口と秘密情報の扱いを維持。 | 文書レビュー |
 | `SUPPORT.md` | 利用時の問い合わせ先 | 既存の Codex provider を対応一覧へ追加。 公開統合: 現行のprovider順とCodexの記載を保持。 | 文書レビュー・R1・R2・R3 |
-| `docs/maintenance-review.md` | 全対象のレビュー・検証記録 | 全対象の役割・改善理由・機能別検証に加え、32言語の逐次レビューを記録。V / T / L の段階と証拠を区別し、新旧ファイルの照合を示す。 | V10・T7・L5・P1–P4 |
+| `docs/maintenance-review.md` | 全対象のレビュー・検証記録 | 全対象の役割・改善理由・機能別検証に加え、32言語の逐次レビューを記録。V / T / L の段階と証拠を区別し、新旧ファイルの照合を示す。 | V10・T7・L5・P1–P5 |
 | `eslint.config.cjs` | 手書き JS / TS の lint | 手書き JS / TS と実行環境を区分。生成物を除き、未使用処理と明示的な any を検査する。 | V1・T1 |
 | `i18n/package-nls/package.nls.ar.json` | VS Code コマンド文言（ar） | 全8文言を個別に読み、コマンドの対象と自然な表現を確認。2文言を修正。キー集合・ブランド名・配布時の生成契約は保持。 | L1・L2・L3・L4・L5 |
 | `i18n/package-nls/package.nls.bn.json` | VS Code コマンド文言（bn） | 全8文言を個別に読み、コマンドの対象と自然な表現を確認。1文言を修正。キー集合・ブランド名・配布時の生成契約は保持。 | L1・L2・L3・L4・L5 |
@@ -425,7 +425,7 @@ CIのVSIXの126 entriesは、実VS Codeで検証したローカルVSIXと全フ�
 
 2026-10-06、公開後のコード改善の再確認依頼を受け、生成の停止・Local取得・画面との境界・配布処理を見直した。Localモデルのハッシュ検証中とruntime展開後に取り消しても、正式配置へ進む不備を一時ファイルとfixture通信で再現した。
 
-ハッシュ用streamにAbortSignalを接続し、取得開始・展開後・正式配置直前にも取り消しを確認する。中止した操作はAbortErrorとなり、正式なモデル・runtimeと一時ファイルを残さない。正常取得も同じfixtureで確認した。取り消しと正式配置の境界を示す短いコメントを更新し、新しい抽象化や設定は追加していない。
+ハッシュ用streamにAbortSignalを接続し、取得開始・展開後・正式配置直前にも取り消しを確認する。再現した2ケースはAbortErrorとなり、取り消したモデルまたはruntimeを正式配置せず、その一時ファイルも削除した。正常取得も同じfixtureで確認した。取り消しと正式配置の境界を示す短いコメントを更新し、新しい抽象化や設定は追加していない。
 
 | ID | 機能・検査 | 結果・根拠 |
 | --- | --- | --- |
@@ -437,3 +437,15 @@ CIのVSIXの126 entriesは、実VS Codeで検証したローカルVSIXと全フ�
 画面・翻訳は変更していないため、384表示ケースは0.18.0の結果を保持し、今回は機能操作を再確認した。実クラウド課金・実Codexアカウント・実GGUF推論の未検証範囲も前回と同じである。今回再現できた2つの取り消し境界は修正済みだが、検証で未知の不具合がないことまで保証するものではない。
 
 既存の公開依頼に沿い、バグ修正のPATCH版0.18.1としてmainとv0.18.1をpushし、stable workflowで公開する。公開結果は成功後に追記する。
+
+## 0.18.1の公開結果
+
+2026-10-06にmainとv0.18.1をpushした。公開対象は60f1622。[mainのCI](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/37388328719)と[stable公開workflow](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/37388329541)が成功し、Windows・macOS・Linuxのruntime取得・検証・実行も成功した。公開後のバッジ更新workflowも成功した。
+
+| ID | 公開後の確認 | 結果・根拠 |
+| --- | --- | --- |
+| P5 | CI・両ストア・公開VSIX | 08:32 JSTにMarketplaceとOpen VSXの公開APIで最新版0.18.1を確認。CIの126 entriesは、実VS Codeで検証したVSIXと全ファイル内容が一致。Open VSXの配布物のSHA-256もCIと一致。output/post-release-review/publish-run.json / stores.json / published-package.json / open-vsx-package.json。 |
+
+公開先は[Marketplace](https://marketplace.visualstudio.com/items?itemName=Hiromitsu.commit-maker)と[Open VSX](https://open-vsx.org/extension/Hiromitsu/commit-maker)。公開VSIXのSHA-256は `40401cbc9b3f757aae5baef9a7c61dd0082e99bc110b7a51eba7a3c7867c5ec7`。検証したローカルVSIXは証拠用に退避し、vsix/commit-maker-0.18.1.vsixにはCI成果物を保存した。
+
+この追記は公開後の記録であり、公開タグの拡張コードは変更していない。追加レビューで再現した不備は修正・検証・公開済み。実サービス・実GGUF推論の確認範囲は上記の通りで、未知の不具合がないという保証はしていない。
