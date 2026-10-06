@@ -77,8 +77,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
   (English) **Prompt preset management** – Save multiple in GUI, shared across local workspaces (except Settings Sync)
 - **低コストな初期モデル**: 有料 API の入力・出力トークン単価を基準に OpenAI `gpt-6-luna` を初期選択。Gemini の無料枠や Claude / Codex / Local にも切り替え可能（[OpenAI 料金](https://developers.openai.com/api/docs/pricing) / [Gemini 料金](https://ai.google.dev/gemini-api/docs/pricing)）
   (English) **Low-cost default** – OpenAI `gpt-6-luna` is selected based on paid input/output token rates. Gemini’s free tier, Claude, Codex, and Local remain available ([OpenAI pricing](https://developers.openai.com/api/docs/pricing) / [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing)).
-- **最新クラウドモデルに対応**: OpenAI GPT-6 Luna / Sol / Astra、Claude Opus 5.5 / Fable 5.1 / Sonnet 5、Gemini 3.8 Flash / 3.5 Flash-Lite をモデル欄から選択可能。OpenAI の初期モデルは GPT-6 Luna、Codex は GPT-5.6 Luna
-  (English) **Current cloud models supported** – Select OpenAI GPT-6 Luna/Sol/Astra, Claude Opus 5.5/Fable 5.1/Sonnet 5, and Gemini 3.8 Flash/3.5 Flash-Lite; GPT-6 Luna is the initial OpenAI model, and GPT-5.6 Luna is the initial Codex model
+- **最新クラウドモデルに対応**: OpenAI GPT-6 Luna / Sol / Astra、Claude Opus 5.5 / Fable 5.1 / Sonnet 5、Gemini 3.8 Flash / 3.5 Flash-Lite をモデル欄から選択可能。OpenAI / Codex の初期モデルは GPT-6 Luna
+  (English) **Current cloud models supported** – Select OpenAI GPT-6 Luna/Sol/Astra, Claude Opus 5.5/Fable 5.1/Sonnet 5, and Gemini 3.8 Flash/3.5 Flash-Lite; GPT-6 Luna is the initial OpenAI and Codex model
 - **Local LLM なら API 利用料なし**: Qwen3.5 / Gemma 4 / LFM2.5 などの GGUF モデルをダウンロードすると PC 内のリソースで生成可能。速度は端末性能と差分サイズに依存
   (English) **No cloud API charge with Local LLM** – Download a Qwen3.5, Gemma 4, or LFM2.5 model in GGUF format and generate on your machine; speed depends on device specs and diff size
 - **追加指示欄でさらにカスタマイズ**: 「英語で短く」「絵文字なし」「Conventional Commits 準拠」など、チームのコミットルールに合わせて自由に指定  
@@ -119,8 +119,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 > 💡 **クラウド API の BYOK**: OpenAI / Gemini / Claude はご自身の API キーを使います。Codex は専用ログイン、Local は API キー不要です。
 > (OpenAI, Gemini, and Claude use your own API keys. Codex uses its dedicated sign-in; Local requires no API key.)
 
-Codex を選ぶ場合、事前に Codex CLI をインストールし、Commit Maker の Codex 欄から「ログイン」を押してください。通常の Codex CLI とは別の `CODEX_HOME` でログインするため、CLI 側のログアウトや別アカウント利用の影響を受けません。Commit Maker は `codex exec` を read-only / ephemeral で呼び出し、最終コミットメッセージだけを受け取ります。
-(For Codex, install the Codex CLI, then press "Sign in" in Commit Maker's Codex section. It signs in with a separate `CODEX_HOME`, so your normal Codex CLI logout or account choice does not affect Commit Maker. Commit Maker calls `codex exec` in read-only / ephemeral mode and uses only the final commit message.)
+Codex を選ぶ場合、事前に Codex CLI をインストールし、Commit Maker の Codex 欄から「ログイン」を押してください。GPT-6 Luna / Sol には CLI 0.157.0 以降が必要です。古い CLI はインストール方法に合わせて `brew upgrade --cask codex` または `npm install -g @openai/codex@latest` で更新してください。通常の Codex CLI とは別の `CODEX_HOME` でログインするため、CLI 側のログアウトや別アカウント利用の影響を受けません。Commit Maker は `codex exec` を read-only / ephemeral で呼び出し、最終コミットメッセージだけを受け取ります。
+(For Codex, install the Codex CLI, then press "Sign in" in Commit Maker's Codex section. GPT-6 Luna/Sol requires CLI 0.157.0 or later. Update an older CLI with `brew upgrade --cask codex` or `npm install -g @openai/codex@latest`, matching your installation method. It signs in with a separate `CODEX_HOME`, so your normal Codex CLI logout or account choice does not affect Commit Maker. Commit Maker calls `codex exec` in read-only / ephemeral mode and uses only the final commit message.)
 
 Local を選ぶ場合、API キーは不要です。上部のモデル欄で Qwen3.5 / Gemma 4 / LFM2.5 などの GGUF モデルを選び、「モデルをダウンロード」で llama.cpp runtime と選択モデルを取得し、以後は PC 内で生成します。
 (For Local, no API key is required. Choose a Qwen3.5, Gemma 4, or LFM2.5 model in GGUF format in the top model field, then use "Download model" to fetch the llama.cpp runtime and selected model. Generation runs on your machine.)

@@ -239,13 +239,15 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       requiresApiKey: false,
       setupMode: 'codexAuth',
       models: [
+        'gpt-6-luna',
+        'gpt-6-sol',
+        'gpt-6-astra',
         'gpt-5.6-luna',
         'gpt-5.6-terra',
         'gpt-5.6-sol',
-        'gpt-6-astra',
         'gpt-5.5'
       ],
-      defaultModel: 'gpt-5.6-luna',
+      defaultModel: 'gpt-6-luna',
       issueUrl: 'https://developers.openai.com/codex/auth',
       defaultEndpoint: '',
       defaultSecret: '',

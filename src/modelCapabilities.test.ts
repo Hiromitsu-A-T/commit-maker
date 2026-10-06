@@ -98,9 +98,9 @@ export function runModelCapabilitiesTests(): void {
   assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-opus-4-20250514'));
   assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-sonnet-4-20250514'));
 
-  assert.strictEqual(DEFAULT_MODEL_BY_PROVIDER.codex, 'gpt-5.6-luna');
-  assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-6-luna'));
-  assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-6-sol'));
+  assert.strictEqual(DEFAULT_MODEL_BY_PROVIDER.codex, 'gpt-6-luna');
+  assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-6-luna'));
+  assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-6-sol'));
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-6-astra'));
   assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-5.4-mini'));
   assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-5.4'));

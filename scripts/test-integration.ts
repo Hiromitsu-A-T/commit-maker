@@ -181,7 +181,7 @@ async function main(): Promise<void> {
     assert.ok(app.terminals[0].options.env?.CODEX_HOME?.startsWith(app.root));
     assert.match(app.terminals[0].command || '', /cli_auth_credentials_store/);
     app.send({ type: 'commitProviderChanged', value: 'codex' });
-    assert.strictEqual(app.state.commitModel, 'gpt-5.6-luna', 'ChatGPT 認証で利用可能な既定モデルを選ぶ');
+    assert.strictEqual(app.state.commitModel, 'gpt-6-luna', 'Codex の既定モデルを選ぶ');
     generate();
     await waitUntil(() => app.state.commitStatus === 'ready');
     assert.strictEqual(app.state.commitResult, 'chore: 検証用の変更');
