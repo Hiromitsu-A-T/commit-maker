@@ -2,7 +2,7 @@
 
 検証日: 2026-10-05〜06。対象: 開始時のワークツリーを含む 0.12.2。教材としての責務・構造・命名・コメントも最終コードで見直した。
 
-V / T / L とファイル別の修正数は0.12.2でのレビュー履歴である。公開依頼に基づく統合・配布物・公開後の検証は、末尾のバージョン別記録に示す。0.18.2では実クラウドAPI・実Codexアカウント・実GGUF推論も確認する。
+V / T / L とファイル別の修正数は0.12.2でのレビュー履歴である。公開依頼に基づく統合・配布物・公開後の検証は、末尾のバージョン別記録に示す。0.18.2では実クラウドAPI・実Codexアカウント・実GGUF推論も確認した。
 
 ## 範囲と完了条件
 
@@ -466,7 +466,7 @@ OpenAIの最初の確認では、高推論の1ケースが300秒の期限に達�
 | --- | --- | --- |
 | A1 | OpenAI / Gemini / Claudeの実生成 | 現行候補はOpenAI 17モデル・234設定、Gemini 10モデル、Claude 13モデル。合計257ケースで実HTTP 200と非空のコミット文章を確認し、OpenAIはcompletedも確認。初回失敗と再実行も別に保持。output/live-api-0.18.1/matrix.json / retry.json / cloud-final.json。 |
 | A2 | Codexの実認証・実生成 | CLI 0.153.4と実ChatGPT認証で、現行5モデル×4推論設定の20ケースが成功。修正前の非対応2モデルの8失敗も保存。codex-before.json / codex.json / codex-diagnostic.json。 |
-| A3 | Localの実取得・実推論・削除 | 4モデルすべて実GGUF取得とSHA-256、実runtime取得とSHA-256を確認。各モデルで2回の日本語のコミット生成・削除に成功。Gemmaの中断した初回は取得と検証までを記録し、資産だけを隔離環境へ再コピーして再検証・推論・削除を行った。local.json / gemma-interrupted.json / gemma.json。 |
+| A3 | Localの実取得・実推論・削除 | 4モデルすべて実GGUF取得とSHA-256、実runtime取得とSHA-256を確認。各モデルで2回の日本語のコミット生成・削除に成功。Gemmaの中断した初回は取得と検証までを記録し、資産だけを隔離環境へ再コピーして再検証・推論・削除を行った。local.json / gemma-interrupted.json / gemma.json / local-final.json。 |
 | A4 | 不完全応答とCLI失敗理由 | 空・部分文章のincomplete、failed、原因なしの応答を拒否。completedと6互換形式の既存契約を維持。未完成応答で実Git fixtureのSCMを上書きせず、Codexのプロンプト末尾の失敗理由と伏せ字も確認。unit-final.log / integration-final.log。 |
 | A5 | 静的検査・テスト・本番ビルド | lint・型検査・単体18ファイル・統合8機能群・compile・build:mediaが成功。4モデルのHEADでHTTP・SHA・サイズを順に確認する検査を追加し、実runtime取得・展開・起動も成功。各final.log / runtime-final.log。 |
 | A6 | 最終VSIX・実SCM・実ブラウザー・全対象 | 最終0.18.2の実コードで、クラウド3種・Codex・Localの5 providerすべてを生成から実SCM反映まで確認。Chromiumで5 providerの操作と32言語×4モデル×3幅の384表示ケースが成功。console error / warning・pageerrorは0。126 entries・32 NLS・67 JSが生成元と一致。現存202ファイル・新旧207行の欠け・重複は0。scm-final.json / browser.json / package.json / inventory.json。 |
@@ -476,3 +476,15 @@ OpenAIの最初の確認では、高推論の1ケースが300秒の期限に達�
 実サービスの生成時間・推論量には揺れがあり、最初の期限・出力上限への到達を隠して「常に成功」とは扱わない。上限による失敗は検査済みの境界として記録する。実GGUF推論と実VS CodeはmacOS ARM64で行い、Windows / Linuxを含むruntime取得・起動は公開CIでも確認する。テスト用VS Codeが途中で終了した2件の未完了結果は採用せず、終了検出を追加して再実行した。
 
 既存の公開依頼に沿い、修正をPATCH版0.18.2としてコミットし、mainとv0.18.2をpushしてstable workflowで公開する。両ストアと配布物の確認結果は成功後にA7として追記する。
+
+## 0.18.2の公開結果
+
+2026-10-06にmainとv0.18.2をpushした。公開対象は6f80d0c。[mainのCI](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/37399803705)と[stable公開workflow](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/37399803978)が成功した。Windows・macOS・Linuxすべてで、4モデルの配布先とSHA-256・サイズの確認、2系列のruntimeの取得・検証・実行も成功した。[公開後のバッジ更新](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/37400011647)も成功した。
+
+| ID | 公開後の確認 | 結果・証拠 |
+| --- | --- | --- |
+| A7 | 両ストア・公開配布物 | 10:41 JSTにMarketplaceとOpen VSXの公開APIで最新版0.18.2を確認。両ストアから実際に取得したVSIXは、CI成果物とSHA-256が一致。CIの内部126ファイルも、実SCMで検証した最終VSIXとすべて一致。output/live-api-0.18.1/stores.json / published-package.json / marketplace-package.json / openvsx-package.json。 |
+
+公開先は[Marketplace](https://marketplace.visualstudio.com/items?itemName=Hiromitsu.commit-maker)と[Open VSX](https://open-vsx.org/extension/Hiromitsu/commit-maker)。公開VSIXのSHA-256は `6f59ac11ad5a6e6ab52f1fc932d8c6f89cb0ea14cc7b17b11cca57182db935c0`。vsix/commit-maker-0.18.2.vsixにはCI成果物を保存し、実操作で検証した元のVSIXも証拠用に保持した。
+
+A1–A7の確認は完了し、今回再現した本番利用の不備は修正・検証・公開済み。対象一覧とレビュー記録の欠け・余り・重複は0。通常の利用者データへ検証の変更は残していない。この追記は公開後の記録であり、公開タグの拡張コードは変更していない。
