@@ -40,9 +40,11 @@ export function runModelCapabilitiesTests(): void {
   assert.strictEqual(DEFAULT_MODEL_BY_PROVIDER.openai, 'gpt-6-luna');
   assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.openai.includes('gpt-5-codex'));
   assert.deepStrictEqual(
-    MODEL_SUGGESTIONS_BY_PROVIDER.openai.slice(0, 3),
-    ['gpt-6-luna', 'gpt-6-sol', 'gpt-6-astra']
+    MODEL_SUGGESTIONS_BY_PROVIDER.openai.slice(0, 4),
+    ['gpt-6-luna', 'gpt-6.1-sol', 'gpt-6-sol', 'gpt-6-astra']
   );
+  assert.deepStrictEqual(getAllowedReasoningOptions('gpt-6.1-sol'), ['low', 'medium', 'high', 'xhigh', 'max']);
+  assert.strictEqual(getDefaultReasoningForModel('gpt-6.1-sol'), 'medium');
   assert.deepStrictEqual(getAllowedReasoningOptions('gpt-6-astra'), ['low', 'medium', 'high', 'xhigh', 'max']);
   assert.deepStrictEqual(
     getAllowedReasoningOptions('gpt-6-luna'),
@@ -93,6 +95,8 @@ export function runModelCapabilitiesTests(): void {
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-opus-4-7'));
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-opus-4-6'));
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-sonnet-5'));
+  assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-sonnet-5-5'));
+  assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-sonnet-4-5-20250929'));
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-fable-5'));
   assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-opus-4-1-20250805'));
   assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.claude.includes('claude-opus-4-20250514'));
@@ -101,6 +105,7 @@ export function runModelCapabilitiesTests(): void {
   assert.strictEqual(DEFAULT_MODEL_BY_PROVIDER.codex, 'gpt-6-luna');
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-6-luna'));
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-6-sol'));
+  assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-6.1-sol'));
   assert.ok(MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-6-astra'));
   assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-5.4-mini'));
   assert.ok(!MODEL_SUGGESTIONS_BY_PROVIDER.codex.includes('gpt-5.4'));

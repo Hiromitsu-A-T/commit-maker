@@ -148,6 +148,7 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       setupMode: 'apiKey',
       models: [
         'gpt-6-luna',
+        'gpt-6.1-sol',
         'gpt-6-sol',
         'gpt-6-astra',
         'gpt-5.6-luna',
@@ -212,6 +213,7 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
         'claude-haiku-4-5',
         'claude-opus-5-5',
         'claude-fable-5-1',
+        'claude-sonnet-5-5',
         'claude-opus-5',
         'claude-sonnet-5',
         'claude-fable-5',
@@ -220,7 +222,6 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
         'claude-opus-4-7',
         'claude-opus-4-6',
         'claude-haiku-4-5-20251001',
-        'claude-sonnet-4-5-20250929',
         'claude-opus-4-5-20251101'
       ],
       defaultModel: 'claude-haiku-4-5',
@@ -240,6 +241,7 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       setupMode: 'codexAuth',
       models: [
         'gpt-6-luna',
+        'gpt-6.1-sol',
         'gpt-6-sol',
         'gpt-6-astra',
         'gpt-5.6-luna',

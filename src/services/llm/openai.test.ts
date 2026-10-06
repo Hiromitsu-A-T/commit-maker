@@ -86,11 +86,19 @@ async function testGpt6ReasoningBody(): Promise<void> {
     };
     await callOpenAi({ ...base, model: 'gpt-6-luna', reasoning: 'max' });
     await callOpenAi({ ...base, model: 'gpt-6-astra', reasoning: 'none' });
+    await callOpenAi({ ...base, model: 'gpt-6.1-sol', reasoning: 'none' });
+    await callOpenAi({ ...base, model: 'gpt-6.1-sol', reasoning: 'minimal' });
+    await callOpenAi({ ...base, model: 'gpt-6.1-sol', reasoning: 'max' });
   });
 
-  assert.deepStrictEqual(bodies.map(body => body.model), ['gpt-6-luna', 'gpt-6-astra']);
+  assert.deepStrictEqual(bodies.map(body => body.model), [
+    'gpt-6-luna', 'gpt-6-astra', 'gpt-6.1-sol', 'gpt-6.1-sol', 'gpt-6.1-sol'
+  ]);
   assert.deepStrictEqual(bodies[0].reasoning, { effort: 'max' });
   assert.deepStrictEqual(bodies[1].reasoning, { effort: 'low' });
+  assert.deepStrictEqual(bodies[2].reasoning, { effort: 'medium' });
+  assert.deepStrictEqual(bodies[3].reasoning, { effort: 'medium' });
+  assert.deepStrictEqual(bodies[4].reasoning, { effort: 'max' });
   assert.ok(bodies.every(body => !Object.prototype.hasOwnProperty.call(body, 'temperature')));
 }
 

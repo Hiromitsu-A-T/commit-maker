@@ -48,17 +48,19 @@ async function testSonnet5OmitsTemperature(): Promise<void> {
     bodies.push(JSON.parse(String(options?.body)));
     return new Response(JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }));
   }, async () => {
-    await callClaude({
-      prompt: 'ping',
-      model: 'claude-sonnet-5',
-      apiKey: 'test-key',
-      endpoint: 'https://api.anthropic.com/v1/messages',
-      timeoutMs: 1000
-    });
+    for (const model of ['claude-sonnet-5', 'claude-sonnet-5-5']) {
+      await callClaude({
+        prompt: 'ping',
+        model,
+        apiKey: 'test-key',
+        endpoint: 'https://api.anthropic.com/v1/messages',
+        timeoutMs: 1000
+      });
+    }
   });
 
-  assert.strictEqual(bodies.length, 1);
-  assert.ok(!Object.prototype.hasOwnProperty.call(bodies[0], 'temperature'));
+  assert.deepStrictEqual(bodies.map(body => body.model), ['claude-sonnet-5', 'claude-sonnet-5-5']);
+  assert.ok(bodies.every(body => !Object.prototype.hasOwnProperty.call(body, 'temperature')));
 }
 
 async function testOpus55OmitsTemperature(): Promise<void> {
