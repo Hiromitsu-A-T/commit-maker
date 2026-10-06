@@ -640,35 +640,36 @@ export class CommitController implements vscode.Disposable {
     return !this.disposed && revision === this.localModelRevision;
   }
 
+  /** 成功した生成の ID を返し、SCM 側が待機後にも所有権を確認できるようにする。 */
   private async generateCommitMessage(
     includeUnstaged: boolean,
     includeUntracked: boolean,
     includeBinary: boolean,
     progress?: (message: string) => void,
     repo?: GitRepository
-  ): Promise<boolean> {
-    if (this.disposed || (this.state.provider === 'local' && this.isLocalModelBusy())) return false;
+  ): Promise<number | undefined> {
+    if (this.disposed || (this.state.provider === 'local' && this.isLocalModelBusy())) return undefined;
     const state = { ...this.state };
     // この生成の設定と signal を保持し、後から始まる生成と混ぜない。
     const { generationId, abortSignal } = this.startGeneration();
     const report = (message: string): void => this.reportGenerationProgress(generationId, message, progress);
     try {
       const targetRepo = repo ?? (await this.getRepositoryOrThrow());
-      if (!this.isCurrentGeneration(generationId)) return false;
+      if (!this.isCurrentGeneration(generationId)) return undefined;
       report(this.strings.msgCommitGenerateFetchingDiff);
       const diff = await this.prepareDiff(targetRepo, includeUnstaged, includeUntracked, includeBinary, state);
-      if (!this.isCurrentGeneration(generationId)) return false;
+      if (!this.isCurrentGeneration(generationId)) return undefined;
       report(this.strings.msgCommitGenerateCallingLlm);
       const result = state.provider === 'local'
         ? await this.generateLocalCommitMessage(diff, state, abortSignal, report)
         : await this.callLlm(buildCommitPrompt(diff, state), state, abortSignal);
-      if (!this.isCurrentGeneration(generationId)) return false;
+      if (!this.isCurrentGeneration(generationId)) return undefined;
       this.handleGenerationSuccess(result);
-      return true;
+      return generationId;
     } catch (error) {
-      if (!this.isCurrentGeneration(generationId)) return false;
+      if (!this.isCurrentGeneration(generationId)) return undefined;
       this.handleGenerationError(error);
-      return false;
+      return undefined;
     } finally {
       await this.finishGeneration(generationId);
     }
@@ -784,15 +785,15 @@ export class CommitController implements vscode.Disposable {
       return;
     }
     await this.runWithScmProgress(this.strings.msgCommitGenerateTitle, this.state.provider === 'local', async report => {
-      const generated = await this.generateCommitMessage(
+      const generationId = await this.generateCommitMessage(
         this.state.includeUnstaged,
         this.state.includeUntracked,
         this.state.includeBinary,
         report,
         repo
       );
-      if (!generated) {
-        // 中止・置換された生成は、別の生成結果を SCM へ反映しない。
+      if (generationId === undefined || !this.isCurrentGeneration(generationId)) {
+        // 完了処理の待機中に中止・置換された生成も、SCM へ反映しない。
         return;
       }
       report(this.strings.msgCommitApplyProgress);
@@ -809,11 +810,16 @@ export class CommitController implements vscode.Disposable {
   ): Promise<T> {
     const location = showNotification ? vscode.ProgressLocation.Notification : vscode.ProgressLocation.SourceControl;
     return vscode.window.withProgress({ location, title, cancellable: true }, async (progress, token) => {
+      const previousGenerationId = this.activeGenerationId;
+      const pending = work(message => progress.report({ message }));
+      // 開始直後の ID を固定し、この進捗から別の生成を中止しない。
+      const generationId = this.activeGenerationId !== previousGenerationId ? this.activeGenerationId : undefined;
       const cancellation = token.onCancellationRequested(() => {
+        if (generationId === undefined || !this.isCurrentGeneration(generationId)) return;
         void this.cancelCurrent(this.strings.msgCancelled);
       });
       try {
-        return await work(message => progress.report({ message }));
+        return await pending;
       } finally {
         cancellation.dispose();
       }

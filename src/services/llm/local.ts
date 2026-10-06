@@ -101,6 +101,10 @@ export async function callLocalLlm({
         parse: raw => {
           const data = asRecord(raw ? JSON.parse(raw) : undefined);
           const choice = asRecord(Array.isArray(data.choices) ? data.choices[0] : undefined);
+          // runtime が上限で打ち切った文章は、整形しても完成した結果にはならない。
+          if (choice.finish_reason === 'length') {
+            throw new Error('Local: response incomplete (length).');
+          }
           const text = asRecord(choice.message).content || data.content || data.response;
           const cleaned = cleanupLocalOutput(typeof text === 'string' ? text : '');
           if (!cleaned.trim()) {

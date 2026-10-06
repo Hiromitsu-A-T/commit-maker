@@ -171,7 +171,7 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `.npmignore` | npm パッケージからの開発物除外 | 検証設定・記録・生成物に加え、共有テスト補助 out/testSupport.js も配布から除外。 | V9・T4 |
 | `.vscode/launch.json` | Extension Host の開発起動 | 変更なし。workspace の out と拡張開発パスを使用。 | V6 |
 | `.vscodeignore` | VSIX からの開発物除外 | 検証設定・記録・秘密情報・テストを除外。共有テスト補助 out/testSupport.js も VSIX に含めない。 | V9・T4 |
-| `AGENTS.md` | 開発・配布・設定契約のガイド | 実装・検証・配布手順を整合させ、レビュー・検証記録の参照先を追加。 公開統合: 最新の初期モデルとprovider順を保持。 実接続見直し: Codex の認証方式別の既定モデルと Local 資産確認コマンドを整合。 CLI更新確認: CodexのGPT-6候補を除外する前に現行CLIで検証する方針を明記。 最新モデル再確認: Codex実接続の前にPC常設CLIを最新安定版へ更新・照合し、実行パスと版を記録する方針を追加。GPT-6.1 SolのCLI条件も明記。 | V1–V11・T7・R1・R2・R3・A2・A3・A5・C1–C4・M1–M5 |
+| `AGENTS.md` | 開発・配布・設定契約のガイド | 実装・検証・配布手順を整合させ、レビュー・検証記録の参照先を追加。 公開統合: 最新の初期モデルとprovider順を保持。 実接続見直し: Codex の認証方式別の既定モデルと Local 資産確認コマンドを整合。 CLI更新確認: CodexのGPT-6候補を除外する前に現行CLIで検証する方針を明記。 最新モデル再確認: Codex実接続の前にPC常設CLIを最新安定版へ更新・照合し、実行パスと版を記録する方針を追加。GPT-6.1 SolのCLI条件も明記。 API検証の費用確認・最小範囲・既存証拠の再利用と使用量の記録を開発手順へ追加。 | V1–V11・T7・R1・R2・R3・A2・A3・A5・C1–C4・M1–M5・Q1–Q6 |
 | `CODE_OF_CONDUCT.md` | 参加者の行動指針 | 変更なし。実行コードと独立した既存の運用文書。 | 文書レビュー |
 | `CONTRIBUTING.md` | 開発準備と検証の入口 | 開発・隔離検証の入口を整理。構造・配布・検証の詳細は AGENTS.md へ案内。 | V1–V6・T7 |
 | `LICENSE` | Apache-2.0 本文 | 変更なし。法的な定型本文は編集しない。 | 文書レビュー |
@@ -179,7 +179,7 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `README.md` | 利用者向けの機能・設定説明 | SecretStorage / 環境変数、データ送信、生成ボタン、設定範囲の説明を実装に合わせ修正。 公開統合: 最新のモデル候補・初期設定の説明を保持。 実接続見直し: OpenAI と Codex の初期モデルを分け、公開説明を実装へ整合。 CLI更新確認: CodexのGPT-6 Luna初期選択とCLI 0.157.0以降の条件・更新方法を整合。 最新モデル再確認: GPT-6.1 Sol / Sonnet 5.5の候補とCLI 0.159.1以降の条件を日英で整合。 | V4–V6・V9・R1・R2・R3・A2・A6・C1–C4・M1–M5 |
 | `SECURITY.md` | 脆弱性の連絡・公開方針 | 変更なし。公開窓口と秘密情報の扱いを維持。 | 文書レビュー |
 | `SUPPORT.md` | 利用時の問い合わせ先 | 既存の Codex provider を対応一覧へ追加。 公開統合: 現行のprovider順とCodexの記載を保持。 | 文書レビュー・R1・R2・R3 |
-| `docs/maintenance-review.md` | 全対象のレビュー・検証記録 | 全対象の役割・改善理由・機能別検証に加え、32言語の逐次レビューを記録。V / T / L の段階と証拠を区別し、新旧ファイルの照合を示す。 実接続見直し: fixture と実サービスの確認を区別し、不備の再現・修正・検証範囲を記録。 CLI更新確認: 同じ認証・同じ拡張コードで旧CLIと現行CLIの結果を比較し、判断を訂正。 最新モデル再確認: 常設CLI・公式情報・各候補の再検証と対象照合、両ストアの公開結果を記録。 | V10・T7・L5・P1–P5・A1–A7・C1–C5・M1–M6 |
+| `docs/maintenance-review.md` | 全対象のレビュー・検証記録 | 全対象の役割・改善理由・機能別検証に加え、32言語の逐次レビューを記録。V / T / L の段階と証拠を区別し、新旧ファイルの照合を示す。 実接続見直し: fixture と実サービスの確認を区別し、不備の再現・修正・検証範囲を記録。 CLI更新確認: 同じ認証・同じ拡張コードで旧CLIと現行CLIの結果を比較し、判断を訂正。 最新モデル再確認: 常設CLI・公式情報・各候補の再検証と対象照合、両ストアの公開結果を記録。 0.18.5の再現・修正・再検証、費用と既存証拠の再利用範囲を記録。 | V10・T7・L5・P1–P5・A1–A7・C1–C5・M1–M6・Q1–Q6 |
 | `eslint.config.cjs` | 手書き JS / TS の lint | 手書き JS / TS と実行環境を区分。生成物を除き、未使用処理と明示的な any を検査する。 | V1・T1 |
 | `i18n/package-nls/package.nls.ar.json` | VS Code コマンド文言（ar） | 全8文言を個別に読み、コマンドの対象と自然な表現を確認。2文言を修正。キー集合・ブランド名・配布時の生成契約は保持。 | L1・L2・L3・L4・L5 |
 | `i18n/package-nls/package.nls.bn.json` | VS Code コマンド文言（bn） | 全8文言を個別に読み、コマンドの対象と自然な表現を確認。1文言を修正。キー集合・ブランド名・配布時の生成契約は保持。 | L1・L2・L3・L4・L5 |
@@ -226,7 +226,7 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `media/src/state.ts` | 画面状態の複製・統合 | 状態の浅い統合という責務を保ち、同梱 classic script の共有先をコメントで説明。 | V1・V4・T1・T3 |
 | `media/src/types.ts` | 画面要素・状態・Window の型契約 | 共通ヘルパーの型をまとめ、任意の Local 状態を正しく表現。開始時のカード要素を維持。 | V1・V4 |
 | `media/tsconfig.json` | 画面ヘルパーのコンパイル設定 | strict と未使用検査を有効化。同じ classic script へ生成。 | V1・V9 |
-| `package.json` | 拡張 metadata・コマンド・設定・開発依存 | 検査コマンドと開発依存を整備。OpenAI endpoint の説明を Responses API へ揃えた。version 0.12.2、engines、権限、既定値、設定キーは維持。 公開統合: 最新の初期設定・ストア説明を保持し、0.18.0へ更新。 追加見直し: バグ修正公開0.18.1へ更新。 実接続の不備を修正するPATCH版0.18.2へ更新。設定・権限・依存は維持。 CLI更新対応をPATCH版0.18.3へ反映。version以外のmetadata・設定・権限・依存は維持。 最新候補の追加漏れ・非推奨候補を修正するPATCH版0.18.4へ更新。設定・権限・依存は維持。 | V1–V3・V9・R1・R2・R3・P4・A5・A6・C1–C4・M1–M5 |
+| `package.json` | 拡張 metadata・コマンド・設定・開発依存 | 検査コマンドと開発依存を整備。OpenAI endpoint の説明を Responses API へ揃えた。version 0.12.2、engines、権限、既定値、設定キーは維持。 公開統合: 最新の初期設定・ストア説明を保持し、0.18.0へ更新。 追加見直し: バグ修正公開0.18.1へ更新。 実接続の不備を修正するPATCH版0.18.2へ更新。設定・権限・依存は維持。 CLI更新対応をPATCH版0.18.3へ反映。version以外のmetadata・設定・権限・依存は維持。 最新候補の追加漏れ・非推奨候補を修正するPATCH版0.18.4へ更新。設定・権限・依存は維持。 SCM所有権と未完成応答の修正をPATCH版0.18.5へ反映。version以外の設定・権限・metadata・依存は維持。 | V1–V3・V9・R1・R2・R3・P4・A5・A6・C1–C4・M1–M5・Q1–Q6 |
 | `package.nls.json` | 英語の VS Code コマンド文言 | 全8文言を個別に読み、コマンドの対象と自然な表現を確認。1文言を修正。キー集合・ブランド名・配布時の生成契約は保持。 | L1・L2・L3・L4・L5 |
 | `scripts/check-commit-emails.js` | Git 履歴のメール検査 | 変更なし。全履歴・範囲指定・push 入力の責務を確認。 | V8 |
 | `scripts/clean-out.js` | out の削除 | 変更なし。リポジトリー内の生成先だけを削除する短い処理。 | V8 |
@@ -244,13 +244,13 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `scripts/smoke-openai-matrix.ts` | OpenAI の全許容設定の API 検証入口 | 変更なし。能力表からの列挙と API サービスの利用を確認。 | V1・V2 |
 | `scripts/smoke-openai-response.ts` | OpenAI 応答形の API 検証入口 | 変更なし。応答契約の検査と秘密情報を出さない入口を確認。 | V1・V2 |
 | `scripts/smoke-openai.ts` | OpenAI の単一 API 検証入口 | 変更なし。明示実行時の環境変数と Responses 呼び出しを確認。 | V1・V2 |
-| `scripts/test-integration.ts` | 機能間の統合・競合・終了検査 | 描画用の型と外部へ送った状態で検証し、private 状態への依存と any を除去。ready の保存先を取得後に確定して使う。 実接続見直し: 未完成応答によるSCM上書き抑止、Codex既定モデルとプロンプトより後のエラー表示を回帰検査。 CLI更新確認: Codexの初期モデルをGPT-6 Lunaへ戻した生成契約を検査。 | V1・V3・T1・T2・A2・A4・A5・C1–C4 |
-| `scripts/test-support.ts` | 検査専用の認証・Git・HTTP・CLI fixture | VS Code の必要な境界を型付き fixture で再現。状態・要求は unknown / 実際の通信型とし、読込 hook の復元理由を説明。 未完成のHTTP 200と、プロンプトの後に出る構造化CLIエラーを認証fixtureで再現。 | V1・V3–V5・T1・T2・T3・A4・A5 |
+| `scripts/test-integration.ts` | 機能間の統合・競合・終了検査 | 描画用の型と外部へ送った状態で検証し、private 状態への依存と any を除去。ready の保存先を取得後に確定して使う。 実接続見直し: 未完成応答によるSCM上書き抑止、Codex既定モデルとプロンプトより後のエラー表示を回帰検査。 CLI更新確認: Codexの初期モデルをGPT-6 Lunaへ戻した生成契約を検査。 完了待機中の置換・中止・古い進捗からの中止を実Git fixtureで検査。全クラウドとLocalの途中応答でSCMを上書きしないことを確認。 | V1・V3・T1・T2・A2・A4・A5・C1–C4・Q1–Q3 |
+| `scripts/test-support.ts` | 検査専用の認証・Git・HTTP・CLI fixture | VS Code の必要な境界を型付き fixture で再現。状態・要求は unknown / 実際の通信型とし、読込 hook の復元理由を説明。 未完成のHTTP 200と、プロンプトの後に出る構造化CLIエラーを認証fixtureで再現。 公式の終了理由を持つ部分応答と進捗ごとの取消通知を隔離fixtureへ追加。 | V1・V3–V5・T1・T2・T3・A4・A5・Q1–Q4 |
 | `scripts/update-badges.js` | ストア統計 JSON の更新 | 変更なし。取得失敗時の保持、数値整形、書き込み先を確認。実統計データは変更しない。 | V1・資産レビュー |
 | `scripts/vscode-smoke.cjs` | 実 VS Code 側の操作・結果確認 | 追加。標準 Git API と実 SCM を検査。observer を復元し、終了コマンドを予約せず呼び出して専用ウィンドウを閉じる。 | V1・V6 |
-| `scripts/webview-smoke.cjs` | 実 Chromium の操作確認 | 本番画面の機能操作と 384 表示ケースを検証。不正な状態の無視と通知の置換・期限も実ブラウザーで確認。 | V1・V4・V5・T1・T3 |
+| `scripts/webview-smoke.cjs` | 実 Chromium の操作確認 | 本番画面の機能操作と 384 表示ケースを検証。不正な状態の無視と通知の置換・期限も実ブラウザーで確認。 4 providerで正常生成→未完成応答→復旧を実画面から確認し、結果/エラーの消去・反映無効・SCM保持を回帰検査。 | V1・V4・V5・T1・T3・Q2・Q4 |
 | `src/commitController.test.ts` | 実際には promptLimit の単体検査 | src/promptLimit.test.ts へ移動。対象の責務とファイル名を一致させる。 | V2 |
-| `src/commitController.ts` | 機能の状態・Git・LLM・SCM の進行管理 | 生成設定と signal の所有を明示。プロンプトの純粋関数を抽出し、言語更新を命名。設定優先順・Local 引数・logger・同一エラー処理の重複を解消し、provider 分岐を直接 switch にした。 | V1–V7・T1–T6 |
+| `src/commitController.ts` | 機能の状態・Git・LLM・SCM の進行管理 | 生成設定と signal の所有を明示。プロンプトの純粋関数を抽出し、言語更新を命名。設定優先順・Local 引数・logger・同一エラー処理の重複を解消し、provider 分岐を直接 switch にした。 成功した生成IDをSCM側へ返し、完了待機後に所有権を再確認。進捗の中止も開始した生成IDだけに結び付け、コメントで理由を説明。 | V1–V7・T1–T6・Q1・Q3・Q4 |
 | `src/commitDiffUtil.ts` | 差分制限の小さな補助 | 使われないエラー変数を整理。既存の補助責務を維持。 | V1–V3 |
 | `src/commitPrompt.ts` | 言語・利用者の指示・差分の組み立て | controller から純粋関数を抽出。保存・通信を持たず、変更前の出力と 192 ケースで完全一致。 | T1・T2・T6 |
 | `src/commitState.ts` | 内部状態と画面への投影 | 復元済み内部状態の必須項目を型で表し、MaxPromptMode を共有。利用前に正規化する責務をコメントに記録。 | V1・V3・T1・T2 |
@@ -296,7 +296,7 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `src/i18n/types.ts` | UiStrings の契約 | 変更なし。全 locale が型と基準キーを満たす。 | V1・V2 |
 | `src/modelCapabilities.test.ts` | モデル別の設定値の単体検査 | 保守レビュー時は変更なし。後方互換モデルも含む既存の能力表の検査を維持。公開統合で最新モデルと初期設定のテストを取得関数へ適合。 実接続見直し: 当時のCodex既定値・旧CLIで拒否された候補・提供終了モデルの除外を検査。カスタムモデルの能力は維持。 CLI更新確認: CodexのGPT-6 Luna既定値とLuna / Sol候補の登録を検査。 最新モデル再確認: GPT-6.1 Solの能力・Codex候補とSonnet 5.5 / 非推奨候補の境界を検査。 | V2・R1・R2・R3・A1・A2・A5・C1–C4・M1–M5 |
 | `src/modelCapabilities.ts` | モデル別の推論・詳細度の能力 | 空の blocklist を除去。表を繰り返すコメントを整理し、未対応と未知のカスタムモデルの違いを説明。能力値は維持。 公開統合: GPT-6の許可値と既定値を保持。 最新モデル再確認: GPT-6.1 Solの許可推論5値とmedium既定を明記。none / minimalは許可しない。 | V1・V2・V4・T1・T2・R1・R2・R3・M1–M5 |
-| `src/panel.ts` | Webview の HTML・メッセージ・通知 | 受信検査の後を判別共用体の switch で dispatch し、重複キャスト・委譲だけの関数を除去。never で 30 種類の対応漏れを検査。全イベントを dispose。 | V1–V4・V6・T1–T3・T5 |
+| `src/panel.ts` | Webview の HTML・メッセージ・通知 | 受信検査の後を判別共用体の switch で dispatch し、重複キャスト・委譲だけの関数を除去。never で 30 種類の対応漏れを検査。全イベントを dispose。 JSON通信でも結果・エラー・進捗の消去を空文字で明示し、通知・保存の既存契約を維持する。 | V1–V4・V6・T1–T3・T5・Q2–Q4 |
 | `src/panelBody.test.ts` | HTML 構造の単体検査 | 開始時の Local カード検査を維持し、読み込み・ID・安全な構造を確認。 | V2・V5 |
 | `src/panelBody.ts` | 静的 HTML と bootstrap | 空の blocklist データを除去。開始時のモデルカード・既存の画面構造を維持。 | V1・V2・V4 |
 | `src/panelMessageGuard.test.ts` | 画面入力境界の単体検査 | 不正な入れ子、0 / 空欄の上限解除、負数 / 非有限値の拒否を検査。 | V2 |
@@ -316,13 +316,13 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `src/services/diffCollector.ts` | Git API と CLI による差分取得 | staged / unstaged から Git API と CLI 引数を一緒に決める。拡張子 Set の反復生成を除去し、relativePath / absolutePath / buffer で対象を区別。 | V1–V3・V6・T1・T2・T5 |
 | `src/services/fileDownload.test.ts` | 転送・検証・異常終了の単体検査 | 追加。実 localhost HTTP と一時ファイルで hash / progress / abort / 404 / 書き込み失敗を検証。 公開後の見直し: 中止済みのハッシュ検証がファイルを開かずAbortErrorになることを追加。 | V1・V2・P1・P2 |
 | `src/services/fileDownload.ts` | stream 転送とファイル hash の共有処理 | 追加。2 箇所の転送を pipeline へ統一し、backpressure・abort・書き込みエラーを伝播。 公開後の見直し: ハッシュ用streamへAbortSignalを接続し、検証中の取り消しとstream解放を伝播。 | V1–V3・V7・P1・P2 |
-| `src/services/llm/claude.test.ts` | Claude HTTP 契約の単体検査 | fetch 復元を共有補助へまとめ、部分的な Response の any を実 Response に置換。送信・応答・異常系の契約を保持。 公開統合: Opus 5.5とFable 5.1の契約を同じ型・Responseで検査。 最新モデル再確認: Sonnet 5と5.5の両方でtemperatureを送らない生成契約を検査。 | V2・T1・T2・R1・R2・R3・M1–M5 |
-| `src/services/llm/claude.ts` | Claude Messages への変換 | 外部 JSON を unknown から検査。テキスト block の抽出順と既存のリクエスト形式を維持。 公開統合: Opus 5系のtemperature非対応判定を保持。 | V1–V4・R1・R2・R3 |
+| `src/services/llm/claude.test.ts` | Claude HTTP 契約の単体検査 | fetch 復元を共有補助へまとめ、部分的な Response の any を実 Response に置換。送信・応答・異常系の契約を保持。 公開統合: Opus 5.5とFable 5.1の契約を同じ型・Responseで検査。 最新モデル再確認: Sonnet 5と5.5の両方でtemperatureを送らない生成契約を検査。 max_tokens / model_context_window_exceededの拒否とend_turn / stop_sequenceの成功を検査。 | V2・T1・T2・R1・R2・R3・M1–M5・Q2・Q3 |
+| `src/services/llm/claude.ts` | Claude Messages への変換 | 外部 JSON を unknown から検査。テキスト block の抽出順と既存のリクエスト形式を維持。 公開統合: Opus 5系のtemperature非対応判定を保持。 非空でも出力・コンテキスト上限で途切れた応答を拒否。旧互換形式と正常終了の抽出は維持。 | V1–V4・R1・R2・R3・Q2–Q4 |
 | `src/services/llm/codex.test.ts` | Codex 送信形式の単体検査 | 変更なし。schema / reasoning / command 設定の契約を維持。 公開統合: 現行の初期モデルでCLI引数を検査。 | V2・R1・R2・R3 |
 | `src/services/llm/codex.ts` | Codex exec による生成 | JSON を record として検査し、二度の文字列整形を除去。通常テキストの fallback を日本語で説明し、CLI 契約を保持。 実接続見直し: 入力全文で失敗理由が切れないよう、末尾のCLIエラーを選んでから認証情報の伏せ字・長さ制限を適用。 | V1–V4・V6・T1–T3・T5・A2・A4・A5 |
-| `src/services/llm/gemini.test.ts` | Gemini HTTP 契約の単体検査 | 共通 fetch 補助、実 Response と Headers を使用。独自ヘッダー読取の重複と any を除去。 | V2・T1・T2 |
-| `src/services/llm/gemini.ts` | Gemini generateContent への変換 | URL 変数名を具体化。candidate / parts の検査と既存認証・送信形式を維持。 | V1–V4・T1–T3 |
-| `src/services/llm/local.ts` | llama-server の寿命と生成通信 | 二重起動、abort / timeout / health / 停止対象を整理。外部 JSON の choices を検査し、不正応答を空応答エラーとして扱う。 | V1・V3・V4・V7 |
+| `src/services/llm/gemini.test.ts` | Gemini HTTP 契約の単体検査 | 共通 fetch 補助、実 Response と Headers を使用。独自ヘッダー読取の重複と any を除去。 STOPの成功とMAX_TOKENSの非空・空応答の拒否を検査。 | V2・T1・T2・Q2・Q3 |
+| `src/services/llm/gemini.ts` | Gemini generateContent への変換 | URL 変数名を具体化。candidate / parts の検査と既存認証・送信形式を維持。 MAX_TOKENSの部分文章を生成成功へ渡さず、送信・認証と互換形式は維持。 | V1–V4・T1–T3・Q2–Q4 |
+| `src/services/llm/local.ts` | llama-server の寿命と生成通信 | 二重起動、abort / timeout / health / 停止対象を整理。外部 JSON の choices を検査し、不正応答を空応答エラーとして扱う。 llama.cppのfinish_reason:lengthを拒否し、通常のstopと既存の本文抽出は維持。 | V1・V3・V4・V7・Q2–Q5 |
 | `src/services/llm/openai.test.ts` | OpenAI API・モデル確認の単体検査 | 認証別 cache・期限・設定制約・6 応答形式・不正応答を維持。共通 fetch 補助と実 Response へ整理。 公開統合: GPT-6のreasoning検査を同じ型・Responseで維持。 実接続見直し: 部分文章・空文章・詳細なし・失敗時の伏せ字・completedを検査。互換応答の既存検査を保持。 最新モデル再確認: GPT-6.1 Solのnone / minimal要求をmediumへ補正し、maxを保持、temperatureを送らない生成契約を検査。 | V2・T1・T2・R1・R2・R3・A4・A5・M1–M5 |
 | `src/services/llm/openai.ts` | Responses 送信と互換応答の解析 | 一度だけ使う attempt closure と不要キャストを除去。temperature の送信条件と複数出力の扱いを実装に合わせ説明し、要求値を保持。 実接続見直し: HTTP 200でもincomplete / failedの応答を拒否し、未完成の文章をSCMへ反映しない。出力上限・期限は変更しない。 | V1–V4・T1–T3・A1・A4・A5 |
 | `src/services/llm/shared.test.ts` | 共通 HTTP の単体検査 | 共通 fetch 補助と DOMException / assert.rejects を使用。再試行・即時中止・期限を実際の Response で検査。 | V2・T1・T2 |
@@ -365,7 +365,7 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `media/ui/render.js` | 生成物 | 対応する media/src から再生成。classic script と実ブラウザーで検証。 |
 | `media/ui/state.js` | 生成物 | 対応する media/src から再生成。classic script と実ブラウザーで検証。 |
 | `media/ui/types.js` | 生成物 | 対応する media/src から再生成。classic script と実ブラウザーで検証。 |
-| `package-lock.json` | 生成物 | npm で再生成。クリーン npm ci と audit 0 件を確認。公開統合では検証済みの依存関係を保持し、0.18.0へ更新。R1・R2・R3。追加見直しでは依存を変更せず0.18.1へ更新。P4。 依存を変更せず0.18.2へ更新。 A5・A6。 依存を変更せず0.18.3へ更新。C4。 最新モデル再確認: rootのversionのみ0.18.4へ同期。依存の内容は不変。M5。 |
+| `package-lock.json` | 生成物 | npm で再生成。クリーン npm ci と audit 0 件を確認。公開統合では検証済みの依存関係を保持し、0.18.0へ更新。R1・R2・R3。追加見直しでは依存を変更せず0.18.1へ更新。P4。 依存を変更せず0.18.2へ更新。 A5・A6。 依存を変更せず0.18.3へ更新。C4。 最新モデル再確認: rootのversionのみ0.18.4へ同期。依存の内容は不変。M5。 0.18.5のversionだけを同期し、依存の解決結果は維持。 Q3・Q6。 |
 
 ## 再検証の入口
 
@@ -553,3 +553,30 @@ M1–M5の確認は完了した。追加漏れと非推奨候補の修正をPATC
 公開先は[Marketplace](https://marketplace.visualstudio.com/items?itemName=Hiromitsu.commit-maker)と[Open VSX](https://open-vsx.org/extension/Hiromitsu/commit-maker)。公開VSIXのSHA-256は `1ac325ce93b336b319c9ebe4dd190acfee17d74268baa6ce8cade7b52811b8d4`。vsix/commit-maker-0.18.4.vsixにはCI成果物を保存し、実接続で検証した元のVSIXも隔離した証拠領域に保持した。
 
 M1–M6の確認は完了した。今後は検証前にPC常設Codex CLIを最新安定版へ更新・照合する手順を適用する。検証用の認証・Git・モデル領域は隔離し、一時領域・VS Code・ブラウザー・サーバーは終了・破棄済み。通常のCodex認証ファイルは変更していない。この追記は公開後の記録であり、公開タグの拡張コードは変更していない。
+
+## 0.18.5の境界動作と品質再検証
+
+2026-10-06、コード品質と本番利用の再確認依頼を受け、現行mainと公開済み0.18.4を基準に再検証した。常設Codex CLI 0.160.1は公式の最新安定版と一致した。全保守対象のレビュー一覧を引き継ぎ、変更する各ファイルと生成・中止・SCM反映・応答抽出の境界を重点的に読み直した。変更のないファイルはbyte一致で前回のファイル別判断を維持し、全ファイルを今回新たに読み直したという記録にはしていない。
+
+追加の境界検査で3種類の不備を再現した。SCM生成では、結果通知後のsetContext完了を待つ間に別の生成が完了すると、先の呼び出しが共有結果を別リポジトリへ書いた。同じ待機中の中止後にも反映が起こり、古い進捗の取消通知で新しい生成も中止された。成功した生成IDを返し、待機後に照合してからSCMへ反映する。進捗の取消通知も、その進捗で始めた生成に結び付けた。所有権を再確認する理由は短いコメントに残す。
+
+Gemini・Claude・Localは、出力上限で途切れた本文でも非空なら成功とみなしていた。[Geminiの終了理由](https://ai.google.dev/api/generate-content)、[Claudeの終了理由](https://platform.claude.com/docs/en/build-with-claude/handling-stop-reasons)、固定した[llama.cpp b9441の応答変換](https://github.com/ggml-org/llama.cpp/blob/b9441/tools/server/server-task.cpp)を照合し、MAX_TOKENS、max_tokens / model_context_window_exceeded、lengthを拒否する。正式な応答形状のfixtureで変更前の受理を再現し、全4 providerで未完成応答からSCMを上書きしないことを確認した。正常終了・終了理由なしの旧互換形式を維持し、自動継続・出力上限や期限の増加は追加しない。
+
+実画面では、ホストが生成結果を消してもJSON通信でundefinedが省略され、前の結果が表示されて反映ボタンも有効なままになる不整合を再現した。結果・エラー・進捗は既存の文字列型の空値を明示して送る。新しい状態型や保存契約は追加しない。統合検査ではJSON往復で消去を確認し、ブラウザー検査には正常生成→未完成応答→復旧の4 providerの回帰操作を追加した。
+
+| ID | 機能・検査 | 結果・証拠 |
+| --- | --- | --- |
+| Q1 | SCM生成と取消通知の所有権 | 変更前の誤反映と新しい生成の中止を再現。完了待機中の置換・中止・古い進捗の取消の3ケースが修正後に成功し、既存の同時生成・設定保持・モデル変更の中止も成功。output/final-quality-0.18.5/scm-finish-before.json / scm-progress-before.json / integration-final.log。 |
+| Q2 | 途中応答の拒否と正常復旧 | 3 providerの部分応答受理を変更前に再現。空・非空の途切れた本文、Claudeのコンテキスト上限、正常終了を単体検査。実HTTP fixtureのLocalと全クラウドでSCMを保持し、通常生成に回復。実画面でも4 providerの理由表示・反映無効・SCM保持・通常復旧を確認。incomplete-before.json / browser-stale-before.json / serialized-state-before.log / unit-final.log / integration-final.log / browser-incomplete.json。 |
+| Q3 | 静的検査・単体・統合・本番ビルド | lint・拡張/画面/scriptsの型検査・単体18ファイル・統合8機能群・compile・build:media・NLS・VSIX生成が成功。最終の改行保存後の再コンパイルでも配布JS/CSS 75ファイルと生成元がbyte一致。各final.log / package-build.log / recompiled-parity.json。 |
+| Q4 | 配布コードの実API・実SCMと最終画面 | 隔離VS Codeの一時GitでOpenAI 3モデル、Gemini 2モデル、Claude 4モデル、Codex 3モデルの計12ケースが生成から実SCM反映まで成功。クラウドはHTTP 200とcompleted / STOP / end_turnを確認。headed Chromiumで5 providerの機能操作、32言語×4カード×3幅の384表示ケース、新候補・推論境界の操作が成功。console error / warning・pageerrorは0。latest-scm.json / browser.json / browser-models.json。 |
+| Q5 | Local実推論と全候補の証拠再利用 | Qwen3.5 2Bを実取得してSHA-256を検証し、b9441 runtimeの取得・検証・起動を確認。最終VSIXのLocalサービスで2回の日本語コミット生成、HTTP 200 / finish_reason:stopと削除が成功。全4モデルの定義・profile・取得処理・送信契約は前版と一致し、M3の全4モデル・計8生成の結果を維持。OpenAI / Codexのサービス・能力表・送信契約もbyte一致し、M2の249 / 32設定の結果を維持。変更した応答判定はQ2と代表実接続で再確認。local-headless.json / validated-package.json / contracts.json。 |
+| Q6 | 契約・全対象・配布物・隔離 | version以外のpackage設定・権限・metadata・依存は前版と同一。変更対象14ファイルを記録し、残る188ファイルはbyte一致。現存202ファイル・手書き184ファイル・新旧207レビュー行の欠け・余り・重複は0。126 entries・32 NLS・秘密情報/開発物の除外、一時NLS/root VSIXは0、保管VSIXは5を確認。通常のCodex認証ハッシュは不変で、検証の変更は一時領域だけに限定。inventory.json / contracts.json / environment-final.json / verification.json。 |
+
+実APIの費用への懸念を受け、追加の全モデル・全設定の実接続は実行しない。異常応答と競合は隔離fixtureで、同じ送信契約とモデル定義の全件結果はM2・M3で確認し、今回の代表接続はQ4・Q5へ分けた。全272クラウドケース・全32 Codex設定を今回再実行したとは記録していない。AGENTS.mdにも最小の範囲、事前の料金・回数確認、使用量・中断・再試行の記録、予算内の実行を追加した。
+
+今回のクラウド生成POSTは中断を含め13件、Codexの契約枠での生成は3件だった。集計できた12応答は入力5,607・推論を含む出力922トークン。[OpenAI](https://developers.openai.com/api/docs/pricing)・[Gemini](https://ai.google.dev/gemini-api/docs/pricing)・[Claude](https://platform.claude.com/docs/en/about-claude/pricing)の2026-10-06の標準有料単価で約0.03308米ドルと推計した。税・使用量を取得できなかった中断1件・前回分・Codex契約枠はこの推計に含めず、請求確定額とは扱わない。api-usage.jsonに範囲とモデル別の集計を残す。
+
+最初の実SCM検査は証拠JSONの書込み途中を読み取った検証用補助の失敗で中断したため、最終成功数に採用せず保存した。証拠保存を一時ファイルからの置換に直し、全12ケースが終了するまで再検証した。通常の利用者プロファイル・SCM・設定・認証は変更していない。APIキーはSecretStorageの暗号化行だけを隔離環境へ複製し、値はメモリー内で使用した。常設CLIは最新版を使用し、認証だけをrefresh無効の専用領域へ隔離した。実API・実SCM・Local推論を確認した候補VSIXと最終VSIXの差分はpanel.jsの空値送信だけで、生成controller・各providerサービス・モデル設定・送信契約はすべてbyte一致した。最終パネルはJSON往復・統合・実ブラウザーで検査し、有料APIは再実行していない。実VSIX操作と実推論はmacOS ARM64で行い、Windows / Linuxを含むruntimeの実取得・起動は公開CIでも確認する。
+
+画面・32言語・保存済みモデル・認証・権限・課金・データの契約は維持した。今回再現した不備の修正と検証を完了し、PATCH版0.18.5を既存の公開依頼に沿ってmainとタグからstable workflowへ配布する。公開結果はQ7として追記する。検証範囲で未解決の不備を残していないことを完了条件とし、未知の不具合がないという保証はしていない。

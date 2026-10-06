@@ -80,6 +80,7 @@ export async function createHarness(initialSettings: Record<string, unknown> = {
   };
   const commands = new Map<string, (...args: unknown[]) => unknown>();
   const contexts = new Map<string, unknown>();
+  const progressCancellations: (() => void)[] = [];
   const notices: string[] = [];
   const logs: string[] = [];
   const externalUrls: string[] = [];
@@ -146,6 +147,7 @@ export async function createHarness(initialSettings: Record<string, unknown> = {
         token: vscode.CancellationToken
       ) => PromiseLike<T>) => {
         const cancellation = new Emitter<void>();
+        progressCancellations.push(() => cancellation.fire(undefined));
         try { return await work({ report() {} }, { isCancellationRequested: false, onCancellationRequested: cancellation.event }); }
         finally { cancellation.dispose(); }
       }
@@ -194,6 +196,14 @@ export async function createHarness(initialSettings: Record<string, unknown> = {
     }
     if (JSON.stringify(body).includes('FAIL_FIXTURE')) return new Response('fixture failure', { status: 400 });
     if (JSON.stringify(body).includes('INCOMPLETE_FIXTURE')) {
+      if (url.includes('/gemini/')) {
+        return new Response(JSON.stringify({ candidates: [{ finishReason: 'MAX_TOKENS',
+          content: { parts: [{ text: 'fix: unfinished' }] } }] }));
+      }
+      if (url.includes('/claude/')) {
+        return new Response(JSON.stringify({ stop_reason: 'max_tokens',
+          content: [{ type: 'text', text: 'fix: unfinished' }] }));
+      }
       return new Response(JSON.stringify({ status: 'incomplete', incomplete_details: { reason: 'max_output_tokens' },
         output_text: 'fix: unfinished' }));
     }
@@ -235,6 +245,9 @@ http.createServer((req, res) => { res.setHeader('content-type', 'application/jso
     const input = JSON.parse(body); if (!input.messages || !input.max_tokens) { res.statusCode=400; res.end('{}'); return; }
     const prompt = JSON.stringify(input.messages);
     if (prompt.includes('EMPTY_LOCAL_FIXTURE')) { res.end(JSON.stringify({choices:[null]})); return; }
+    if (prompt.includes('INCOMPLETE_LOCAL_FIXTURE')) {
+      res.end(JSON.stringify({choices:[{finish_reason:'length',message:{content:'fix: unfinished'}}]})); return;
+    }
     const respond = () => res.end(JSON.stringify({choices:[{message:{content:'<think>fixture</think>chore: 検証用の変更'}}]}));
     const holdPath = path.join(__dirname, 'local-test.hold');
     if (prompt.includes('Return exactly: local model ready') && fs.existsSync(holdPath)) {
@@ -269,7 +282,7 @@ http.createServer((req, res) => { res.setHeader('content-type', 'application/jso
   send({ type: 'ready' });
   await waitUntil(() => outbound.at(-1)?.state?.apiKeys?.codex !== undefined);
   return {
-    root, config, user, context, secrets, secretReads, repos, commands, contexts, errors, notices, logs,
+    root, config, user, context, secrets, secretReads, repos, commands, contexts, progressCancellations, errors, notices, logs,
     externalUrls, terminals, focus, input, requests, panel, webview, send, updates, emitters,
     get state() {
       const state = outbound.at(-1)?.state;

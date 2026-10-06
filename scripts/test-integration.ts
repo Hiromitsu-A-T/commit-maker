@@ -32,14 +32,26 @@ async function main(): Promise<void> {
     app.send({ type: 'commitApply' });
     await waitUntil(() => app.repos[0].inputBox.value === 'chore: 検証用の変更');
     assert.strictEqual(app.repos[0].git('log', '--format=%s', '-1').trim(), 'chore: fixture', 'SCM への反映だけでコミットしない');
-    app.send({ type: 'commitProviderChanged', value: 'openai' });
-    app.send({ type: 'commitPromptChanged', value: 'INCOMPLETE_FIXTURE' });
-    await app.commands.get('commitMaker.generateCommitFromSCM')!(app.repos[0]);
-    assert.strictEqual(app.state.commitStatus, 'error');
-    assert.match(app.state.commitLastError ?? '', /incomplete.*max_output_tokens/);
-    assert.strictEqual(app.repos[0].inputBox.value, 'chore: 検証用の変更', '未完成の応答で SCM を上書きしない');
+    for (const [provider, reason] of [
+      ['openai', /incomplete.*max_output_tokens/], ['gemini', /MAX_TOKENS/], ['claude', /max_tokens/]
+    ] as const) {
+      app.send({ type: 'commitProviderChanged', value: provider });
+      app.send({ type: 'commitPromptChanged', value: 'INCOMPLETE_FIXTURE' });
+      await app.commands.get('commitMaker.generateCommitFromSCM')!(app.repos[0]);
+      assert.strictEqual(app.state.commitStatus, 'error');
+      assert.match(app.state.commitLastError ?? '', reason);
+      assert.strictEqual(JSON.parse(JSON.stringify(app.state)).commitResult, '',
+        'JSON通信でも、画面の前回結果を明示的に消す');
+      assert.strictEqual(app.repos[0].inputBox.value, 'chore: 検証用の変更',
+        `${provider}の未完成の応答でSCMを上書きしない`);
+    }
     app.send({ type: 'commitPromptChanged', value: 'normal fixture' });
     app.send({ type: 'commitProviderChanged', value: 'claude' });
+    generate();
+    await waitUntil(() => app.state.commitStatus === 'ready');
+    const recoveredState = JSON.parse(JSON.stringify(app.state));
+    assert.strictEqual(recoveredState.commitLastError, '', '正常復旧後は画面の古いエラーを消す');
+    assert.strictEqual(recoveredState.commitProgress, '', '完了後は画面の古い進捗を消す');
     const reads = app.secretReads.count;
     app.secretReads.delayMs = 60;
     app.send({ type: 'codexRefresh' });
@@ -84,10 +96,13 @@ async function main(): Promise<void> {
     await waitUntil(() => app.state.promptPresets.length === 1);
     app.send({ type: 'commitMaxPromptChanged', value: { mode: 'limited', value: 12000.8 } });
     app.send({ type: 'commitIncludeBinaryChanged', value: false });
+    // 入力のローカル反映とは別に、通信で送られる最新の状態を取得する。
+    app.send({ type: 'ready' });
     assert.strictEqual(app.state.commitMaxPromptChars, 12000);
     for (const value of [0, null]) {
       app.send({ type: 'commitMaxPromptChanged', value: { mode: 'limited', value: 1 } });
       app.send({ type: 'commitMaxPromptChanged', value: { mode: 'limited', value } });
+      app.send({ type: 'ready' });
       assert.strictEqual(app.state.commitMaxPromptChars, null, '0 / 空欄で保存済みの上限を解除する');
       assert.strictEqual(app.state.commitMaxPromptMode, 'limited');
       generate();
@@ -215,6 +230,9 @@ async function main(): Promise<void> {
     await assert.rejects(() => callLocalLlm({ prompt: 'EMPTY_LOCAL_FIXTURE', modelPath: downloadedModelPath,
       runtimePath, extensionUri: app.context.extensionUri as vscode.Uri,
       timeoutMs: 3000, keepAliveMs: 0 }), /空|empty/i);
+    await assert.rejects(() => callLocalLlm({ prompt: 'INCOMPLETE_LOCAL_FIXTURE', modelPath: downloadedModelPath,
+      runtimePath, extensionUri: app.context.extensionUri as vscode.Uri,
+      timeoutMs: 3000, keepAliveMs: 0 }), /length/);
     const pidsFile = path.join(app.root, 'local-pids.txt');
     assert.strictEqual((await fs.promises.readFile(pidsFile, 'utf8')).trim().split('\n').length, 1, '並行呼び出しでも runtime は1個だけ起動する');
     stopLocalLlmRuntime();
@@ -256,6 +274,15 @@ async function main(): Promise<void> {
     generate();
     await waitUntil(() => app.state.commitStatus === 'ready');
     assert.strictEqual(app.state.commitResult, 'chore: 検証用の変更');
+    const previousScmMessage = app.repos[0].inputBox.value;
+    app.send({ type: 'commitPromptChanged', value: 'INCOMPLETE_LOCAL_FIXTURE' });
+    await app.commands.get('commitMaker.generateCommitFromSCM')!(app.repos[0]);
+    assert.strictEqual(app.state.commitStatus, 'error');
+    assert.match(app.state.commitLastError ?? '', /length/);
+    assert.strictEqual(app.repos[0].inputBox.value, previousScmMessage, 'Localの未完成応答でSCMを上書きしない');
+    app.send({ type: 'commitPromptChanged', value: 'normal fixture' });
+    generate();
+    await waitUntil(() => app.state.commitStatus === 'ready');
     const originalRm = fs.promises.rm;
     let releaseDelete: (() => void) | undefined;
     fs.promises.rm = (async (...args: Parameters<typeof originalRm>) => {
@@ -295,6 +322,56 @@ async function main(): Promise<void> {
     await Promise.all([old, next]);
     assert.strictEqual(app.repos[0].inputBox.value, 'existing-message', '古い呼び出しは新しい結果を別リポジトリーに書かない');
     assert.strictEqual(app.repos[1].inputBox.value, 'chore: 検証用の変更');
+    const commandApi = require('vscode').commands as {
+      executeCommand(id: string, ...args: unknown[]): Promise<unknown>;
+    };
+    const originalExecuteCommand = commandApi.executeCommand;
+    for (const action of ['replace', 'cancel', 'stale-progress']) {
+      let releaseCompletion: (() => void) | undefined;
+      let completionUpdates = 0;
+      // ready の通知に続く完了処理を止め、SCM 反映の直前に別操作を挟む。
+      commandApi.executeCommand = async (id, ...args) => {
+        const result = await originalExecuteCommand(id, ...args);
+        if (id === 'setContext' && args[0] === 'commitMaker.commitGenerating' &&
+            args[1] === false && ++completionUpdates === 2) {
+          await new Promise<void>(resolve => { releaseCompletion = resolve; });
+        }
+        return result;
+      };
+      app.repos[0].inputBox.value = 'existing-message';
+      const pending = app.commands.get('commitMaker.generateCommitFromSCM')!(app.repos[0]);
+      try {
+        await waitUntil(() => Boolean(releaseCompletion));
+        if (action === 'replace') {
+          await app.commands.get('commitMaker.generateCommitFromSCM')!(app.repos[1]);
+          assert.strictEqual(app.repos[1].inputBox.value, 'chore: 検証用の変更');
+        } else if (action === 'cancel') {
+          await app.commands.get('commitMaker.cancelCommitFromSCM')!();
+          assert.strictEqual(app.state.commitStatus, 'error');
+        } else {
+          const cancelPendingProgress = app.progressCancellations.at(-1)!;
+          const requestCount = app.requests.length;
+          app.send({ type: 'commitPromptChanged', value: 'SLOW_FIXTURE' });
+          const latest = app.commands.get('commitMaker.generateCommitFromSCM')!(app.repos[1]);
+          await waitUntil(() => app.requests.length > requestCount &&
+            JSON.stringify(app.requests.at(-1)?.body).includes('SLOW_FIXTURE'));
+          cancelPendingProgress();
+          releaseCompletion!();
+          await Promise.all([pending, latest]);
+          assert.strictEqual(app.state.commitStatus, 'ready', '古い進捗の中止で次の生成を中止しない');
+          assert.strictEqual(app.repos[1].inputBox.value, 'chore: 検証用の変更');
+          app.send({ type: 'commitPromptChanged', value: 'normal fixture' });
+        }
+        releaseCompletion!();
+        await pending;
+        assert.strictEqual(app.repos[0].inputBox.value, 'existing-message',
+          `完了処理中の${action}でも、古い生成をSCMへ反映しない`);
+      } finally {
+        releaseCompletion?.();
+        commandApi.executeCommand = originalExecuteCommand;
+        await pending;
+      }
+    }
     app.send({ type: 'commitPromptChanged', value: 'SLOW_FIXTURE' });
     generate();
     await app.commands.get('commitMaker.cancelCommitFromSCM')!();

@@ -227,6 +227,47 @@ module.exports = async page => {
     return {status:'passed', features:['OpenAI','Claude','custom model','reasoning/verbosity','Codex login/generate/logout','Local download/cancel/test/generate/delete'],cards};
   }
 
+  async function verifyGenerationFailures() {
+    const results=[];
+    for (const [provider, reason] of [
+      ['openai','max_output_tokens'], ['gemini','MAX_TOKENS'], ['claude','max_tokens'], ['local','length']
+    ]) {
+      await page.locator('#provider').selectOption(provider);
+      await until(async () => (await diagnostics()).state.commitProvider === provider &&
+        await page.locator('#apiKeyProvider').inputValue() === provider, provider);
+      if (provider === 'local') {
+        await page.locator('#localModelDownload').click();
+        await until(async () => (await diagnostics()).state.localModel.status === 'ready', 'Local準備');
+      }
+      await page.locator('#prompt').fill('normal fixture');
+      await until(async () => (await diagnostics()).state.commitPrompt === 'normal fixture');
+      await generate();
+      const previousScm = (await diagnostics()).scm;
+      const prompt = provider === 'local' ? 'INCOMPLETE_LOCAL_FIXTURE' : 'INCOMPLETE_FIXTURE';
+      await page.locator('#prompt').fill(prompt);
+      await until(async () => (await diagnostics()).state.commitPrompt === prompt);
+      await page.locator('#generate').click();
+      await until(async () => (await diagnostics()).state.commitStatus === 'error', '未完成応答');
+      await until(async () => await page.locator('#apply').isDisabled(), '未完成結果の反映無効');
+      await until(async () => (await page.locator('#errorBox').textContent()).includes(reason), '失敗理由');
+      const state = await diagnostics();
+      assert(!state.state.commitResult, provider+'の部分文章を結果へ渡さない');
+      assert((await page.locator('#result').textContent()) !== 'chore: 検証用の変更', '前回の表示結果を消す');
+      assert(JSON.stringify(state.scm) === JSON.stringify(previousScm), provider+'のSCMを保持');
+      await page.locator('#prompt').fill('normal fixture');
+      await until(async () => (await diagnostics()).state.commitPrompt === 'normal fixture');
+      await generate();
+      await until(async () => !(await page.locator('#errorBox').isVisible()), '正常復旧後のエラー消去');
+      results.push({provider,reason,status:'passed',partialRejected:true,scmPreserved:true,
+        resultCleared:true,applyDisabled:true,normalRecovered:true,errorCleared:true});
+    }
+    await page.screenshot({path:'output/playwright/incomplete-protection.png',fullPage:true});
+    await page.locator('#localModelDelete').click();
+    await until(async () => (await diagnostics()).state.localModel.status === 'notDownloaded', 'Local削除');
+    assert((await diagnostics()).errors.length === 0, '拡張側の例外なし');
+    return {status:'passed',results};
+  }
+
   async function verifyLocalizedLayout() {
     const languages = await page.locator('#language option').evaluateAll(options=>options.map(o=>o.value));
     const models = await page.locator('#localModelName option').evaluateAll(options=>options.map(o=>o.value));
@@ -262,7 +303,7 @@ module.exports = async page => {
     return {status:'passed',languages:languages.length,models:models.length,widths:[320,480,1280],cases:results.length};
   }
   const results = [];
-  for (const verify of [verifyMessageBoundary, verifyPanel, verifyProviders, verifyLocalizedLayout]) results.push(await verify());
+  for (const verify of [verifyMessageBoundary, verifyPanel, verifyProviders, verifyGenerationFailures, verifyLocalizedLayout]) results.push(await verify());
   if (errors.length) throw new Error(errors.join("\n"));
   return {status:"passed", results, browserErrors:errors};
 };

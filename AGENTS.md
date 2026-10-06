@@ -100,6 +100,7 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 - プロバイダー並びとデフォルト: 「OpenAI → Gemini → Claude → Codex → Local」、初期モデルは `gpt-6-luna`。Local は API キー不要で、ユーザーが明示的にモデルをダウンロードした場合のみ利用する。llama.cpp runtime は未指定なら OS/CPU 別に自動取得し、SHA-256 検証後に globalStorage へ展開する。`commitMaker.localRuntimePath` は開発・検証用の上書き設定として扱う。
 - Codex の既定モデルは `gpt-6-luna`。GPT-6 Luna / Sol は CLI 0.157.0 以降、GPT-6.1 Sol は 0.159.1 以降で対応する。候補からモデルを除外する前に、公式の更新履歴と現行 CLI のモデル一覧・実接続を確認し、古い CLI の拒否とサービス側の非対応を区別する。利用者が保存したカスタムモデルを別モデルへ自動置換しない。
 - Codex の実接続検証前に、PC に常設された CLI をインストール方法に合わせて最新安定版へ更新する（Homebrew: `brew update` → `brew upgrade --cask codex`、npm: `npm install -g @openai/codex@latest`）。更新が不要な場合も、公式の最新安定版と `codex --version` の一致および実行ファイルのパスを記録する。一時導入した CLI だけで代用しない。認証・Git・SCM の検証データは従来どおり隔離する。
+- 実API検証は変更箇所に必要なモデル・設定と最小の入力に限定する。異常応答・競合・全組み合わせの回帰検査は原則fixtureで行い、送信契約やモデル定義が同じ場合は配布コードの一致を確認して既存の実接続結果を再利用する。実行前に呼び出し数・出力上限・推論を含む料金見積りを確認し、実行後に使用量と中断・再試行も記録する。全件の実API検証は必要な差分がある場合に限り、指定された予算・回数を超えて続行しない。
 - Local モデル固有の sampling / runtime 調整は `services/localModelProfiles.ts` の profile に集約し、モデル名で分岐しない。新規モデルは `LOCAL_MODEL_DEFINITIONS` で profile を選ぶ。
 - 差分取得は Git API 優先、フォールバックで `git diff` / `git status --porcelain`。
 - API キー未保存のクラウド provider は選択可能だが生成ボタンを無効化し、Reasoning/Verbosity を無効化して「-」を表示。Local はモデル未ダウンロード時に生成ボタンを無効化。

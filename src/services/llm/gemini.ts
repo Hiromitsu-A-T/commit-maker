@@ -46,6 +46,10 @@ export async function callGemini({
     parse: raw => {
       const data = asRecord(raw ? JSON.parse(raw) : undefined);
       const candidate = asRecord(Array.isArray(data.candidates) ? data.candidates[0] : undefined);
+      // 出力上限までの部分文章を SCM へ渡さない。
+      if (candidate.finishReason === 'MAX_TOKENS') {
+        throw new Error('Gemini: response incomplete (MAX_TOKENS).');
+      }
       const parts = asRecord(candidate.content).parts;
       const text = asRecord(Array.isArray(parts) ? parts[0] : undefined).text;
       if (!text || typeof text !== 'string') {

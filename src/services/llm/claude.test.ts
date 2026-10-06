@@ -104,11 +104,37 @@ async function testFable51ReadsTextAfterThinkingBlock(): Promise<void> {
   assert.ok(!Object.prototype.hasOwnProperty.call(bodies[0], 'temperature'));
 }
 
+async function testClaudeRejectsTruncatedOutput(): Promise<void> {
+  for (const reason of ['max_tokens', 'model_context_window_exceeded']) {
+    for (const text of ['fix: unfinished', '']) {
+      await withMockFetch(async () => new Response(JSON.stringify({
+        stop_reason: reason, content: [{ type: 'text', text }]
+      })), async () => {
+        await assert.rejects(() => callClaude({
+          prompt: 'ping', model: 'claude-haiku-4-5', apiKey: 'test-key',
+          endpoint: 'https://api.anthropic.com/v1/messages', timeoutMs: 1000
+        }), new RegExp(reason));
+      });
+    }
+  }
+  for (const reason of ['end_turn', 'stop_sequence']) {
+    await withMockFetch(async () => new Response(JSON.stringify({
+      stop_reason: reason, content: [{ type: 'text', text: 'fix: complete' }]
+    })), async () => {
+      assert.strictEqual(await callClaude({
+        prompt: 'ping', model: 'claude-haiku-4-5', apiKey: 'test-key',
+        endpoint: 'https://api.anthropic.com/v1/messages', timeoutMs: 1000
+      }), 'fix: complete');
+    });
+  }
+}
+
 export async function runClaudeLlmTests(): Promise<void> {
   await testOpus48OmitsTemperature();
   await testSonnet46KeepsTemperature();
   await testSonnet5OmitsTemperature();
   await testOpus55OmitsTemperature();
   await testFable51ReadsTextAfterThinkingBlock();
+  await testClaudeRejectsTruncatedOutput();
   console.log('claude.test.ts passed');
 }

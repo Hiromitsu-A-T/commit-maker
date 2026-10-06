@@ -215,6 +215,10 @@ export class CommitPanelProvider implements vscode.WebviewViewProvider, vscode.D
 
   public updateState(partial: Partial<PanelState>): void {
     this.state = { ...this.state, ...partial };
+    // JSON通信でundefinedが省略されても、画面の前回表示を明示的に消す。
+    this.state.commitResult ??= '';
+    this.state.commitLastError ??= '';
+    this.state.commitProgress ??= '';
     this.postState();
   }
 

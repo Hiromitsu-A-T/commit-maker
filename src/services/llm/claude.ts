@@ -38,7 +38,11 @@ export async function callClaude({
       body: buildClaudeBody(model, prompt)
     }),
     parse: raw => {
-      const data: unknown = raw ? JSON.parse(raw) : undefined;
+      const data = asRecord(raw ? JSON.parse(raw) : undefined);
+      // 本文があっても、出力・コンテキスト上限で途切れた応答は完成とみなさない。
+      if (data.stop_reason === 'max_tokens' || data.stop_reason === 'model_context_window_exceeded') {
+        throw new Error(`Claude: response incomplete (${data.stop_reason}).`);
+      }
       const text = extractClaudeText(data);
       if (!text) {
         throw new Error(strings.msgLlmEmptyClaude);
