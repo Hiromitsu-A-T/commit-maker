@@ -179,7 +179,7 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `README.md` | 利用者向けの機能・設定説明 | SecretStorage / 環境変数、データ送信、生成ボタン、設定範囲の説明を実装に合わせ修正。 公開統合: 最新のモデル候補・初期設定の説明を保持。 実接続見直し: OpenAI と Codex の初期モデルを分け、公開説明を実装へ整合。 CLI更新確認: CodexのGPT-6 Luna初期選択とCLI 0.157.0以降の条件・更新方法を整合。 最新モデル再確認: GPT-6.1 Sol / Sonnet 5.5の候補とCLI 0.159.1以降の条件を日英で整合。 | V4–V6・V9・R1・R2・R3・A2・A6・C1–C4・M1–M5 |
 | `SECURITY.md` | 脆弱性の連絡・公開方針 | 変更なし。公開窓口と秘密情報の扱いを維持。 | 文書レビュー |
 | `SUPPORT.md` | 利用時の問い合わせ先 | 既存の Codex provider を対応一覧へ追加。 公開統合: 現行のprovider順とCodexの記載を保持。 | 文書レビュー・R1・R2・R3 |
-| `docs/maintenance-review.md` | 全対象のレビュー・検証記録 | 全対象の役割・改善理由・機能別検証に加え、32言語の逐次レビューを記録。V / T / L の段階と証拠を区別し、新旧ファイルの照合を示す。 実接続見直し: fixture と実サービスの確認を区別し、不備の再現・修正・検証範囲を記録。 CLI更新確認: 同じ認証・同じ拡張コードで旧CLIと現行CLIの結果を比較し、判断を訂正。 最新モデル再確認: 常設CLI・公式情報・各候補の再検証と対象照合を記録。 | V10・T7・L5・P1–P5・A1–A7・C1–C5・M1–M5 |
+| `docs/maintenance-review.md` | 全対象のレビュー・検証記録 | 全対象の役割・改善理由・機能別検証に加え、32言語の逐次レビューを記録。V / T / L の段階と証拠を区別し、新旧ファイルの照合を示す。 実接続見直し: fixture と実サービスの確認を区別し、不備の再現・修正・検証範囲を記録。 CLI更新確認: 同じ認証・同じ拡張コードで旧CLIと現行CLIの結果を比較し、判断を訂正。 最新モデル再確認: 常設CLI・公式情報・各候補の再検証と対象照合、両ストアの公開結果を記録。 | V10・T7・L5・P1–P5・A1–A7・C1–C5・M1–M6 |
 | `eslint.config.cjs` | 手書き JS / TS の lint | 手書き JS / TS と実行環境を区分。生成物を除き、未使用処理と明示的な any を検査する。 | V1・T1 |
 | `i18n/package-nls/package.nls.ar.json` | VS Code コマンド文言（ar） | 全8文言を個別に読み、コマンドの対象と自然な表現を確認。2文言を修正。キー集合・ブランド名・配布時の生成契約は保持。 | L1・L2・L3・L4・L5 |
 | `i18n/package-nls/package.nls.bn.json` | VS Code コマンド文言（bn） | 全8文言を個別に読み、コマンドの対象と自然な表現を確認。1文言を修正。キー集合・ブランド名・配布時の生成契約は保持。 | L1・L2・L3・L4・L5 |
@@ -541,3 +541,15 @@ C1–C5の確認は完了した。通常CLIは0.160.1に更新済みで、GPT-6 
 OpenAI / CodexのLuna既定値、画面構成、32言語、設定・保存・認証・権限の契約、タイムアウトと使用量の上限を維持した。古いCLIの拒否だけでモデルを非対応と判断しない。実接続・SCM・GGUF推論はmacOS ARM64で実施した。Windows / Linuxを含むruntime取得・起動は公開CIでも確認する。高推論の実応答時間・使用量は変動するため、今回の成功は常時成功の保証を意味しない。
 
 M1–M5の確認は完了した。追加漏れと非推奨候補の修正をPATCH版0.18.4としてコミットし、既存の公開依頼に沿ってmainとv0.18.4をpushし、stable workflow経由で両ストアへ公開する。公開結果は成功後にM6として追記する。
+
+## 0.18.4の公開結果
+
+2026-10-06にmainとv0.18.4をpushした。公開対象はf00b211。[mainのCI](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/37408036942)と[stable公開workflow](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/37408037840)が成功した。Windows・macOS・Linuxすべてで4モデルの配布先・SHA-256・サイズと2系列のruntimeの実取得・検証・起動を確認し、[公開後のバッジ更新](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/37408226125)も成功した。
+
+| ID | 公開後の確認 | 結果・証拠 |
+| --- | --- | --- |
+| M6 | 両ストア・公開VSIX | 12:22 JSTにMarketplaceとOpen VSXの公開APIで最新版0.18.4を確認。両ストアから実際に取得したVSIXのSHA-256がCI成果物と一致。CIの内部126ファイルも、実接続・実SCM・実ブラウザーで検証した最終VSIXとすべてbyte一致。output/model-audit-0.18.4/stores.json / published-package.json / marketplace-package.json / openvsx-package.json。 |
+
+公開先は[Marketplace](https://marketplace.visualstudio.com/items?itemName=Hiromitsu.commit-maker)と[Open VSX](https://open-vsx.org/extension/Hiromitsu/commit-maker)。公開VSIXのSHA-256は `1ac325ce93b336b319c9ebe4dd190acfee17d74268baa6ce8cade7b52811b8d4`。vsix/commit-maker-0.18.4.vsixにはCI成果物を保存し、実接続で検証した元のVSIXも隔離した証拠領域に保持した。
+
+M1–M6の確認は完了した。今後は検証前にPC常設Codex CLIを最新安定版へ更新・照合する手順を適用する。検証用の認証・Git・モデル領域は隔離し、一時領域・VS Code・ブラウザー・サーバーは終了・破棄済み。通常のCodex認証ファイルは変更していない。この追記は公開後の記録であり、公開タグの拡張コードは変更していない。
