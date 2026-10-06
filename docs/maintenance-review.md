@@ -179,7 +179,7 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `README.md` | 利用者向けの機能・設定説明 | SecretStorage / 環境変数、データ送信、生成ボタン、設定範囲の説明を実装に合わせ修正。 公開統合: 最新のモデル候補・初期設定の説明を保持。 実接続見直し: OpenAI と Codex の初期モデルを分け、公開説明を実装へ整合。 CLI更新確認: CodexのGPT-6 Luna初期選択とCLI 0.157.0以降の条件・更新方法を整合。 最新モデル再確認: GPT-6.1 Sol / Sonnet 5.5の候補とCLI 0.159.1以降の条件を日英で整合。 | V4–V6・V9・R1・R2・R3・A2・A6・C1–C4・M1–M5 |
 | `SECURITY.md` | 脆弱性の連絡・公開方針 | 変更なし。公開窓口と秘密情報の扱いを維持。 | 文書レビュー |
 | `SUPPORT.md` | 利用時の問い合わせ先 | 既存の Codex provider を対応一覧へ追加。 公開統合: 現行のprovider順とCodexの記載を保持。 | 文書レビュー・R1・R2・R3 |
-| `docs/maintenance-review.md` | 全対象のレビュー・検証記録 | 全対象の役割・改善理由・機能別検証に加え、32言語の逐次レビューを記録。V / T / L の段階と証拠を区別し、新旧ファイルの照合を示す。 実接続見直し: fixture と実サービスの確認を区別し、不備の再現・修正・検証範囲を記録。 CLI更新確認: 同じ認証・同じ拡張コードで旧CLIと現行CLIの結果を比較し、判断を訂正。 最新モデル再確認: 常設CLI・公式情報・各候補の再検証と対象照合、両ストアの公開結果を記録。 0.18.5の再現・修正・再検証、費用と既存証拠の再利用範囲を記録。 | V10・T7・L5・P1–P5・A1–A7・C1–C5・M1–M6・Q1–Q6 |
+| `docs/maintenance-review.md` | 全対象のレビュー・検証記録 | 全対象の役割・改善理由・機能別検証に加え、32言語の逐次レビューを記録。V / T / L の段階と証拠を区別し、新旧ファイルの照合を示す。 実接続見直し: fixture と実サービスの確認を区別し、不備の再現・修正・検証範囲を記録。 CLI更新確認: 同じ認証・同じ拡張コードで旧CLIと現行CLIの結果を比較し、判断を訂正。 最新モデル再確認: 常設CLI・公式情報・各候補の再検証と対象照合、両ストアの公開結果を記録。 0.18.5の再現・修正・再検証、費用と既存証拠の再利用範囲、両ストアの配布物照合を記録。 | V10・T7・L5・P1–P5・A1–A7・C1–C5・M1–M6・Q1–Q7 |
 | `eslint.config.cjs` | 手書き JS / TS の lint | 手書き JS / TS と実行環境を区分。生成物を除き、未使用処理と明示的な any を検査する。 | V1・T1 |
 | `i18n/package-nls/package.nls.ar.json` | VS Code コマンド文言（ar） | 全8文言を個別に読み、コマンドの対象と自然な表現を確認。2文言を修正。キー集合・ブランド名・配布時の生成契約は保持。 | L1・L2・L3・L4・L5 |
 | `i18n/package-nls/package.nls.bn.json` | VS Code コマンド文言（bn） | 全8文言を個別に読み、コマンドの対象と自然な表現を確認。1文言を修正。キー集合・ブランド名・配布時の生成契約は保持。 | L1・L2・L3・L4・L5 |
@@ -580,3 +580,15 @@ Gemini・Claude・Localは、出力上限で途切れた本文でも非空なら
 最初の実SCM検査は証拠JSONの書込み途中を読み取った検証用補助の失敗で中断したため、最終成功数に採用せず保存した。証拠保存を一時ファイルからの置換に直し、全12ケースが終了するまで再検証した。通常の利用者プロファイル・SCM・設定・認証は変更していない。APIキーはSecretStorageの暗号化行だけを隔離環境へ複製し、値はメモリー内で使用した。常設CLIは最新版を使用し、認証だけをrefresh無効の専用領域へ隔離した。実API・実SCM・Local推論を確認した候補VSIXと最終VSIXの差分はpanel.jsの空値送信だけで、生成controller・各providerサービス・モデル設定・送信契約はすべてbyte一致した。最終パネルはJSON往復・統合・実ブラウザーで検査し、有料APIは再実行していない。実VSIX操作と実推論はmacOS ARM64で行い、Windows / Linuxを含むruntimeの実取得・起動は公開CIでも確認する。
 
 画面・32言語・保存済みモデル・認証・権限・課金・データの契約は維持した。今回再現した不備の修正と検証を完了し、PATCH版0.18.5を既存の公開依頼に沿ってmainとタグからstable workflowへ配布する。公開結果はQ7として追記する。検証範囲で未解決の不備を残していないことを完了条件とし、未知の不具合がないという保証はしていない。
+
+## 0.18.5の公開結果
+
+2026-10-06にmainとv0.18.5をpushした。公開対象はc9f21ae。[mainのCI](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/37413475565)と[stable公開workflow](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/37413475138)が成功し、Windows・macOS・Linuxのruntime取得・検証・起動も成功した。[公開後のバッジ更新](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/37413670587)も成功した。
+
+| ID | 公開後の確認 | 結果・証拠 |
+| --- | --- | --- |
+| Q7 | 両ストア・公開VSIX | 13:29 JSTにMarketplaceとOpen VSXの公開APIで最新版0.18.5を確認。両ストアから実際に取得したVSIXのSHA-256がCI成果物と一致。CIの内部126ファイルも、最終の静的検査・統合・実ブラウザーで検証したVSIXとすべてbyte一致。実API・実SCMの候補との差分と追加課金を避けた再検証範囲はQ4–Q6の記録どおり。output/final-quality-0.18.5/publish-run.json / badge-run.json / stores.json / published-package.json / marketplace-package.json / openvsx-package.json。 |
+
+公開先は[Marketplace](https://marketplace.visualstudio.com/items?itemName=Hiromitsu.commit-maker)と[Open VSX](https://open-vsx.org/extension/Hiromitsu/commit-maker)。公開VSIXのSHA-256は `ce6bfac5da3057c8e43c7975f1f7950afca79b7cf448998a1ea534690009be5c`。vsix/commit-maker-0.18.5.vsixにはCI成果物を保存し、検証した元のVSIX（SHA-256: `8f500e5d9d80dda91346020b2985632aa223200ba709e67ef2cba962776c5e7a`）も隔離した証拠領域に保持した。外側のアーカイブのハッシュは生成日時等で異なるが、内部の全ファイル内容は一致する。
+
+Q1–Q7の確認は完了した。今回再現した3種類の不備を修正・検証・公開し、未解決の検証失敗はない。認証・Git・モデルの検証領域と専用プロセスは終了・破棄済み。公開確認で有料APIの追加呼び出しは行っていない。この追記は公開後の記録であり、公開タグの拡張コードは変更していない。
