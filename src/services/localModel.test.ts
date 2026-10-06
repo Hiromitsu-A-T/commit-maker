@@ -87,8 +87,8 @@ export async function runLocalModelTests(): Promise<void> {
   const gemma = getLocalModelDefinition(createConfig(), GEMMA4_LOCAL_MODEL_ID);
   assert.strictEqual(gemma.label, 'Gemma 4 E4B IT Q4_K_M');
   assert.strictEqual(gemma.filename, 'gemma-4-E4B-it-Q4_K_M.gguf');
-  assert.strictEqual(gemma.sha256, '90ce98129eb3e8cc57e62433d500c97c624b1e3af1fcc85dd3b55ad7e0313e9f');
-  assert.strictEqual(gemma.sizeBytes, 5_335_289_824);
+  assert.strictEqual(gemma.sha256, '85a896a047553e842f25297ee5b031d64ff30147d9c4af17b1e4b394cd1fab87');
+  assert.strictEqual(gemma.sizeBytes, 4_977_171_584);
   assert.strictEqual(gemma.runtimeVersion, 'b8967');
   assert.strictEqual(gemma.generationProfile, 'gemma4');
   assert.strictEqual(gemma.runtimeProfile, 'gemma4');

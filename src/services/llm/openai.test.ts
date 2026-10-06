@@ -234,6 +234,16 @@ async function testResponseContracts(): Promise<void> {
       payload = response;
       await assert.rejects(() => callOpenAi(params), { message: getStrings(DEFAULT_LANGUAGE).msgLlmEmptyOpenAi });
     }
+    for (const output of ['', 'fix: unfinished']) {
+      payload = { status: 'incomplete', incomplete_details: { reason: 'max_output_tokens' }, output_text: output };
+      await assert.rejects(() => callOpenAi(params), { message: 'OpenAI: response incomplete (max_output_tokens).' });
+    }
+    payload = { status: 'failed', error: { message: 'Rejected Bearer sk-proj-fixture1234567890' }, output_text: 'fix: unfinished' };
+    await assert.rejects(() => callOpenAi(params), { message: 'OpenAI: response failed (Rejected Bearer [REDACTED]).' });
+    payload = { status: 'incomplete', incomplete_details: null, output_text: 'fix: unfinished' };
+    await assert.rejects(() => callOpenAi(params), { message: 'OpenAI: response incomplete.' });
+    payload = { status: 'completed', output_text: 'fix: complete' };
+    assert.strictEqual(await callOpenAi(params), 'fix: complete');
   });
 }
 

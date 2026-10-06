@@ -6,7 +6,7 @@ import {
 } from '../../modelCapabilities';
 import { DEFAULT_REASONING_EFFORT, DEFAULT_VERBOSITY, DEFAULT_MODEL_BY_PROVIDER } from '../../constants';
 import { ReasoningEffort, VerbositySetting } from '../../types';
-import { asRecord, callLlmJson, createAbortController, validateHttps } from './shared';
+import { asRecord, callLlmJson, createAbortController, sanitizeLlmErrorText, validateHttps } from './shared';
 import { getStrings, DEFAULT_LANGUAGE } from '../../i18n/strings';
 
 export interface OpenAiCallParams {
@@ -107,6 +107,15 @@ export async function callOpenAi({
       },
       parse: raw => {
         const data = asRecord(raw ? JSON.parse(raw) : undefined);
+        // HTTP 200 でも、出力上限などで未完成の応答は SCM へ反映しない。
+        if (data.status === 'incomplete' || data.status === 'failed') {
+          const reason = data.status === 'incomplete'
+            ? asRecord(data.incomplete_details).reason
+            : asRecord(data.error).message;
+          const detail = typeof reason === 'string' && reason.trim()
+            ? ` (${sanitizeLlmErrorText(reason)})` : '';
+          throw new Error(`OpenAI: response ${data.status}${detail}.`);
+        }
         const text = extractOpenAiText(data) || extractFromChat(data);
         if (!text || !text.trim()) {
           throw new Error(strings.msgLlmEmptyOpenAi);

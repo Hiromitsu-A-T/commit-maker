@@ -77,8 +77,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
   (English) **Prompt preset management** – Save multiple in GUI, shared across local workspaces (except Settings Sync)
 - **低コストな初期モデル**: 有料 API の入力・出力トークン単価を基準に OpenAI `gpt-6-luna` を初期選択。Gemini の無料枠や Claude / Codex / Local にも切り替え可能（[OpenAI 料金](https://developers.openai.com/api/docs/pricing) / [Gemini 料金](https://ai.google.dev/gemini-api/docs/pricing)）
   (English) **Low-cost default** – OpenAI `gpt-6-luna` is selected based on paid input/output token rates. Gemini’s free tier, Claude, Codex, and Local remain available ([OpenAI pricing](https://developers.openai.com/api/docs/pricing) / [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing)).
-- **最新クラウドモデルに対応**: OpenAI GPT-6 Luna / Sol / Astra、Claude Opus 5.5 / Fable 5.1 / Sonnet 5、Gemini 3.8 Flash / 3.5 Flash-Lite をモデル欄から選択可能。OpenAI と Codex の初期モデルは GPT-6 Luna
-  (English) **Current cloud models supported** – Select OpenAI GPT-6 Luna/Sol/Astra, Claude Opus 5.5/Fable 5.1/Sonnet 5, and Gemini 3.8 Flash/3.5 Flash-Lite; GPT-6 Luna is the initial OpenAI and Codex model
+- **最新クラウドモデルに対応**: OpenAI GPT-6 Luna / Sol / Astra、Claude Opus 5.5 / Fable 5.1 / Sonnet 5、Gemini 3.8 Flash / 3.5 Flash-Lite をモデル欄から選択可能。OpenAI の初期モデルは GPT-6 Luna、Codex は GPT-5.6 Luna
+  (English) **Current cloud models supported** – Select OpenAI GPT-6 Luna/Sol/Astra, Claude Opus 5.5/Fable 5.1/Sonnet 5, and Gemini 3.8 Flash/3.5 Flash-Lite; GPT-6 Luna is the initial OpenAI model, and GPT-5.6 Luna is the initial Codex model
 - **Local LLM なら API 利用料なし**: Qwen3.5 / Gemma 4 / LFM2.5 などの GGUF モデルをダウンロードすると PC 内のリソースで生成可能。速度は端末性能と差分サイズに依存
   (English) **No cloud API charge with Local LLM** – Download a Qwen3.5, Gemma 4, or LFM2.5 model in GGUF format and generate on your machine; speed depends on device specs and diff size
 - **追加指示欄でさらにカスタマイズ**: 「英語で短く」「絵文字なし」「Conventional Commits 準拠」など、チームのコミットルールに合わせて自由に指定  

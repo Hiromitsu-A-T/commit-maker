@@ -90,9 +90,9 @@ export const LOCAL_MODEL_DEFINITIONS: LocalModelDefinition[] = [
     id: GEMMA4_LOCAL_MODEL_ID,
     label: 'Gemma 4 E4B IT Q4_K_M',
     filename: 'gemma-4-E4B-it-Q4_K_M.gguf',
-    url: 'https://huggingface.co/ggml-org/gemma-4-E4B-it-GGUF/resolve/main/gemma-4-E4B-it-Q4_K_M.gguf',
-    sha256: '90ce98129eb3e8cc57e62433d500c97c624b1e3af1fcc85dd3b55ad7e0313e9f',
-    sizeBytes: 5_335_289_824,
+    url: 'https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF/resolve/bfc15c382204943c3a8fff0c750b94ae2364d7a3/gemma-4-E4B-it-Q4_K_M.gguf',
+    sha256: '85a896a047553e842f25297ee5b031d64ff30147d9c4af17b1e4b394cd1fab87',
+    sizeBytes: 4_977_171_584,
     contextSize: 32_768,
     runtimeVersion: DEFAULT_LOCAL_RUNTIME_VERSION,
     generationProfile: 'gemma4',
@@ -163,9 +163,8 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
         'gpt-5-nano',
         'gpt-5-mini',
         'gpt-5',
-        'gpt-5-pro',
-        'gpt-5-codex'
-        // rolling alias の *-chat-latest と旧 5.1 / 5.2 系は推奨候補へ載せない
+        'gpt-5-pro'
+        // rolling alias・停止済みの gpt-5-codex・旧 5.1 / 5.2 系は推奨候補へ載せない。
       ],
       defaultModel: 'gpt-6-luna',
       issueUrl: 'https://platform.openai.com/api-keys',
@@ -240,15 +239,13 @@ export function buildProviderCapabilities(strings: UiStrings): ProviderCapabilit
       requiresApiKey: false,
       setupMode: 'codexAuth',
       models: [
-        'gpt-6-luna',
-        'gpt-6-sol',
-        'gpt-6-astra',
         'gpt-5.6-luna',
         'gpt-5.6-terra',
         'gpt-5.6-sol',
+        'gpt-6-astra',
         'gpt-5.5'
       ],
-      defaultModel: 'gpt-6-luna',
+      defaultModel: 'gpt-5.6-luna',
       issueUrl: 'https://developers.openai.com/codex/auth',
       defaultEndpoint: '',
       defaultSecret: '',

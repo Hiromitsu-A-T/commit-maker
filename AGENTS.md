@@ -83,7 +83,7 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
   - OpenAI 全許容組合せ: `npm run smoke:openai:matrix`
   - Gemini の推奨モデル候補: `npm run smoke:gemini:matrix`
   - Claude の推奨モデル候補: `npm run smoke:claude:matrix`
-  - Local llama.cpp runtime 自動取得: `npm run smoke:local:runtime`
+  - Local 全モデルの配布URL・SHA-256・サイズ確認と llama.cpp runtime 自動取得: `npm run smoke:local:runtime`
 
 ## チェックリスト
 - `npm run lint`、`npm run typecheck`、`npm run compile`、`npm run build:media`、`npm test`、`npm run test:integration` が通る
@@ -98,6 +98,7 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 - 全ファイルのレビューと検証記録は `docs/maintenance-review.md` を参照する。
 - Webview CSP は nonce 付き。スタイル/スクリプトは同梱のみ。
 - プロバイダー並びとデフォルト: 「OpenAI → Gemini → Claude → Codex → Local」、初期モデルは `gpt-6-luna`。Local は API キー不要で、ユーザーが明示的にモデルをダウンロードした場合のみ利用する。llama.cpp runtime は未指定なら OS/CPU 別に自動取得し、SHA-256 検証後に globalStorage へ展開する。`commitMaker.localRuntimePath` は開発・検証用の上書き設定として扱う。
+- Codex の既定モデルは `gpt-5.6-luna`。ChatGPT 認証で拒否された `gpt-6-luna` / `gpt-6-sol` は Codex の推奨候補へ載せない。OpenAI API の候補とは別に、CLI のモデル一覧と実接続で確認する。利用者が保存したカスタムモデルを別モデルへ自動置換しない。
 - Local モデル固有の sampling / runtime 調整は `services/localModelProfiles.ts` の profile に集約し、モデル名で分岐しない。新規モデルは `LOCAL_MODEL_DEFINITIONS` で profile を選ぶ。
 - 差分取得は Git API 優先、フォールバックで `git diff` / `git status --porcelain`。
 - API キー未保存のクラウド provider は選択可能だが生成ボタンを無効化し、Reasoning/Verbosity を無効化して「-」を表示。Local はモデル未ダウンロード時に生成ボタンを無効化。

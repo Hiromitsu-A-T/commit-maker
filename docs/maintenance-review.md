@@ -2,7 +2,7 @@
 
 検証日: 2026-10-05〜06。対象: 開始時のワークツリーを含む 0.12.2。教材としての責務・構造・命名・コメントも最終コードで見直した。
 
-V / T / L とファイル別の修正数は0.12.2でのレビュー履歴である。公開依頼に基づく最新の安定版との統合・配布物の検証は末尾の「0.18.0の公開準備」に記録する。
+V / T / L とファイル別の修正数は0.12.2でのレビュー履歴である。公開依頼に基づく統合・配布物・公開後の検証は、末尾のバージョン別記録に示す。0.18.2では実クラウドAPI・実Codexアカウント・実GGUF推論も確認する。
 
 ## 範囲と完了条件
 
@@ -10,7 +10,7 @@ V / T / L とファイル別の修正数は0.12.2でのレビュー履歴であ�
 
 開始時から存在した 11 ファイルの変更を基準としてレビューした。モデル説明カードなどの追加内容を維持し、CSS は開始時から追加変更していない。新しい検査コードとこの記録も同じ一覧に含めた。削除・改名した元ファイルも判断を記録し、最後に Git の一覧と照合する。
 
-現行の画面構成、5 provider、32 言語、設定キー・既定値、SecretStorage / Memento の保存契約、Codex の専用 CODEX_HOME、Local の明示ダウンロード、信頼済み workspace 限定の権限を維持した。自動コミットや公開操作は追加していない。既存の課金・契約を拡張側から変更する処理はなく、検査では利用者の課金認証を使用していない。
+現行の画面構成、5 provider、32 言語、設定キー・既定値、SecretStorage / Memento の保存契約、Codex の専用 CODEX_HOME、Local の明示ダウンロード、信頼済み workspace 限定の権限を維持した。自動コミットや公開操作は追加していない。既存の課金・契約を拡張側から変更する処理はない。V / T / L の検査では課金認証を使用していない。後述のAでは実接続の確認依頼に基づき、既存の認証を隔離環境で使った。
 
 ## 教材としての構造と命名
 
@@ -171,15 +171,15 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `.npmignore` | npm パッケージからの開発物除外 | 検証設定・記録・生成物に加え、共有テスト補助 out/testSupport.js も配布から除外。 | V9・T4 |
 | `.vscode/launch.json` | Extension Host の開発起動 | 変更なし。workspace の out と拡張開発パスを使用。 | V6 |
 | `.vscodeignore` | VSIX からの開発物除外 | 検証設定・記録・秘密情報・テストを除外。共有テスト補助 out/testSupport.js も VSIX に含めない。 | V9・T4 |
-| `AGENTS.md` | 開発・配布・設定契約のガイド | 実装・検証・配布手順を整合させ、レビュー・検証記録の参照先を追加。 公開統合: 最新の初期モデルとprovider順を保持。 | V1–V11・T7・R1・R2・R3 |
+| `AGENTS.md` | 開発・配布・設定契約のガイド | 実装・検証・配布手順を整合させ、レビュー・検証記録の参照先を追加。 公開統合: 最新の初期モデルとprovider順を保持。 実接続見直し: Codex の認証方式別の既定モデルと Local 資産確認コマンドを整合。 | V1–V11・T7・R1・R2・R3・A2・A3・A5 |
 | `CODE_OF_CONDUCT.md` | 参加者の行動指針 | 変更なし。実行コードと独立した既存の運用文書。 | 文書レビュー |
 | `CONTRIBUTING.md` | 開発準備と検証の入口 | 開発・隔離検証の入口を整理。構造・配布・検証の詳細は AGENTS.md へ案内。 | V1–V6・T7 |
 | `LICENSE` | Apache-2.0 本文 | 変更なし。法的な定型本文は編集しない。 | 文書レビュー |
 | `NOTICE` | 著作権表示 | 変更なし。LICENSE / package の表記との関係を確認。 | 文書レビュー |
-| `README.md` | 利用者向けの機能・設定説明 | SecretStorage / 環境変数、データ送信、生成ボタン、設定範囲の説明を実装に合わせ修正。 公開統合: 最新のモデル候補・初期設定の説明を保持。 | V4–V6・V9・R1・R2・R3 |
+| `README.md` | 利用者向けの機能・設定説明 | SecretStorage / 環境変数、データ送信、生成ボタン、設定範囲の説明を実装に合わせ修正。 公開統合: 最新のモデル候補・初期設定の説明を保持。 実接続見直し: OpenAI と Codex の初期モデルを分け、公開説明を実装へ整合。 | V4–V6・V9・R1・R2・R3・A2・A6 |
 | `SECURITY.md` | 脆弱性の連絡・公開方針 | 変更なし。公開窓口と秘密情報の扱いを維持。 | 文書レビュー |
 | `SUPPORT.md` | 利用時の問い合わせ先 | 既存の Codex provider を対応一覧へ追加。 公開統合: 現行のprovider順とCodexの記載を保持。 | 文書レビュー・R1・R2・R3 |
-| `docs/maintenance-review.md` | 全対象のレビュー・検証記録 | 全対象の役割・改善理由・機能別検証に加え、32言語の逐次レビューを記録。V / T / L の段階と証拠を区別し、新旧ファイルの照合を示す。 | V10・T7・L5・P1–P5 |
+| `docs/maintenance-review.md` | 全対象のレビュー・検証記録 | 全対象の役割・改善理由・機能別検証に加え、32言語の逐次レビューを記録。V / T / L の段階と証拠を区別し、新旧ファイルの照合を示す。 実接続見直し: fixture と実サービスの確認を区別し、不備の再現・修正・検証範囲を記録。 | V10・T7・L5・P1–P5・A1–A7 |
 | `eslint.config.cjs` | 手書き JS / TS の lint | 手書き JS / TS と実行環境を区分。生成物を除き、未使用処理と明示的な any を検査する。 | V1・T1 |
 | `i18n/package-nls/package.nls.ar.json` | VS Code コマンド文言（ar） | 全8文言を個別に読み、コマンドの対象と自然な表現を確認。2文言を修正。キー集合・ブランド名・配布時の生成契約は保持。 | L1・L2・L3・L4・L5 |
 | `i18n/package-nls/package.nls.bn.json` | VS Code コマンド文言（bn） | 全8文言を個別に読み、コマンドの対象と自然な表現を確認。1文言を修正。キー集合・ブランド名・配布時の生成契約は保持。 | L1・L2・L3・L4・L5 |
@@ -226,7 +226,7 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `media/src/state.ts` | 画面状態の複製・統合 | 状態の浅い統合という責務を保ち、同梱 classic script の共有先をコメントで説明。 | V1・V4・T1・T3 |
 | `media/src/types.ts` | 画面要素・状態・Window の型契約 | 共通ヘルパーの型をまとめ、任意の Local 状態を正しく表現。開始時のカード要素を維持。 | V1・V4 |
 | `media/tsconfig.json` | 画面ヘルパーのコンパイル設定 | strict と未使用検査を有効化。同じ classic script へ生成。 | V1・V9 |
-| `package.json` | 拡張 metadata・コマンド・設定・開発依存 | 検査コマンドと開発依存を整備。OpenAI endpoint の説明を Responses API へ揃えた。version 0.12.2、engines、権限、既定値、設定キーは維持。 公開統合: 最新の初期設定・ストア説明を保持し、0.18.0へ更新。 追加見直し: バグ修正公開0.18.1へ更新。 | V1–V3・V9・R1・R2・R3・P4 |
+| `package.json` | 拡張 metadata・コマンド・設定・開発依存 | 検査コマンドと開発依存を整備。OpenAI endpoint の説明を Responses API へ揃えた。version 0.12.2、engines、権限、既定値、設定キーは維持。 公開統合: 最新の初期設定・ストア説明を保持し、0.18.0へ更新。 追加見直し: バグ修正公開0.18.1へ更新。 実接続の不備を修正するPATCH版0.18.2へ更新。設定・権限・依存は維持。 | V1–V3・V9・R1・R2・R3・P4・A5・A6 |
 | `package.nls.json` | 英語の VS Code コマンド文言 | 全8文言を個別に読み、コマンドの対象と自然な表現を確認。1文言を修正。キー集合・ブランド名・配布時の生成契約は保持。 | L1・L2・L3・L4・L5 |
 | `scripts/check-commit-emails.js` | Git 履歴のメール検査 | 変更なし。全履歴・範囲指定・push 入力の責務を確認。 | V8 |
 | `scripts/clean-out.js` | out の削除 | 変更なし。リポジトリー内の生成先だけを削除する短い処理。 | V8 |
@@ -240,12 +240,12 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `scripts/smoke-cloud-minimal.ts` | クラウド候補の最小 API 検証入口 | 変更なし。引数と fixture で検証した各 service の呼び出し関係を確認。 公開統合: 最新モデル候補とAstraのreasoningを保持。 | V1–V3・R1・R2・R3 |
 | `scripts/smoke-gemini-matrix.ts` | Gemini 候補の実 API 検証入口 | 型検査の絞り込みと未使用 catch を整理。候補・送信契約は維持。 | V1・V2 |
 | `scripts/smoke-gemini.ts` | Gemini の単一 API 検証入口 | 変更なし。明示実行時の環境変数と generateContent 契約を確認。 | V1・V2 |
-| `scripts/smoke-local-runtime.ts` | runtime の取得・検証・実行 | 最小 ExtensionContext fixture を明示し、any を除去。実取得・検証・一時領域の掃除の契約を保持。 | V1・V7・T1・T6 |
+| `scripts/smoke-local-runtime.ts` | runtime の取得・検証・実行 | 最小 ExtensionContext fixture を明示し、any を除去。実取得・検証・一時領域の掃除の契約を保持。 実接続見直し: 4モデルの配布URLをHEADで順に確認し、HTTP status・SHA-256・サイズの一致もCIで検査。 | V1・V7・T1・T6・A3・A5 |
 | `scripts/smoke-openai-matrix.ts` | OpenAI の全許容設定の API 検証入口 | 変更なし。能力表からの列挙と API サービスの利用を確認。 | V1・V2 |
 | `scripts/smoke-openai-response.ts` | OpenAI 応答形の API 検証入口 | 変更なし。応答契約の検査と秘密情報を出さない入口を確認。 | V1・V2 |
 | `scripts/smoke-openai.ts` | OpenAI の単一 API 検証入口 | 変更なし。明示実行時の環境変数と Responses 呼び出しを確認。 | V1・V2 |
-| `scripts/test-integration.ts` | 機能間の統合・競合・終了検査 | 描画用の型と外部へ送った状態で検証し、private 状態への依存と any を除去。ready の保存先を取得後に確定して使う。 | V1・V3・T1・T2 |
-| `scripts/test-support.ts` | 検査専用の認証・Git・HTTP・CLI fixture | VS Code の必要な境界を型付き fixture で再現。状態・要求は unknown / 実際の通信型とし、読込 hook の復元理由を説明。 | V1・V3–V5・T1・T2・T3 |
+| `scripts/test-integration.ts` | 機能間の統合・競合・終了検査 | 描画用の型と外部へ送った状態で検証し、private 状態への依存と any を除去。ready の保存先を取得後に確定して使う。 実接続見直し: 未完成応答によるSCM上書き抑止、Codex既定モデルとプロンプトより後のエラー表示を回帰検査。 | V1・V3・T1・T2・A2・A4・A5 |
+| `scripts/test-support.ts` | 検査専用の認証・Git・HTTP・CLI fixture | VS Code の必要な境界を型付き fixture で再現。状態・要求は unknown / 実際の通信型とし、読込 hook の復元理由を説明。 未完成のHTTP 200と、プロンプトの後に出る構造化CLIエラーを認証fixtureで再現。 | V1・V3–V5・T1・T2・T3・A4・A5 |
 | `scripts/update-badges.js` | ストア統計 JSON の更新 | 変更なし。取得失敗時の保持、数値整形、書き込み先を確認。実統計データは変更しない。 | V1・資産レビュー |
 | `scripts/vscode-smoke.cjs` | 実 VS Code 側の操作・結果確認 | 追加。標準 Git API と実 SCM を検査。observer を復元し、終了コマンドを予約せず呼び出して専用ウィンドウを閉じる。 | V1・V6 |
 | `scripts/webview-smoke.cjs` | 実 Chromium の操作確認 | 本番画面の機能操作と 384 表示ケースを検証。不正な状態の無視と通知の置換・期限も実ブラウザーで確認。 | V1・V4・V5・T1・T3 |
@@ -255,7 +255,7 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `src/commitPrompt.ts` | 言語・利用者の指示・差分の組み立て | controller から純粋関数を抽出。保存・通信を持たず、変更前の出力と 192 ケースで完全一致。 | T1・T2・T6 |
 | `src/commitState.ts` | 内部状態と画面への投影 | 復元済み内部状態の必須項目を型で表し、MaxPromptMode を共有。利用前に正規化する責務をコメントに記録。 | V1・V3・T1・T2 |
 | `src/configScope.ts` | ユーザー設定の安全な参照 | 通常の明示設定の 6 段階の優先順を共有。endpoint 等のユーザー専用取得とは分け、信頼境界を保持。 | V1・V2・V3・T1・T2 |
-| `src/constants.ts` | 候補・能力・既定値の一覧 | 表から索引を作る目的をコメントで説明。モデル・保存キー・URL・SHA・画面 metadata の値は維持。 公開統合: 最新の候補・既定値と開始時のモデル詳細表示を両立。 | V1・V2・V4・T2・T6・T8・R1・R2・R3 |
+| `src/constants.ts` | 候補・能力・既定値の一覧 | 表から索引を作る目的をコメントで説明。モデル・保存キー・URL・SHA・画面 metadata の値は維持。 公開統合: 最新の候補・既定値と開始時のモデル詳細表示を両立。 実接続見直し: ChatGPT認証で拒否されるCodex候補と提供終了したOpenAI候補を除外。Gemma Q4_K_Mの実在する固定revision・SHA・サイズへ修正。保存ID・sampling・runtimeは維持。 | V1・V2・V4・T2・T6・T8・R1・R2・R3・A1・A2・A3 |
 | `src/defaults.ts` | 初期状態とパネル既定値 | 既定値を型注釈で表し、モデル fallback と Codex reasoning の優先順を読みやすく整理。値と復元順は維持。 | V1・V3・T1・T2 |
 | `src/extension.ts` | 登録・認証・拡張寿命の入口 | 認証イベントの購読も context の寿命に登録。不要な provider キャストを除去し、認証・保存方式は保持。 | V1・V3・V4・V6・T1・T2・T5 |
 | `src/i18n/languages.ts` | 対応言語コードと表示名 | 変更なし。登録と実ファイルの一致を確認。 | V2・V5 |
@@ -294,7 +294,7 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `src/i18n/strings.test.ts` | 全 locale / NLS の整合検査 | 追加。登録・ファイル・型・キー・重複・空文言・置換文字列を各ファイルで検査。 | V1・V2 |
 | `src/i18n/strings.ts` | 言語辞書の選択と既定値 | 変更なし。全登録・fallback と文字列契約を確認。 | V2・V5 |
 | `src/i18n/types.ts` | UiStrings の契約 | 変更なし。全 locale が型と基準キーを満たす。 | V1・V2 |
-| `src/modelCapabilities.test.ts` | モデル別の設定値の単体検査 | 保守レビュー時は変更なし。後方互換モデルも含む既存の能力表の検査を維持。公開統合で最新モデルと初期設定のテストを取得関数へ適合。 | V2・R1・R2・R3 |
+| `src/modelCapabilities.test.ts` | モデル別の設定値の単体検査 | 保守レビュー時は変更なし。後方互換モデルも含む既存の能力表の検査を維持。公開統合で最新モデルと初期設定のテストを取得関数へ適合。 実接続見直し: Codex既定値・非対応候補・提供終了モデルの除外を検査。カスタムモデルの能力は維持。 | V2・R1・R2・R3・A1・A2・A5 |
 | `src/modelCapabilities.ts` | モデル別の推論・詳細度の能力 | 空の blocklist を除去。表を繰り返すコメントを整理し、未対応と未知のカスタムモデルの違いを説明。能力値は維持。 公開統合: GPT-6の許可値と既定値を保持。 | V1・V2・V4・T1・T2・R1・R2・R3 |
 | `src/panel.ts` | Webview の HTML・メッセージ・通知 | 受信検査の後を判別共用体の switch で dispatch し、重複キャスト・委譲だけの関数を除去。never で 30 種類の対応漏れを検査。全イベントを dispose。 | V1–V4・V6・T1–T3・T5 |
 | `src/panelBody.test.ts` | HTML 構造の単体検査 | 開始時の Local カード検査を維持し、読み込み・ID・安全な構造を確認。 | V2・V5 |
@@ -319,15 +319,15 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `src/services/llm/claude.test.ts` | Claude HTTP 契約の単体検査 | fetch 復元を共有補助へまとめ、部分的な Response の any を実 Response に置換。送信・応答・異常系の契約を保持。 公開統合: Opus 5.5とFable 5.1の契約を同じ型・Responseで検査。 | V2・T1・T2・R1・R2・R3 |
 | `src/services/llm/claude.ts` | Claude Messages への変換 | 外部 JSON を unknown から検査。テキスト block の抽出順と既存のリクエスト形式を維持。 公開統合: Opus 5系のtemperature非対応判定を保持。 | V1–V4・R1・R2・R3 |
 | `src/services/llm/codex.test.ts` | Codex 送信形式の単体検査 | 変更なし。schema / reasoning / command 設定の契約を維持。 公開統合: 現行の初期モデルでCLI引数を検査。 | V2・R1・R2・R3 |
-| `src/services/llm/codex.ts` | Codex exec による生成 | JSON を record として検査し、二度の文字列整形を除去。通常テキストの fallback を日本語で説明し、CLI 契約を保持。 | V1–V4・V6・T1–T3・T5 |
+| `src/services/llm/codex.ts` | Codex exec による生成 | JSON を record として検査し、二度の文字列整形を除去。通常テキストの fallback を日本語で説明し、CLI 契約を保持。 実接続見直し: 入力全文で失敗理由が切れないよう、末尾のCLIエラーを選んでから認証情報の伏せ字・長さ制限を適用。 | V1–V4・V6・T1–T3・T5・A2・A4・A5 |
 | `src/services/llm/gemini.test.ts` | Gemini HTTP 契約の単体検査 | 共通 fetch 補助、実 Response と Headers を使用。独自ヘッダー読取の重複と any を除去。 | V2・T1・T2 |
 | `src/services/llm/gemini.ts` | Gemini generateContent への変換 | URL 変数名を具体化。candidate / parts の検査と既存認証・送信形式を維持。 | V1–V4・T1–T3 |
 | `src/services/llm/local.ts` | llama-server の寿命と生成通信 | 二重起動、abort / timeout / health / 停止対象を整理。外部 JSON の choices を検査し、不正応答を空応答エラーとして扱う。 | V1・V3・V4・V7 |
-| `src/services/llm/openai.test.ts` | OpenAI API・モデル確認の単体検査 | 認証別 cache・期限・設定制約・6 応答形式・不正応答を維持。共通 fetch 補助と実 Response へ整理。 公開統合: GPT-6のreasoning検査を同じ型・Responseで維持。 | V2・T1・T2・R1・R2・R3 |
-| `src/services/llm/openai.ts` | Responses 送信と互換応答の解析 | 一度だけ使う attempt closure と不要キャストを除去。temperature の送信条件と複数出力の扱いを実装に合わせ説明し、要求値を保持。 | V1–V4・T1–T3 |
+| `src/services/llm/openai.test.ts` | OpenAI API・モデル確認の単体検査 | 認証別 cache・期限・設定制約・6 応答形式・不正応答を維持。共通 fetch 補助と実 Response へ整理。 公開統合: GPT-6のreasoning検査を同じ型・Responseで維持。 実接続見直し: 部分文章・空文章・詳細なし・失敗時の伏せ字・completedを検査。互換応答の既存検査を保持。 | V2・T1・T2・R1・R2・R3・A4・A5 |
+| `src/services/llm/openai.ts` | Responses 送信と互換応答の解析 | 一度だけ使う attempt closure と不要キャストを除去。temperature の送信条件と複数出力の扱いを実装に合わせ説明し、要求値を保持。 実接続見直し: HTTP 200でもincomplete / failedの応答を拒否し、未完成の文章をSCMへ反映しない。出力上限・期限は変更しない。 | V1–V4・T1–T3・A1・A4・A5 |
 | `src/services/llm/shared.test.ts` | 共通 HTTP の単体検査 | 共通 fetch 補助と DOMException / assert.rejects を使用。再試行・即時中止・期限を実際の Response で検査。 | V2・T1・T2 |
 | `src/services/llm/shared.ts` | HTTP・再試行・abort・文字列の共通処理 | 送信前の中止と再試行待機の abort を管理。HTTP status と通信エラーで再試行を判断し、JSON object の短い型ガードを共有。 | V1–V4 |
-| `src/services/localModel.test.ts` | GGUF 定義・パス・検証の単体検査 | モデル説明検査を保持。VS Code fixture を明示し、失敗時も一時ファイルを finally で削除。 公開後の見直し: 転送完了後の検証中に取り消し、正式配置・一時ファイルが残らないことと正常取得を検査。 | V2・T1・T2・T6・P1・P2 |
+| `src/services/localModel.test.ts` | GGUF 定義・パス・検証の単体検査 | モデル説明検査を保持。VS Code fixture を明示し、失敗時も一時ファイルを finally で削除。 公開後の見直し: 転送完了後の検証中に取り消し、正式配置・一時ファイルが残らないことと正常取得を検査。 実接続見直し: Gemmaの実ファイルのSHA-256・サイズに更新し、保存IDなどの既存検査を維持。 | V2・T1・T2・T6・P1・P2・A3・A5 |
 | `src/services/localModel.ts` | GGUF の取得・保存・検証 | 転送進捗型を共有し、保存候補を一度で求める。検証後の置換と候補を試す理由をコメントで説明。ID 移行と保存契約を維持。 公開後の見直し: 検証へsignalを渡し、配置直前に取り消しを確認。URL・SHA・保存先を維持。 | V1–V4・T1–T3・T6・P1・P2 |
 | `src/services/localModelProfiles.ts` | sampling と runtime 調整の profile | 空 profile に対する古い方針説明だけを除去。既存 4 モデルの sampling と引数の値を比較して一致。 | V2・V3・T2・T6 |
 | `src/services/localRuntime.test.ts` | runtime 資産・OS 選択の単体検査 | 型付き fixture と実モデル定義を使用。2 系列・全 OS / CPU・SHA・展開規則の検査を保持。 公開後の見直し: 隔離archiveの実展開後に取り消し、配置抑止・一時物削除・正常取得を検査。 | V2・V7・T1・T2・T6・P1・P2 |
@@ -365,7 +365,7 @@ L1–L5の総合結果は output/translation-review/verification.json に記録�
 | `media/ui/render.js` | 生成物 | 対応する media/src から再生成。classic script と実ブラウザーで検証。 |
 | `media/ui/state.js` | 生成物 | 対応する media/src から再生成。classic script と実ブラウザーで検証。 |
 | `media/ui/types.js` | 生成物 | 対応する media/src から再生成。classic script と実ブラウザーで検証。 |
-| `package-lock.json` | 生成物 | npm で再生成。クリーン npm ci と audit 0 件を確認。公開統合では検証済みの依存関係を保持し、0.18.0へ更新。R1・R2・R3。追加見直しでは依存を変更せず0.18.1へ更新。P4。 |
+| `package-lock.json` | 生成物 | npm で再生成。クリーン npm ci と audit 0 件を確認。公開統合では検証済みの依存関係を保持し、0.18.0へ更新。R1・R2・R3。追加見直しでは依存を変更せず0.18.1へ更新。P4。 依存を変更せず0.18.2へ更新。 A5・A6。 |
 
 ## 再検証の入口
 
@@ -449,3 +449,30 @@ CIのVSIXの126 entriesは、実VS Codeで検証したローカルVSIXと全フ�
 公開先は[Marketplace](https://marketplace.visualstudio.com/items?itemName=Hiromitsu.commit-maker)と[Open VSX](https://open-vsx.org/extension/Hiromitsu/commit-maker)。公開VSIXのSHA-256は `40401cbc9b3f757aae5baef9a7c61dd0082e99bc110b7a51eba7a3c7867c5ec7`。検証したローカルVSIXは証拠用に退避し、vsix/commit-maker-0.18.1.vsixにはCI成果物を保存した。
 
 この追記は公開後の記録であり、公開タグの拡張コードは変更していない。追加レビューで再現した不備は修正・検証・公開済み。実サービス・実GGUF推論の確認範囲は上記の通りで、未知の不具合がないという保証はしていない。
+
+## 0.18.2の実接続検証・修正
+
+2026-10-06、実APIと本番利用の確認依頼を受け、公開済み0.18.1のVSIXから実コードを読み込み、候補を1モデル・1設定ずつ順に確認した。従来のクラウドfixture・CLI fixture・GGUF fixtureによる結果と区別し、実際にコミット文章を生成できることを確認する。
+
+実接続で次の不備を再現した。CodexのChatGPT認証ではgpt-6-luna / gpt-6-solが拒否され、CLIが出した入力全文のため失敗理由も表示から切れていた。GemmaのカタログURLはQ4_K_Mファイルが存在せず404だった。OpenAIのgpt-5-codexは実POSTが404で、[公式の提供終了記録](https://developers.openai.com/api/docs/deprecations)でも2026-07-23の終了を確認した。
+
+Codexの既定モデルを実接続できたgpt-5.6-lunaへ変更し、拒否された2候補を除外する。CLIエラーを末尾から選び、構造化された原因だけを伏せ字・長さ制限の対象とする。Gemmaは実在するUnslothの固定revisionのQ4_K_MへURL・SHA-256・サイズを修正する。OpenAIの終了モデルは推奨候補から外す。利用者の保存済みモデルを自動置換せず、カスタム指定の能力表は保持する。以前の非対応モデルを保存している場合は、対応する候補をモデル欄で選択する必要がある。
+
+OpenAIの最初の確認では、高推論の1ケースが300秒の期限に達し、別の1ケースは8192トークンを推論に使い切ってincompleteとなった。同じ期限・出力上限で2ケースを再実行すると、131秒と43秒でcompletedの文章を得た。期限や出力上限を自動で増やす処理は追加していない。HTTP 200だけでは成功とみなさず、incomplete / failedを実コードで拒否し、未完成の文章でSCMを上書きしない回帰検査を追加した。
+
+実接続では、通常の利用者プロファイルの設定・SCM・保存データを変更していない。専用のVS Codeプロファイルと一時Gitリポジトリのsample.txtの差分を使用した。既存の3件のSecretStorageは暗号化された行だけを隔離環境へ複製し、実VS Code APIで取得した値をメモリー内で使用した。Codexも既存の有効なアクセストークンを専用CODEX_HOMEへ複製し、元の認証を更新しないようrefresh tokenを無効にした。キー・トークンの平文を記録やリポジトリへ出していない。モデル・認証の一時領域と実行プロセスは終了時に破棄した。
+
+| ID | 機能・検査 | 結果・証拠 |
+| --- | --- | --- |
+| A1 | OpenAI / Gemini / Claudeの実生成 | 現行候補はOpenAI 17モデル・234設定、Gemini 10モデル、Claude 13モデル。合計257ケースで実HTTP 200と非空のコミット文章を確認し、OpenAIはcompletedも確認。初回失敗と再実行も別に保持。output/live-api-0.18.1/matrix.json / retry.json / cloud-final.json。 |
+| A2 | Codexの実認証・実生成 | CLI 0.153.4と実ChatGPT認証で、現行5モデル×4推論設定の20ケースが成功。修正前の非対応2モデルの8失敗も保存。codex-before.json / codex.json / codex-diagnostic.json。 |
+| A3 | Localの実取得・実推論・削除 | 4モデルすべて実GGUF取得とSHA-256、実runtime取得とSHA-256を確認。各モデルで2回の日本語のコミット生成・削除に成功。Gemmaの中断した初回は取得と検証までを記録し、資産だけを隔離環境へ再コピーして再検証・推論・削除を行った。local.json / gemma-interrupted.json / gemma.json。 |
+| A4 | 不完全応答とCLI失敗理由 | 空・部分文章のincomplete、failed、原因なしの応答を拒否。completedと6互換形式の既存契約を維持。未完成応答で実Git fixtureのSCMを上書きせず、Codexのプロンプト末尾の失敗理由と伏せ字も確認。unit-final.log / integration-final.log。 |
+| A5 | 静的検査・テスト・本番ビルド | lint・型検査・単体18ファイル・統合8機能群・compile・build:mediaが成功。4モデルのHEADでHTTP・SHA・サイズを順に確認する検査を追加し、実runtime取得・展開・起動も成功。各final.log / runtime-final.log。 |
+| A6 | 最終VSIX・実SCM・実ブラウザー・全対象 | 最終0.18.2の実コードで、クラウド3種・Codex・Localの5 providerすべてを生成から実SCM反映まで確認。Chromiumで5 providerの操作と32言語×4モデル×3幅の384表示ケースが成功。console error / warning・pageerrorは0。126 entries・32 NLS・67 JSが生成元と一致。現存202ファイル・新旧207行の欠け・重複は0。scm-final.json / browser.json / package.json / inventory.json。 |
+
+通常のOpenAI既定値gpt-6-luna、設定キー・設定既定値、コマンド、権限、SecretStorage / Mementoの契約、Localの保存ID・sampling・runtime選択、32言語の文言は維持した。version以外のpackage.jsonの契約は同一で、変更対象14ファイル以外の188ファイルも0.18.1とbyte一致。READMEではCodexの初期モデルだけを実装に揃えた。新規の保守対象ファイルはなく、対象一覧の207行すべてを保持した。
+
+実サービスの生成時間・推論量には揺れがあり、最初の期限・出力上限への到達を隠して「常に成功」とは扱わない。上限による失敗は検査済みの境界として記録する。実GGUF推論と実VS CodeはmacOS ARM64で行い、Windows / Linuxを含むruntime取得・起動は公開CIでも確認する。テスト用VS Codeが途中で終了した2件の未完了結果は採用せず、終了検出を追加して再実行した。
+
+既存の公開依頼に沿い、修正をPATCH版0.18.2としてコミットし、mainとv0.18.2をpushしてstable workflowで公開する。両ストアと配布物の確認結果は成功後にA7として追記する。

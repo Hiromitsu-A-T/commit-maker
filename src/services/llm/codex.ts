@@ -59,7 +59,7 @@ export async function callCodex({
       timeoutMs
     });
     if (result.code !== 0) {
-      const detail = sanitizeLlmErrorText(result.stderr || result.stdout || `exit code ${result.code}`);
+      const detail = getCodexFailureDetail(result.stderr || result.stdout || `exit code ${result.code}`);
       throw new Error(`Codex execution failed: ${detail}`);
     }
     const output = await readOutputFile(outputPath, result.stdout);
@@ -71,6 +71,27 @@ export async function callCodex({
   } finally {
     await fs.promises.rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
   }
+}
+
+function getCodexFailureDetail(output: string): string {
+  // CLI は入力も stderr に出すため、末尾のエラーを選んでから長さを制限する。
+  const errors = output.split(/\r?\n/).flatMap(line => {
+    const match = line.match(/^\s*error:\s*(.+)/i);
+    return match ? [match[1]] : [];
+  });
+  const detail = errors.at(-1);
+  if (detail) {
+    try {
+      const payload = asRecord(JSON.parse(detail));
+      const message = asRecord(payload.error).message ?? payload.message;
+      if (typeof message === 'string' && message.trim()) {
+        return sanitizeLlmErrorText(message);
+      }
+    } catch {
+      // 構造化されていない CLI のエラーもそのまま表示する。
+    }
+  }
+  return sanitizeLlmErrorText(detail ?? output.trim().slice(-1000));
 }
 
 export function buildCodexExecArgs({

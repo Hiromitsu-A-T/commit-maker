@@ -193,6 +193,10 @@ export async function createHarness(initialSettings: Record<string, unknown> = {
       });
     }
     if (JSON.stringify(body).includes('FAIL_FIXTURE')) return new Response('fixture failure', { status: 400 });
+    if (JSON.stringify(body).includes('INCOMPLETE_FIXTURE')) {
+      return new Response(JSON.stringify({ status: 'incomplete', incomplete_details: { reason: 'max_output_tokens' },
+        output_text: 'fix: unfinished' }));
+    }
     const message = 'chore: 検証用の変更';
     return new Response(JSON.stringify(url.includes('/gemini/')
       ? { candidates: [{ content: { parts: [{ text: message }] } }] }
@@ -211,7 +215,11 @@ const auth = path.join(process.env.CODEX_HOME, 'auth.fixture');
 if (args[0] === '--version') { console.log('codex fixture'); }
 else if (args[0] === 'login') { if (fs.existsSync(auth)) console.log('Logged in using fixture'); else process.exitCode = 1; }
 else if (args[0] === 'logout') { fs.rmSync(auth, {force: true}); }
-else if (args[0] === 'exec') { process.stdin.resume(); process.stdin.on('end', () => {
+else if (args[0] === 'exec') { let prompt=''; process.stdin.setEncoding('utf8'); process.stdin.on('data', text => { prompt+=text; }); process.stdin.on('end', () => {
+  if (prompt.includes('FAIL_CODEX_FIXTURE')) {
+    process.stderr.write(prompt+'\\nERROR: '+JSON.stringify({error:{message:'The model is not supported. Bearer sk-proj-fixture1234567890'}})+'\\n');
+    process.exitCode=1; return;
+  }
   fs.writeFileSync(args[args.indexOf('--output-last-message') + 1], JSON.stringify({message: 'chore: 検証用の変更'}));
 }); } else process.exitCode = 1;
 `, { mode: 0o755 });

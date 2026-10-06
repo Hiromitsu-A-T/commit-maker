@@ -20,6 +20,22 @@ async function main(): Promise<void> {
   };
 
   try {
+    for (const model of LOCAL_MODEL_DEFINITIONS) {
+      const response = await fetch(model.url, {
+        method: 'HEAD',
+        redirect: 'manual',
+        signal: AbortSignal.timeout(30000)
+      });
+      if (![200, 302, 307].includes(response.status)) {
+        throw new Error(`${model.id}: model asset returned HTTP ${response.status}`);
+      }
+      const sha256 = (response.headers.get('x-linked-etag') ?? response.headers.get('etag'))?.replace(/^"|"$/g, '');
+      const size = Number(response.headers.get('x-linked-size') ?? response.headers.get('content-length'));
+      if (sha256 !== model.sha256 || size !== model.sizeBytes) {
+        throw new Error(`${model.id}: model asset SHA-256 or size differs from the catalog`);
+      }
+      console.log(`${model.id}: model asset metadata smoke passed`);
+    }
     const runtimeVersions = [...new Set(LOCAL_MODEL_DEFINITIONS.map(resolveLocalRuntimeVersion))];
     for (const runtimeVersion of runtimeVersions) {
       const runtimePath = await ensureLocalRuntime(context as unknown as vscode.ExtensionContext, extensionUri as vscode.Uri, config as unknown as vscode.WorkspaceConfiguration, {

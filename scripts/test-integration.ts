@@ -32,6 +32,14 @@ async function main(): Promise<void> {
     app.send({ type: 'commitApply' });
     await waitUntil(() => app.repos[0].inputBox.value === 'chore: 検証用の変更');
     assert.strictEqual(app.repos[0].git('log', '--format=%s', '-1').trim(), 'chore: fixture', 'SCM への反映だけでコミットしない');
+    app.send({ type: 'commitProviderChanged', value: 'openai' });
+    app.send({ type: 'commitPromptChanged', value: 'INCOMPLETE_FIXTURE' });
+    await app.commands.get('commitMaker.generateCommitFromSCM')!(app.repos[0]);
+    assert.strictEqual(app.state.commitStatus, 'error');
+    assert.match(app.state.commitLastError ?? '', /incomplete.*max_output_tokens/);
+    assert.strictEqual(app.repos[0].inputBox.value, 'chore: 検証用の変更', '未完成の応答で SCM を上書きしない');
+    app.send({ type: 'commitPromptChanged', value: 'normal fixture' });
+    app.send({ type: 'commitProviderChanged', value: 'claude' });
     const reads = app.secretReads.count;
     app.secretReads.delayMs = 60;
     app.send({ type: 'codexRefresh' });
@@ -173,9 +181,17 @@ async function main(): Promise<void> {
     assert.ok(app.terminals[0].options.env?.CODEX_HOME?.startsWith(app.root));
     assert.match(app.terminals[0].command || '', /cli_auth_credentials_store/);
     app.send({ type: 'commitProviderChanged', value: 'codex' });
+    assert.strictEqual(app.state.commitModel, 'gpt-5.6-luna', 'ChatGPT 認証で利用可能な既定モデルを選ぶ');
     generate();
     await waitUntil(() => app.state.commitStatus === 'ready');
     assert.strictEqual(app.state.commitResult, 'chore: 検証用の変更');
+    app.send({ type: 'commitPromptChanged', value: 'FAIL_CODEX_FIXTURE' });
+    generate();
+    await waitUntil(() => app.state.commitStatus === 'error');
+    assert.match(app.state.commitLastError ?? '', /The model is not supported/);
+    assert.doesNotMatch(app.state.commitLastError ?? '', /FAIL_CODEX_FIXTURE|sk-proj-fixture/,
+      '入力でエラーが切れず、認証情報も表示されない');
+    app.send({ type: 'commitPromptChanged', value: 'normal fixture' });
     app.send({ type: 'codexLogout' });
     await waitUntil(() => !app.state.apiKeys.codex.ready);
     console.log('PASS: 専用Codex認証領域・実CLI起動・生成・ログアウト');
