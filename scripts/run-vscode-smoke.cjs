@@ -48,7 +48,7 @@ async function closeOwnedProcesses() {
     .map(line => Number(line.trim().split(/\s+/, 1)[0]));
   // macOS ではウィンドウを閉じた後も本体の終了に時間がかかる。
   const waitForExit = async () => {
-    const deadline = Date.now() + 10000;
+    const deadline = Date.now() + 20000;
     while (list().length && Date.now() < deadline) await pause(100);
   };
   await waitForExit();
@@ -83,7 +83,8 @@ async function main() {
     const cliScript = path.join(root, 'codex-fixture.cjs');
     fs.writeFileSync(cliScript, `const fs = require('fs');
   const args = process.argv.slice(2);
-  if (args[0] === '--version') console.log('codex fixture');
+  if (args[0] === '--version') console.log('codex-cli 0.164.0');
+  else if (args[0] === 'debug') console.log(JSON.stringify({models:[{slug:'gpt-6-luna'}]}));
   else if (args[0] === 'login') console.log('Logged in using fixture');
   else if (args[0] === 'exec') {
     process.stdin.resume();

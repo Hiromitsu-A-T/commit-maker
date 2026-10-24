@@ -50,7 +50,7 @@ const zhTw: UiStrings = {
   presetDeleteButton: '刪除',
   promptTextareaPlaceholder: '例如：請以繁體中文撰寫不超過50個字元的標題與條列式本文。',
   includeUnstagedLabel: '包含未暫存的變更',
-  includeUntrackedLabel: '包含未追蹤的檔案',
+  includeUntrackedLabel: '包含未追蹤的檔案（僅檔名）',
   includeBinaryLabel: '包含可能為二進位的檔案',
   maxPromptLabel: '提示詞長度上限',
   maxPromptUnlimited: '不限（預設）',

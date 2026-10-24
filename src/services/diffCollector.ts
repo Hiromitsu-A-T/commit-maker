@@ -1,13 +1,11 @@
 import * as path from 'path';
-import * as fs from 'fs';
 import { promisify } from 'util';
-import { execFile } from 'child_process';
+import { execFile, spawn } from 'child_process';
 import { parseUntrackedPaths } from '../commitDiffUtil';
 import { getStrings, DEFAULT_LANGUAGE } from '../i18n/strings';
 
 const execFileAsync = promisify(execFile);
 const strings = getStrings(DEFAULT_LANGUAGE);
-const MAX_UNTRACKED_FILE_BYTES = 256 * 1024;
 export const DEFAULT_DIFF_COLLECTION_LIMIT_CHARS = 32 * 1024 * 1024;
 
 const BINARY_EXTENSIONS = new Set([
@@ -34,8 +32,7 @@ export interface DiffCollectOptions {
   logger?: { appendLine(message: string): void };
   /** テストや差し替え用の mock ステータス文字列（git status --porcelain 相当） */
   mockStatusOutput?: string;
-  /** テスト用: 未追跡ファイルの内容を与える (path -> Buffer) */
-  mockUntrackedFiles?: Record<string, Buffer>;
+
 }
 
 export async function collectDiff(
@@ -46,8 +43,7 @@ export async function collectDiff(
     includeBinary,
     maxCollectedChars,
     logger,
-    mockStatusOutput,
-    mockUntrackedFiles
+    mockStatusOutput
   }: DiffCollectOptions
 ): Promise<string> {
   const parts: string[] = [];
@@ -57,13 +53,13 @@ export async function collectDiff(
     truncated: false
   };
 
-  // 片方の API が失敗しても、その区分だけ CLI で取得して差分を欠落させない。
+  // Git API は本文の全量確保を避けられないため、上限付きの Git stream で取得する。
   const staged = await readRepositoryDiff(repo, 'staged', collectionLimit, logger);
   if (staged.trim()) {
     appendCollectedPart(parts, `${strings.diffSectionStaged}\n${staged.trim()}`, budget, logger);
   }
   if (includeUnstaged && budget.remaining > 0) {
-    const unstaged = await readRepositoryDiff(repo, 'unstaged', collectionLimit, logger);
+    const unstaged = await readRepositoryDiff(repo, 'unstaged', budget.remaining, logger);
     if (unstaged.trim()) {
       appendCollectedPart(parts, `${strings.diffSectionUnstaged}\n${unstaged.trim()}`, budget, logger);
     }
@@ -71,7 +67,7 @@ export async function collectDiff(
 
   // 未追跡ファイルは未ステージの変更と一緒に扱う。
   if (includeUnstaged && includeUntracked && budget.remaining > 0) {
-    const untracked = await collectUntrackedFiles(repo, includeBinary, logger, budget, mockStatusOutput, mockUntrackedFiles);
+    const untracked = await collectUntrackedFiles(repo, includeBinary, logger, budget, mockStatusOutput);
     if (untracked.trim()) {
       parts.push(untracked.trim());
     }
@@ -86,27 +82,38 @@ async function readRepositoryDiff(
   collectionLimit: number,
   logger?: { appendLine(message: string): void }
 ): Promise<string> {
-  // 引数なしの diffWithHEAD / diffIndexWithHEAD は変更一覧を返す API もある。
-  const cached = section === 'staged';
-  const legacyMethod = cached ? 'diffIndexWithHEAD' : 'diffWithHEAD';
-  const read = repo.diff?.bind(repo, cached) ?? repo[legacyMethod]?.bind(repo);
-  if (read) {
-    try {
-      const result = await read();
-      if (typeof result === 'string') return result;
-    } catch (error) {
-      logger?.appendLine(strings.msgGitDiffFailed.replace('{detail}', String(error)));
-    }
-  }
-  const cwd = repo.rootUri.fsPath;
-  try {
-    const args = cached ? ['diff', '--cached'] : ['diff'];
-    const { stdout } = await execFileAsync('git', args, { cwd, maxBuffer: Math.max(DEFAULT_DIFF_COLLECTION_LIMIT_CHARS, collectionLimit) * 4 });
-    return stdout;
-  } catch (error) {
-    logger?.appendLine(strings.msgGitDiffFailed.replace('{detail}', String(error)));
-    return '';
-  }
+  return new Promise((resolve, reject) => {
+    const args = ['--no-pager', 'diff', '--no-ext-diff', '--no-textconv'];
+    if (section === 'staged') args.push('--cached');
+    const child = spawn('git', args, { cwd: repo.rootUri.fsPath, stdio: ['ignore', 'pipe', 'pipe'] });
+    const chunks: Buffer[] = [];
+    let bytes = 0;
+    let truncated = false;
+    let errorText = '';
+    const timer = setTimeout(() => { child.kill(); reject(new Error('Git diff timed out.')); }, 30000);
+    child.stdout.on('data', (chunk: Buffer) => {
+      if (truncated) return;
+      const remaining = collectionLimit - bytes;
+      chunks.push(chunk.subarray(0, remaining));
+      bytes += Math.min(chunk.length, remaining);
+      if (chunk.length > remaining) {
+        truncated = true;
+        child.kill();
+      }
+    });
+    child.stderr.on('data', chunk => { errorText = (errorText + String(chunk)).slice(-8192); });
+    child.once('error', error => { clearTimeout(timer); reject(error); });
+    child.once('close', code => {
+      clearTimeout(timer);
+      if (code !== 0 && !truncated) { reject(new Error(`Git diff failed: ${errorText}`)); return; }
+      let text = Buffer.concat(chunks, bytes).toString('utf8');
+      if (truncated) {
+        text += '\n[...omitted by Commit Maker safety limit...]';
+        logger?.appendLine('Commit Maker diff safety limit reached while reading Git.');
+      }
+      resolve(text);
+    });
+  });
 }
 
 async function collectUntrackedFiles(
@@ -114,8 +121,7 @@ async function collectUntrackedFiles(
   includeBinary: boolean,
   logger: { appendLine(message: string): void } | undefined,
   budget: DiffCollectionBudget,
-  mockStatusOutput?: string,
-  mockUntrackedFiles?: Record<string, Buffer>
+  mockStatusOutput?: string
 ): Promise<string> {
   const repoPath = repo.rootUri.fsPath;
   let status: string;
@@ -152,40 +158,10 @@ async function collectUntrackedFiles(
       logger?.appendLine(`Skipped sensitive untracked file: ${relativePath}`);
       continue;
     }
-    try {
-      let buffer: Buffer;
-      if (mockUntrackedFiles && mockUntrackedFiles[relativePath] !== undefined) {
-        buffer = mockUntrackedFiles[relativePath];
-      } else {
-        const stat = await fs.promises.lstat(absolutePath);
-        if (stat.isSymbolicLink()) {
-          logger?.appendLine(`Skipped untracked symlink: ${relativePath}`);
-          continue;
-        }
-        if (!stat.isFile()) {
-          continue;
-        }
-        if (stat.size > MAX_UNTRACKED_FILE_BYTES) {
-          logger?.appendLine(`Skipped large untracked file: ${relativePath}`);
-          continue;
-        }
-        buffer = await fs.promises.readFile(absolutePath);
-      }
-      const isBinary = isBinaryBuffer(buffer, relativePath);
-      if (!includeBinary && isBinary) {
-        logger?.appendLine(strings.msgUntrackedSkipBinary.replace('{path}', relativePath));
-        continue;
-      }
-      const content = buffer.toString('utf8');
-      appendCollectedPart(
-        parts,
-        strings.diffSectionUntracked.replace('{path}', relativePath) + '\n' + content.trim(),
-        budget,
-        logger
-      );
-    } catch (error) {
-      logger?.appendLine(strings.msgUntrackedReadFailed.replace('{path}', relativePath).replace('{detail}', String(error)));
-    }
+    // 未追跡のパスを再openしない。本文は利用者がステージした後の Git 差分だけで扱う。
+    if (!includeBinary && BINARY_EXTENSIONS.has(path.extname(relativePath).toLowerCase())) continue;
+    appendCollectedPart(parts, strings.diffSectionUntracked.replace('{path}', relativePath) +
+      '\n[Filename only. Stage this file to include its contents.]', budget, logger);
   }
   return parts.join('\n\n');
 }
@@ -228,7 +204,7 @@ function markDiffTruncated(budget: DiffCollectionBudget, logger?: { appendLine(m
 
 function normalizeDiffCollectionLimit(value: number | undefined): number {
   if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
-    return Math.floor(value);
+    return Math.min(DEFAULT_DIFF_COLLECTION_LIMIT_CHARS, Math.floor(value));
   }
   return DEFAULT_DIFF_COLLECTION_LIMIT_CHARS;
 }
@@ -258,6 +234,8 @@ export function isSensitiveUntrackedPath(filename: string): boolean {
   if (base === '.env' || base.startsWith('.env.')) {
     return true;
   }
+  if (lower.split(/[\\/]/).some(part => ['.aws', '.ssh', '.docker', '.kube', '.azure', '.config', '.gnupg'].includes(part))) return true;
+  if (base === 'credentials' || base === '.git-credentials' || /^secrets?(?:\.|$)/.test(base) || ext === '.tfvars' || lower.endsWith('.tfvars.json')) return true;
   if (base === '.npmrc' || base === '.pypirc' || base === '.netrc') {
     return true;
   }

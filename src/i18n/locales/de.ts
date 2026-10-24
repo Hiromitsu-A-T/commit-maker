@@ -50,7 +50,7 @@ const de: UiStrings = {
   presetDeleteButton: 'Löschen',
   promptTextareaPlaceholder: 'Z. B.: Schreibe einen Titel mit höchstens 50 Zeichen und einen Text mit Stichpunkten auf Deutsch.',
   includeUnstagedLabel: 'Nicht vorgemerkte Änderungen einbeziehen',
-  includeUntrackedLabel: 'Nicht verfolgte Dateien einbeziehen',
+  includeUntrackedLabel: 'Nicht verfolgte Dateien einbeziehen (nur Dateinamen)',
   includeBinaryLabel: 'Mögliche Binärdateien einbeziehen',
   maxPromptLabel: 'Zeichenlimit für den Prompt',
   maxPromptUnlimited: 'Unbegrenzt (Standard)',

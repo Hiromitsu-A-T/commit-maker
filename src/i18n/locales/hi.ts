@@ -50,7 +50,7 @@ const hi: UiStrings = {
   presetDeleteButton: 'हटाएँ',
   promptTextareaPlaceholder: 'उदा.: हिंदी में अधिकतम 50 अक्षरों का शीर्षक और बिंदुवार विवरण लिखें।',
   includeUnstagedLabel: 'अनस्टेज्ड बदलाव शामिल करें',
-  includeUntrackedLabel: 'अनट्रैक्ड फ़ाइलें शामिल करें',
+  includeUntrackedLabel: 'अनट्रैक्ड फ़ाइलें शामिल करें (केवल फ़ाइल नाम)',
   includeBinaryLabel: 'संभावित बाइनरी फ़ाइलें शामिल करें',
   maxPromptLabel: 'प्रॉम्प्ट की अक्षर सीमा',
   maxPromptUnlimited: 'असीमित (डिफ़ॉल्ट)',

@@ -50,7 +50,7 @@ const bn: UiStrings = {
   presetDeleteButton: 'মুছুন',
   promptTextareaPlaceholder: 'উদা.: বাংলায় সর্বোচ্চ ৫০ অক্ষরের শিরোনাম এবং বুলেট তালিকা আকারে বিবরণ লিখুন।',
   includeUnstagedLabel: 'স্টেজ না করা পরিবর্তন অন্তর্ভুক্ত করুন',
-  includeUntrackedLabel: 'ট্র্যাক না করা ফাইল অন্তর্ভুক্ত করুন',
+  includeUntrackedLabel: 'ট্র্যাক না করা ফাইল অন্তর্ভুক্ত করুন (শুধু ফাইলের নাম)',
   includeBinaryLabel: 'সম্ভাব্য বাইনারি ফাইল অন্তর্ভুক্ত করুন',
   maxPromptLabel: 'প্রম্পটের অক্ষরসীমা',
   maxPromptUnlimited: 'সীমাহীন (ডিফল্ট)',

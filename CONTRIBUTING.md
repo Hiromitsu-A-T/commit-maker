@@ -61,7 +61,7 @@ npm run test:integration
 
 `npm run test:integration` は専用の一時ディレクトリーと架空の認証情報を使います。
 ブラウザーで画面を確認する場合は `npm run smoke:webview` が表示するローカル URL を開きます。
-操作の自動確認は別ターミナルで `node scripts/webview-smoke.cjs <URL>` を実行します（Playwright CLI を使用）。
+操作の自動確認は別ターミナルで `node scripts/webview-smoke.cjs <URL>` を実行します（lockfileに固定したローカルPlaywright CLI を使用）。
 macOS / Linux の実 VS Code 確認は `node scripts/run-vscode-smoke.cjs [code のパス] [VSIX のパス]` で実行できます。
 検証は専用プロファイルを作成し、終了時に削除します。
 構造、配布、検証の詳細は [`AGENTS.md`](AGENTS.md) を参照してください。

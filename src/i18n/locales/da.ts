@@ -50,7 +50,7 @@ const da: UiStrings = {
   presetDeleteButton: 'Slet',
   promptTextareaPlaceholder: 'F.eks.: Skriv en titel på højst 50 tegn og en punktliste på dansk.',
   includeUnstagedLabel: 'Medtag ikke-klargjorte ændringer',
-  includeUntrackedLabel: 'Medtag ikke-sporede filer',
+  includeUntrackedLabel: 'Medtag ikke-sporede filer (kun filnavne)',
   includeBinaryLabel: 'Medtag mulige binære filer',
   maxPromptLabel: 'Tegngrænse for prompten',
   maxPromptUnlimited: 'Ubegrænset (standard)',

@@ -50,7 +50,7 @@ const tr: UiStrings = {
   presetDeleteButton: 'Sil',
   promptTextareaPlaceholder: 'Örn.: En fazla 50 karakterlik bir başlık ve madde işaretli açıklamayı Türkçe yazın.',
   includeUnstagedLabel: 'Hazırlanmamış değişiklikleri dahil et',
-  includeUntrackedLabel: 'İzlenmeyen dosyaları dahil et',
+  includeUntrackedLabel: 'İzlenmeyen dosyaları dahil et (yalnızca adlar)',
   includeBinaryLabel: 'Olası ikili dosyaları dahil et',
   maxPromptLabel: 'İstem karakter sınırı',
   maxPromptUnlimited: 'Sınırsız (varsayılan)',

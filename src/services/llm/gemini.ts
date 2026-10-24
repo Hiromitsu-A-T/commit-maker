@@ -1,3 +1,4 @@
+import { limitTimeout } from '../../resourceLimits';
 import { GEMINI_GENERATE_SUFFIX } from '../../constants';
 import { asRecord, callLlmJson } from './shared';
 import { getStrings, DEFAULT_LANGUAGE } from '../../i18n/strings';
@@ -26,7 +27,7 @@ export async function callGemini({
     label: 'Gemini',
     endpoint,
     abortSignal,
-    timeoutMs,
+    timeoutMs: limitTimeout(timeoutMs),
     logger,
     buildRequest: base => ({
       url: buildGeminiEndpoint(base, model),

@@ -50,7 +50,7 @@ const vi: UiStrings = {
   presetDeleteButton: 'Xóa',
   promptTextareaPlaceholder: 'Ví dụ: Viết tiêu đề tối đa 50 ký tự và nội dung dạng gạch đầu dòng bằng tiếng Việt.',
   includeUnstagedLabel: 'Bao gồm thay đổi chưa đưa vào staging',
-  includeUntrackedLabel: 'Bao gồm tệp chưa được theo dõi',
+  includeUntrackedLabel: 'Bao gồm tệp chưa được theo dõi (chỉ tên tệp)',
   includeBinaryLabel: 'Bao gồm tệp có thể là tệp nhị phân',
   maxPromptLabel: 'Giới hạn ký tự của prompt',
   maxPromptUnlimited: 'Không giới hạn (mặc định)',

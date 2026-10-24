@@ -9,7 +9,7 @@ import type { CommitPanelProvider } from '../src/panel';
 import type { WebviewOutboundMessage } from '../src/panelMessages';
 
 /** 実装の境界で VS Code とクラウドを置き換え、Git・ファイル・子プロセスは隔離領域で動かす。 */
-export async function createHarness(initialSettings: Record<string, unknown> = {}) {
+export async function createHarness(initialSettings: Record<string, unknown> = {}, workspaceSettings: Record<string, unknown> = {}) {
   const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'commit-maker-integration-'));
   const packageJson = require('../package.json');
   const values = new Map<string, unknown>();
@@ -20,12 +20,12 @@ export async function createHarness(initialSettings: Record<string, unknown> = {
     ['endpoint', 'https://fixture.example/v1/responses'],
     ['endpointGemini', 'https://fixture.example/gemini/models'],
     ['endpointClaude', 'https://fixture.example/claude/messages'],
-    ['requestTimeoutMs', 1000],
+    ['requestTimeoutMs', 5000],
     ...Object.entries(initialSettings)
   ]);
   const config = {
-    get: <T>(key: string, fallback?: T): T => (user.has(key) ? user.get(key) : values.get(key) ?? fallback) as T,
-    inspect: (key: string) => ({ defaultValue: values.get(key), globalValue: user.get(key) })
+    get: <T>(key: string, fallback?: T): T => (workspaceSettings[key] ?? (user.has(key) ? user.get(key) : values.get(key) ?? fallback)) as T,
+    inspect: (key: string) => ({ defaultValue: values.get(key), globalValue: user.get(key), workspaceValue: workspaceSettings[key] })
   };
   const errors: unknown[] = [];
   const emitters: Emitter<unknown>[] = [];
@@ -135,6 +135,8 @@ export async function createHarness(initialSettings: Record<string, unknown> = {
       createTerminal: (options: vscode.TerminalOptions) => {
         const terminal = { options, command: undefined as string | undefined };
         terminals.push(terminal);
+        const home = options.env?.CODEX_HOME;
+        if (home && options.shellArgs) fs.writeFileSync(path.join(home, 'auth.fixture'), 'fixture');
         return { show() {}, sendText: (command: string) => {
           terminal.command = command;
           const home = options.env?.CODEX_HOME;
@@ -222,7 +224,8 @@ export async function createHarness(initialSettings: Record<string, unknown> = {
   await fs.promises.writeFile(codexPath, `#!/usr/bin/env node
 const fs = require('fs'); const path = require('path'); const args = process.argv.slice(2);
 const auth = path.join(process.env.CODEX_HOME, 'auth.fixture');
-if (args[0] === '--version') { console.log('codex fixture'); }
+if (args[0] === '--version') { console.log('codex-cli 0.164.0'); }
+else if (args[0] === 'debug') { console.log(JSON.stringify({models:[{slug:'gpt-6-luna'}]})); }
 else if (args[0] === 'login') { if (fs.existsSync(auth)) console.log('Logged in using fixture'); else process.exitCode = 1; }
 else if (args[0] === 'logout') { fs.rmSync(auth, {force: true}); }
 else if (args[0] === 'exec') { let prompt=''; process.stdin.setEncoding('utf8'); process.stdin.on('data', text => { prompt+=text; }); process.stdin.on('end', () => {
@@ -239,8 +242,9 @@ else if (args[0] === 'exec') { let prompt=''; process.stdin.setEncoding('utf8');
 const fs = require('fs'); const path = require('path');
 fs.appendFileSync(path.join(__dirname, 'local-pids.txt'), process.pid + '\\n');
 const http = require('http'); const args = process.argv.slice(2); const port = Number(args[args.indexOf('--port') + 1]);
-http.createServer((req, res) => { res.setHeader('content-type', 'application/json');
+const localServer = http.createServer((req, res) => { res.setHeader('content-type', 'application/json');
   if (req.url === '/health') { res.end('{}'); return; }
+  if (!process.env.LLAMA_API_KEY || req.headers.authorization !== 'Bearer ' + process.env.LLAMA_API_KEY) { res.statusCode=401; res.end('{}'); return; }
   let body = ''; req.on('data', chunk => body += chunk); req.on('end', () => {
     const input = JSON.parse(body); if (!input.messages || !input.max_tokens) { res.statusCode=400; res.end('{}'); return; }
     const prompt = JSON.stringify(input.messages);
@@ -256,7 +260,8 @@ http.createServer((req, res) => { res.setHeader('content-type', 'application/jso
       }, 10);
     } else respond();
   });
-}).listen(port, '127.0.0.1');
+});
+localServer.listen(port, '127.0.0.1', () => process.stderr.write('server is listening on http://127.0.0.1:' + localServer.address().port + '\\n'));
 `, { mode: 0o755 });
   user.set('localRuntimePath', localPath);
   user.set('localKeepAliveMs', 50);

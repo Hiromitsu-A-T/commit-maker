@@ -311,9 +311,14 @@ module.exports = async page => {
 if (require.main === module) {
   const url = new URL(process.argv[2]);
   if (url.protocol !== 'http:' || url.hostname !== '127.0.0.1') throw new Error('隔離サーバーの localhost URL を指定してください');
-  const command = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-  const args = ['--yes', '--package', '@playwright/cli', 'playwright-cli', '-s=commit-maker-smoke'];
-  const cli = (...input) => execFileSync(command, [...args, ...input], { encoding:'utf8', maxBuffer:8*1024*1024 });
+  const command = process.execPath;
+  const cliPath = require.resolve('@playwright/cli/playwright-cli.js');
+  const env = {};
+  for (const key of ['PATH','Path','HOME','USERPROFILE','TEMP','TMP','TMPDIR','SystemRoot','WINDIR','DISPLAY','XAUTHORITY']) {
+    if (process.env[key] !== undefined) env[key] = process.env[key];
+  }
+  const args = [cliPath, '-s=commit-maker-smoke'];
+  const cli = (...input) => execFileSync(command, [...args, ...input], { encoding:'utf8', maxBuffer:8*1024*1024, env });
   fs.mkdirSync(path.join('output', 'playwright'), {recursive:true});
   try {
     console.log(cli('open', url.href, '--headed'));

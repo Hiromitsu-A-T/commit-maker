@@ -50,7 +50,7 @@ const nl: UiStrings = {
   presetDeleteButton: 'Verwijderen',
   promptTextareaPlaceholder: 'Bijv.: Schrijf een titel van maximaal 50 tekens en een beschrijving met opsommingstekens in het Nederlands.',
   includeUnstagedLabel: 'Niet-geïndexeerde wijzigingen meenemen',
-  includeUntrackedLabel: 'Niet-gevolgde bestanden meenemen',
+  includeUntrackedLabel: 'Niet-gevolgde bestanden meenemen (alleen namen)',
   includeBinaryLabel: 'Mogelijke binaire bestanden meenemen',
   maxPromptLabel: 'Tekenlimiet voor de prompt',
   maxPromptUnlimited: 'Onbeperkt (standaard)',

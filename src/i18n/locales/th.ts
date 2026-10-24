@@ -50,7 +50,7 @@ const th: UiStrings = {
   presetDeleteButton: 'ลบ',
   promptTextareaPlaceholder: 'เช่น เขียนหัวข้อไม่เกิน 50 อักขระและเนื้อหาแบบรายการเป็นภาษาไทย',
   includeUnstagedLabel: 'รวมการเปลี่ยนแปลงที่ยังไม่เพิ่มใน staging',
-  includeUntrackedLabel: 'รวมไฟล์ที่ยังไม่ติดตาม',
+  includeUntrackedLabel: 'รวมไฟล์ที่ยังไม่ติดตาม (เฉพาะชื่อไฟล์)',
   includeBinaryLabel: 'รวมไฟล์ที่อาจเป็นไบนารี',
   maxPromptLabel: 'ขีดจำกัดจำนวนอักขระของพรอมต์',
   maxPromptUnlimited: 'ไม่จำกัด (ค่าเริ่มต้น)',

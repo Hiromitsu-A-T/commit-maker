@@ -1,3 +1,4 @@
+import { readBoundedText, rejectRedirect, MAX_ERROR_BYTES } from '../httpResponse';
 import { getStrings, DEFAULT_LANGUAGE } from '../../i18n/strings';
 import { setTimeout as wait } from 'timers/promises';
 
@@ -114,10 +115,12 @@ export async function postJsonWithBackoff(
         method: 'POST',
         headers,
         body: JSON.stringify(body),
-        signal: controller.signal
+        signal: controller.signal,
+        redirect: 'manual'
       });
+      await rejectRedirect(res);
       if (!res.ok) {
-        const text = await res.text();
+        const text = await readBoundedText(res, MAX_ERROR_BYTES);
         throw new HttpError(
           strings.msgHttpError
             .replace('{label}', label)
@@ -126,7 +129,7 @@ export async function postJsonWithBackoff(
           res.status
         );
       }
-      const raw = await res.text();
+      const raw = await readBoundedText(res);
       return parse(raw);
     } catch (error) {
       lastError = error;

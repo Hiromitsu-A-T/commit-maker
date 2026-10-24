@@ -64,10 +64,10 @@ export async function runCodexCliTests(): Promise<void> {
 
     const terminalEnv = buildCodexTerminalEnvironment('/tmp/commit-maker-codex');
     assert.strictEqual(terminalEnv.CODEX_HOME, '/tmp/commit-maker-codex');
-    assert.strictEqual(terminalEnv.OPENAI_API_KEY, null);
-    assert.strictEqual(terminalEnv.COMMIT_MAKER_GEMINI_API_KEY, null);
-    assert.strictEqual(terminalEnv.ANTHROPIC_API_KEY, null);
-    assert.strictEqual(terminalEnv.GITHUB_TOKEN, null);
+    assert.strictEqual(terminalEnv.OPENAI_API_KEY, undefined);
+    assert.strictEqual(terminalEnv.COMMIT_MAKER_GEMINI_API_KEY, undefined);
+    assert.strictEqual(terminalEnv.ANTHROPIC_API_KEY, undefined);
+    assert.strictEqual(terminalEnv.GITHUB_TOKEN, undefined);
   } finally {
     restoreEnv('CODEX_HOME', originalCodexHome);
     restoreEnv('CODEX_API_KEY', originalCodexApiKey);

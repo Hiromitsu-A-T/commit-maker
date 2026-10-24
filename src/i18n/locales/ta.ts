@@ -50,7 +50,7 @@ const ta: UiStrings = {
   presetDeleteButton: 'அழி',
   promptTextareaPlaceholder: 'உதா: தமிழில் அதிகபட்சம் 50 எழுத்துகளைக் கொண்ட தலைப்பையும் புள்ளிப் பட்டியல் வடிவில் விவரத்தையும் எழுதவும்.',
   includeUnstagedLabel: 'staging-இல் சேர்க்கப்படாத மாற்றங்களைச் சேர்க்கவும்',
-  includeUntrackedLabel: 'கண்காணிக்கப்படாத கோப்புகளைச் சேர்க்கவும்',
+  includeUntrackedLabel: 'கண்காணிக்கப்படாத கோப்புகளைச் சேர்க்கவும் (கோப்புப் பெயர்கள் மட்டும்)',
   includeBinaryLabel: 'பைனரியாக இருக்கக்கூடிய கோப்புகளைச் சேர்க்கவும்',
   maxPromptLabel: 'அறிவுறுத்தலின் எழுத்து வரம்பு',
   maxPromptUnlimited: 'வரம்பில்லை (இயல்புநிலை)',

@@ -1,3 +1,5 @@
+import * as http from 'http';
+import { readBoundedText } from '../httpResponse';
 import assert from 'assert';
 import { callLlmJson, createAbortController, postJsonWithBackoff, sanitizeLlmErrorText } from './shared';
 
@@ -74,6 +76,41 @@ async function testSanitizeLlmErrorText(): Promise<void> {
   assert(sanitized.includes('[REDACTED_API_KEY]'));
 }
 
+async function testSecurityBoundaries(): Promise<void> {
+  let destinationRequests = 0;
+  const destination = http.createServer((_req, res) => { destinationRequests++; res.end('leaked'); });
+  await new Promise<void>(resolve => destination.listen(0, '127.0.0.1', resolve));
+  const address = destination.address() as import('net').AddressInfo;
+  let status = 307;
+  const source = http.createServer((_req, res) => {
+    res.writeHead(status, { location: `http://127.0.0.1:${address.port}/private` }); res.end();
+  });
+  await new Promise<void>(resolve => source.listen(0, '127.0.0.1', resolve));
+  const sourceAddress = source.address() as import('net').AddressInfo;
+  try {
+    for (status of [301, 302, 303, 307, 308]) {
+      await assert.rejects(() => postJsonWithBackoff(`http://127.0.0.1:${sourceAddress.port}`, {
+        headers: { 'x-api-key': 'fixture-secret' }, body: { prompt: 'private-fixture' },
+        controller: new AbortController(), label: 'fixture', parse: text => text
+      }), /redirects/);
+    }
+    assert.strictEqual(destinationRequests, 0, 'redirect先へ本文・キーを送らない');
+    await assert.rejects(() => readBoundedText(new Response('small', { headers: { 'content-length': '10000000' } })), /byte limit/);
+    let cancelled = false;
+    const oversized = new Response(new ReadableStream({
+      pull(stream) { stream.enqueue(new Uint8Array(1024)); },
+      cancel() { cancelled = true; }
+    }), { headers: { 'content-length': '1' } });
+    await assert.rejects(() => readBoundedText(oversized, 2048), /byte limit/);
+    assert.ok(cancelled, '過少申告されたstreamも上限で中止する');
+    assert.strictEqual(await readBoundedText(new Response('正常な応答')), '正常な応答');
+  } finally {
+    source.closeAllConnections(); destination.closeAllConnections();
+    await Promise.all([new Promise<void>(resolve => source.close(() => resolve())),
+      new Promise<void>(resolve => destination.close(() => resolve()))]);
+  }
+}
+
 export async function runSharedLlmTests(): Promise<void> {
   let attempts = 0;
   await withMockFetch(async () => {
@@ -118,6 +155,7 @@ export async function runSharedLlmTests(): Promise<void> {
       buildRequest: url => ({ url, headers: {}, body: {} }), parse: text => text
     }), { name: 'AbortError' });
   });
+  await testSecurityBoundaries();
   await testSuccessNoRetry();
   await testRetryOn429();
   await testTimeoutAbort();

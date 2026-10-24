@@ -50,7 +50,7 @@ const pl: UiStrings = {
   presetDeleteButton: 'Usuń',
   promptTextareaPlaceholder: 'Np.: Napisz tytuł do 50 znaków i treść w postaci listy po polsku.',
   includeUnstagedLabel: 'Dołącz zmiany nieindeksowane',
-  includeUntrackedLabel: 'Dołącz pliki nieśledzone',
+  includeUntrackedLabel: 'Dołącz pliki nieśledzone (tylko nazwy)',
   includeBinaryLabel: 'Dołącz pliki, które mogą być binarne',
   maxPromptLabel: 'Limit znaków w prompcie',
   maxPromptUnlimited: 'Bez limitu (domyślnie)',

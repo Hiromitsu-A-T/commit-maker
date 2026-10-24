@@ -146,11 +146,17 @@ export async function runLocalModelTests(): Promise<void> {
   assert.strictEqual(resolveLocalModelId('Qwen3-4B-Thinking-2507-Q4_K_M'), DEFAULT_LOCAL_MODEL_ID);
   assert.strictEqual(resolveLocalModelId('unknown'), DEFAULT_LOCAL_MODEL_ID);
 
-  const customUrl = getLocalModelDefinition(createConfig({
-    localModelUrl: 'https://example.com/model.gguf'
-  }));
-  assert.strictEqual(customUrl.url, 'https://example.com/model.gguf');
-  assert.strictEqual(customUrl.sha256, '');
+  for (const digest of [undefined, '', 'abc123']) {
+    assert.throws(() => getLocalModelDefinition(createConfig({
+      localModelUrl: 'https://example.com/model.gguf', localModelSha256: digest
+    })), /SHA-256/);
+  }
+  assert.throws(() => getLocalModelDefinition(createConfig({ localModelSha256: '' })), /SHA-256/);
+
+  const invalidState = await inspectLocalModel({ globalStorageUri: { fsPath: '/unread-fixture' } } as unknown as vscode.ExtensionContext,
+    createConfig({ localModelUrl: 'https://fixture.example/no-digest' }));
+  assert.strictEqual(invalidState.status, 'error');
+  assert.match(invalidState.error ?? '', /SHA-256/);
 
   const workspaceOverride = getLocalModelDefinition(createWorkspaceConfig({
     localModelUrl: 'https://attacker.example/model.gguf',
@@ -163,10 +169,10 @@ export async function runLocalModelTests(): Promise<void> {
 
   const customSha = getLocalModelDefinition(createConfig({
     localModelUrl: 'https://example.com/model.gguf',
-    localModelSha256: 'abc123',
+    localModelSha256: 'a'.repeat(64),
     localModelFilename: '../custom.gguf'
   }));
-  assert.strictEqual(customSha.sha256, 'abc123');
+  assert.strictEqual(customSha.sha256, 'a'.repeat(64));
   assert.strictEqual(customSha.filename, 'custom.gguf');
 
   const tmpRoot = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'commit-maker-local-model-'));
@@ -176,8 +182,7 @@ export async function runLocalModelTests(): Promise<void> {
     await fs.promises.writeFile(legacyPath, 'model');
     const inspected = await inspectLocalModel({ globalStorageUri: { fsPath: tmpRoot } } as unknown as vscode.ExtensionContext, createConfig());
     assert.strictEqual(inspected.id, DEFAULT_LOCAL_MODEL_ID);
-    assert.strictEqual(inspected.status, 'ready');
-    assert.strictEqual(inspected.path, legacyPath);
+    assert.strictEqual(inspected.status, 'notDownloaded', '未検証の旧cacheをnative parserへ渡さない');
   } finally {
     await fs.promises.rm(tmpRoot, { recursive: true, force: true });
   }
@@ -230,6 +235,8 @@ export async function runLocalModelTests(): Promise<void> {
       const downloaded = await downloadLocalModel(context, config, undefined, undefined, () => {});
       assert.strictEqual(downloaded.status, 'ready');
       assert.deepStrictEqual(await fs.promises.readFile(modelPath), bytes);
+      await fs.promises.writeFile(modelPath, 'tampered fixture');
+      assert.strictEqual((await inspectLocalModel(context, config)).status, 'notDownloaded', 'カスタムモデルのcache改変を拒否');
     });
   } finally {
     fs.createReadStream = originalReadStream;

@@ -50,7 +50,7 @@ const he: UiStrings = {
   presetDeleteButton: 'מחק',
   promptTextareaPlaceholder: 'לדוגמה: כתוב כותרת באורך של עד 50 תווים ותיאור ברשימת תבליטים בעברית.',
   includeUnstagedLabel: 'כלול שינויים שלא הוכנו לקומיט',
-  includeUntrackedLabel: 'כלול קבצים לא במעקב',
+  includeUntrackedLabel: 'כלול קבצים לא במעקב (שמות בלבד)',
   includeBinaryLabel: 'כלול קבצים חשודים כבינאריים',
   maxPromptLabel: 'מגבלת תווים בפרומפט',
   maxPromptUnlimited: 'ללא הגבלה (ברירת מחדל)',

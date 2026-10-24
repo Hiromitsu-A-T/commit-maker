@@ -1,3 +1,4 @@
+import { limitTimeout } from '../../resourceLimits';
 import { ANTHROPIC_API_VERSION, DEFAULT_CLAUDE_MAX_TOKENS } from '../../constants';
 import { asRecord, callLlmJson } from './shared';
 import { getStrings, DEFAULT_LANGUAGE } from '../../i18n/strings';
@@ -26,7 +27,7 @@ export async function callClaude({
     label: 'Claude',
     endpoint,
     abortSignal,
-    timeoutMs,
+    timeoutMs: limitTimeout(timeoutMs),
     logger,
     buildRequest: base => ({
       url: base,

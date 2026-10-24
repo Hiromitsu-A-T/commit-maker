@@ -50,7 +50,7 @@ const sw: UiStrings = {
   presetDeleteButton: 'Futa',
   promptTextareaPlaceholder: 'Mfano: Andika kichwa cha hadi vibambo 50 na maelezo kwa orodha yenye alama za vitone kwa Kiswahili.',
   includeUnstagedLabel: 'Jumuisha mabadiliko ambayo hayajaongezwa kwenye staging',
-  includeUntrackedLabel: 'Jumuisha faili zisizofuatiliwa',
+  includeUntrackedLabel: 'Jumuisha faili zisizofuatiliwa (majina pekee)',
   includeBinaryLabel: 'Jumuisha faili zinazoweza kuwa binary',
   maxPromptLabel: 'Kikomo cha vibambo vya maelekezo',
   maxPromptUnlimited: 'Hakuna kikomo (chaguo-msingi)',

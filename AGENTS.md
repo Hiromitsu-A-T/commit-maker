@@ -12,7 +12,7 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 ## 設定とシークレット
 - 設定キー（`commitMaker.*`）: `provider` / `endpoint` / `endpointGemini` / `endpointClaude` / `endpointLocal` / `model`（デフォルト `gpt-6-luna`）/ `reasoningEffort` / `verbosity` / `apiKeySecret*` / `requestTimeoutMs` / `local*`。旧 `simpleUi.*` は置換して使用。
 - ログ出力: `commitMaker.logLlm` を `true` で LLM 呼び出しの試行/リトライを Output チャネルへ記録（デフォルト `false`）。
-- シークレット保存先: GitHub Actions → `Settings > Secrets and variables > Actions` に `VSCE_PAT`（Marketplace 用）、`OVSX_PAT`（Open VSX 用）を登録。ローカル開発時は `.env` に置かず、VS Code SecretStorage へ保存。
+- シークレット保存先: GitHub の保護 Environment `release` にのみ `VSCE_PAT`（Marketplace 用）、`OVSX_PAT`（Open VSX 用）を登録。repository/org secrets には置かない。`release` は管理者の必須レビューと main / v* の ref 制限を設定する。ローカル開発時は `.env` に置かず、VS Code SecretStorage へ保存。
 - `.env` はリポジトリに含めない（`.vscodeignore` で除外済み）。ただし **CI/ローカルで一時利用するトークンを .env に置く場合がある**。その際は `.env` を手元専用にし、必ずコミット・配布対象から除外する（既に ignore 済み）。`VSCE_PAT` / `OVSX_PAT` を .env に置いてもビルド・公開は可能だが、公開リポジトリに絶対含めないこと。
 
 ## バージョニング
@@ -34,18 +34,21 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
   - stable: `.github/workflows/publish.yml`（トリガー: `v*` タグ push）
   - preview: `.github/workflows/publish-preview.yml`（トリガー: `workflow_dispatch`）
   - 共通処理: `.github/workflows/_publish-core.yml`（直接起動しない）
-  - 週次パッチ公開: `.github/workflows/weekly-patch-publish.yml`（毎週月曜 09:15 JST / 手動起動）
-  - バッジ統計更新: `.github/workflows/update-badges.yml`（日次 / 公開成功後 / 手動起動）
+  - 週次パッチ候補: `.github/workflows/weekly-patch-publish.yml`（毎週月曜 09:15 JST、確認用 diff artifact のみ）
+  - バッジ統計候補: `.github/workflows/update-badges.yml`（日次 / 公開成功後、確認用 diff artifact のみ）
 - CI ガード: stable は偶数 MINOR かつ `v<version>` タグと `package.json` の一致が必須。preview は奇数 MINOR かつ `--pre-release` 固定で、タグ起動は禁止。
-- 週次パッチ公開は偶数 MINOR の stable 系列のみ実行し、一時ブランチ `codex/weekly-patch-release` で PATCH version 更新、バッジ統計更新、`npm run compile`、`npm test`、local runtime smoke（Ubuntu/macOS/Windows）、Marketplace / Open VSX 公開を行い、成功後に `main` と `v<version>` タグを更新する。GitHub Actions の `GITHUB_TOKEN` で push したタグは別 workflow を起動しないため、公開処理は同 workflow 内で完結させる。
+- 週次・バッジ workflow は `contents: read` のみで確認用 artifact を作る。管理者が差分を確認し、必要な更新を取り込んで通常の stable 手順で公開する。無承認の自動公開・main/tag push は行わない。
+- main と v* タグは管理者に作成・更新・削除を限定した active ruleset で保護する。GitHub Actions の write token を bypass に登録しない。
+- 公開は秘密情報を持たない build job と `release` Environment の publish job に分離する。publish は固定 SHA の action、lockfile に固定したツールの `npm ci --ignore-scripts`、同一 run の artifact ID と SHA-256 の照合だけを使い、repository の build/lifecycle script を実行しない。
 - Stable 手順（迷ったらこの順で）
   1. `package.json` の version を上げる。
   2. 変更を commit する。
   3. `v<version>` でタグを切る（例 `v0.1.4`）。
   4. `main` とタグを push する（`Publish Extension (Stable)` が自動起動）。
-  5. Actions で `Publish Extension (Stable)` が成功したら Marketplace / Open VSX へ同時反映される。
+  5. 検証済み artifact と source SHA を確認して `release` Environment を管理者が承認する。
+  6. Actions で `Publish Extension (Stable)` が成功したら Marketplace / Open VSX へ同時反映される。
 - Preview 手順: `package.json` を奇数 MINOR（例 `0.5.0`）に上げ、commit/push 後に Actions から `Publish Extension (Preview)` を `workflow_dispatch` で実行する。preview ではタグを切らない。実機検証完了後、安定版は次の偶数 MINOR（例 `0.6.0`）で通常リリースする。
-- 必要シークレット: `VSCE_PAT`, `OVSX_PAT`
+- 必要シークレット: `release` Environment の `VSCE_PAT`, `OVSX_PAT`（repository secrets は空）
 - 処理概要: version/channel 検証 → runtime smoke（Ubuntu/macOS/Windows）→ `npm ci` → `npm run compile` → `npm test` → `vsce package --no-dependencies --no-rewrite-relative-links` → `vsce publish --packagePath ... --skip-duplicate` → `ovsx publish --skip-duplicate`。preview の場合は package/publish に `--pre-release` を付与する。完了後 `vsix/` に成果物を保存し、VSIX artifact もアップロードする。
 
 ## 手動配布と整理
@@ -74,10 +77,11 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 - アイコンは `media/commit-maker.png`（512px 正方形、透過推奨）。
 
 ## テスト
+- 公開権限の回帰検査: `npm run check:workflows`（固定 action SHA、read-only token、artifact digest、main 外 tag と未承認 preview の拒否）
 - 静的検査: `npm run lint`（手書き JS/TS）、`npm run typecheck`（拡張・画面・スクリプト）
 - 型チェック・本番用ビルド: `npm run compile` → `npm run build:media`
 - 統合テスト: `npm run test:integration`（一時 Git/SecretStorage/Codex/Local 環境、クラウド応答は fixture）
-- 実ブラウザー確認: `npm run smoke:webview` の localhost URL を開く。操作の再現は別ターミナルで `node scripts/webview-smoke.cjs <URL>`（同じ隔離環境と本番画面コード、Playwright CLI が必要）
+- 実ブラウザー確認: `npm run smoke:webview` の localhost URL を開く。操作の再現は別ターミナルで `node scripts/webview-smoke.cjs <URL>`（同じ隔離環境と本番画面コード、`npm ci` で lockfile に固定した Playwright CLI を導入）
 - ユニットテスト（軽量）: `npm test` で ts-node 実行（`src/testRunner.ts` が一括実行）
 - スモーク（実API最小トークン検証）
   - OpenAI 全許容組合せ: `npm run smoke:openai:matrix`
@@ -98,11 +102,12 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 - 全ファイルのレビューと検証記録は `docs/maintenance-review.md` を参照する。
 - Webview CSP は nonce 付き。スタイル/スクリプトは同梱のみ。
 - プロバイダー並びとデフォルト: 「OpenAI → Gemini → Claude → Codex → Local」、初期モデルは `gpt-6-luna`。Local は API キー不要で、ユーザーが明示的にモデルをダウンロードした場合のみ利用する。llama.cpp runtime は未指定なら OS/CPU 別に自動取得し、SHA-256 検証後に globalStorage へ展開する。`commitMaker.localRuntimePath` は開発・検証用の上書き設定として扱う。
+- Codex の生成は検証済み CLI 0.164.0 のみを使用する。モデルのツール metadata と機能を無効化し、専用 loopback transport でツール定義とツール応答を拒否する。他版は安全性を再検証してから対応する。`npm run smoke:codex:text-only` は実CLIと隔離した応答fixtureで検証し、有料APIを呼ばない。
 - Codex の既定モデルは `gpt-6-luna`。GPT-6 Luna / Sol は CLI 0.157.0 以降、GPT-6.1 Sol は 0.159.1 以降で対応する。候補からモデルを除外する前に、公式の更新履歴と現行 CLI のモデル一覧・実接続を確認し、古い CLI の拒否とサービス側の非対応を区別する。利用者が保存したカスタムモデルを別モデルへ自動置換しない。
 - Codex の実接続検証前に、PC に常設された CLI をインストール方法に合わせて最新安定版へ更新する（Homebrew: `brew update` → `brew upgrade --cask codex`、npm: `npm install -g @openai/codex@latest`）。更新が不要な場合も、公式の最新安定版と `codex --version` の一致および実行ファイルのパスを記録する。一時導入した CLI だけで代用しない。認証・Git・SCM の検証データは従来どおり隔離する。
 - 実API検証は変更箇所に必要なモデル・設定と最小の入力に限定する。異常応答・競合・全組み合わせの回帰検査は原則fixtureで行い、送信契約やモデル定義が同じ場合は配布コードの一致を確認して既存の実接続結果を再利用する。実行前に呼び出し数・出力上限・推論を含む料金見積りを確認し、実行後に使用量と中断・再試行も記録する。全件の実API検証は必要な差分がある場合に限り、指定された予算・回数を超えて続行しない。
 - Local モデル固有の sampling / runtime 調整は `services/localModelProfiles.ts` の profile に集約し、モデル名で分岐しない。新規モデルは `LOCAL_MODEL_DEFINITIONS` で profile を選ぶ。
-- 差分取得は Git API 優先、フォールバックで `git diff` / `git status --porcelain`。
+- リポジトリ検出は Git API を使用し、差分本文は上限付きの `git diff` stream、未追跡名は `git status --porcelain` から取得する。
 - API キー未保存のクラウド provider は選択可能だが生成ボタンを無効化し、Reasoning/Verbosity を無効化して「-」を表示。Local はモデル未ダウンロード時に生成ボタンを無効化。
 - Webview スクリプトはプレーン JS。`as` 型アサーションは禁止（ビルド後 JS でエラーを防ぐ）。
 - LLM 呼び出しは `services/llm/` に分割済み。新規プロバイダー追加時は `PROVIDER_CAPABILITIES` を更新し、各サービスを追加する。
@@ -149,3 +154,11 @@ UI/実装の整合性確認用。Chat/Responses 両APIの必須パラメータ�
 - `gpt-5.1-codex-max`: reasoning=`low/medium/high/xhigh`、verbosity=`medium` 固定。
 - Claude候補には active のみを載せ、deprecated/retired は削除する。
 - `gemini-2.5-pro` は新規ユーザー向けAPIで利用不可のため推奨候補へ載せない。
+
+## 差分と通信の安全境界
+- 未追跡・binary 名は既定で除外する。未追跡を含めてもファイル名だけを扱い、本文の filesystem read は行わない。本文は利用者がステージしてから Git の差分として取得する。
+- Git の差分本文は `--no-ext-diff --no-textconv` の bounded stream で収集する。全量を先に返す Git API は本文に使わない。
+- provider・モデル・推論・詳細度・費用・Local 資源設定は application scope と user-only resolver を併用し、数値は実行時にも有限の範囲へ制限する。
+- provider 通信は redirect を拒否し、成功・失敗・モデル一覧を byte 上限で読む。download は検証済み HTTPS redirect 先、容量上限、全体期限、部分ファイルの削除を必須とする。
+- カスタムモデル URL には64桁の SHA-256 が必須。キャッシュも再検証し、native runtime へ渡す直前に確認する。
+- Local server は自身が port 0 に bind して報告した endpoint だけを使い、子ごとのランダム API key を推論に付ける。key はログへ出さず、keep-alive は有限にする。

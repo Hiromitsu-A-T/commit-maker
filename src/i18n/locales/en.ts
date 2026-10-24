@@ -50,7 +50,7 @@ const en: UiStrings = {
   presetDeleteButton: 'Delete',
   promptTextareaPlaceholder: 'e.g., Write a title of up to 50 characters and a bulleted description in English.',
   includeUnstagedLabel: 'Include unstaged changes',
-  includeUntrackedLabel: 'Include untracked files',
+  includeUntrackedLabel: 'Include untracked files (filenames only)',
   includeBinaryLabel: 'Include files that may be binary',
   maxPromptLabel: 'Prompt length limit',
   maxPromptUnlimited: 'Unlimited (default)',

@@ -50,7 +50,7 @@ const fr: UiStrings = {
   presetDeleteButton: 'Supprimer',
   promptTextareaPlaceholder: 'Ex. : Rédigez un titre de 50 caractères maximum et un corps sous forme de liste à puces en français.',
   includeUnstagedLabel: 'Inclure les changements non indexés',
-  includeUntrackedLabel: 'Inclure les fichiers non suivis',
+  includeUntrackedLabel: 'Inclure les fichiers non suivis (noms uniquement)',
   includeBinaryLabel: 'Inclure les fichiers potentiellement binaires',
   maxPromptLabel: 'Limite de caractères du prompt',
   maxPromptUnlimited: 'Illimitée (par défaut)',

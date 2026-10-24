@@ -185,7 +185,7 @@ export async function ensureLocalRuntime(
   await fs.promises.rm(tmpInstallDir, { recursive: true, force: true }).catch(() => undefined);
 
   try {
-    await downloadToFile(asset.url, tmpArchivePath, options.abortSignal, options.onProgress);
+    await downloadToFile(asset.url, tmpArchivePath, { maxBytes: 1024 ** 3, timeoutMs: 1800000 }, options.abortSignal, options.onProgress);
     const actual = await sha256File(tmpArchivePath, options.abortSignal);
     if (actual.toLowerCase() !== asset.sha256.toLowerCase()) {
       throw new Error(`SHA256 mismatch: expected ${asset.sha256}, got ${actual}`);

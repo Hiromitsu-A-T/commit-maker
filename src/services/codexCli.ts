@@ -14,11 +14,6 @@ export interface CodexCliStatus {
 const CODEX_HOME_DIR_NAME = 'codex-home';
 const CODEX_FILE_STORE_CONFIG = 'cli_auth_credentials_store = "file"\n';
 const CODEX_FILE_STORE_OVERRIDE = 'cli_auth_credentials_store="file"';
-const CODEX_AUTH_ENV_VARS = [
-  'CODEX_API_KEY',
-  'CODEX_ACCESS_TOKEN',
-  'OPENAI_API_KEY'
-];
 const CODEX_ENV_ALLOWLIST = [
   'APPDATA',
   'ComSpec',
@@ -75,19 +70,26 @@ export function buildCodexEnvironment(codexHome?: string): NodeJS.ProcessEnv {
   return env;
 }
 
-export function buildCodexTerminalEnvironment(codexHome: string): Record<string, string | null> {
-  const env: Record<string, string | null> = {};
-  for (const key of Object.keys(process.env)) {
-    if (isSensitiveEnvKey(key)) {
-      env[key] = null;
+export function buildCodexTerminalEnvironment(codexHome: string): Record<string, string> {
+  return buildCodexEnvironment(codexHome) as Record<string, string>;
+}
+
+/** workspace の terminal profile を経由せず、利用者の PATH から実体を決定する。 */
+export function resolveCodexExecutable(command: string): string {
+  if (path.isAbsolute(command)) return command;
+  if (command.includes('/') || command.includes('\\')) throw new Error('Codex command must be an absolute path or executable name.');
+  const extensions = process.platform === 'win32' ? ['', '.exe', '.cmd'] : [''];
+  for (const directory of (process.env.PATH ?? process.env.Path ?? '').split(path.delimiter)) {
+    if (!path.isAbsolute(directory)) continue;
+    for (const extension of extensions) {
+      const candidate = path.join(directory, command + extension);
+      try {
+        fs.accessSync(candidate, fs.constants.X_OK);
+        if (fs.statSync(candidate).isFile()) return candidate;
+      } catch { /* 次の利用者 PATH 候補を確認する。 */ }
     }
   }
-  for (const key of CODEX_AUTH_ENV_VARS) {
-    env[key] = null;
-  }
-  env.CODEX_HOME = codexHome;
-  env.CODEX_SQLITE_HOME = codexHome;
-  return env;
+  throw new Error('Codex CLI executable was not found in the user PATH.');
 }
 
 export function buildCodexLoginCommand(command: string, platform = process.platform): string {

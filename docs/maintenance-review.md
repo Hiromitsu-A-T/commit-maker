@@ -592,3 +592,42 @@ Gemini・Claude・Localは、出力上限で途切れた本文でも非空なら
 公開先は[Marketplace](https://marketplace.visualstudio.com/items?itemName=Hiromitsu.commit-maker)と[Open VSX](https://open-vsx.org/extension/Hiromitsu/commit-maker)。公開VSIXのSHA-256は `ce6bfac5da3057c8e43c7975f1f7950afca79b7cf448998a1ea534690009be5c`。vsix/commit-maker-0.18.5.vsixにはCI成果物を保存し、検証した元のVSIX（SHA-256: `8f500e5d9d80dda91346020b2985632aa223200ba709e67ef2cba962776c5e7a`）も隔離した証拠領域に保持した。外側のアーカイブのハッシュは生成日時等で異なるが、内部の全ファイル内容は一致する。
 
 Q1–Q7の確認は完了した。今回再現した3種類の不備を修正・検証・公開し、未解決の検証失敗はない。認証・Git・モデルの検証領域と専用プロセスは終了・破棄済み。公開確認で有料APIの追加呼び出しは行っていない。この追記は公開後の記録であり、公開タグの拡張コードは変更していない。
+
+
+## 0.18.8のセキュリティ修正と公開境界
+
+2026-10-24、Daybreak の完了済みスキャン c4199d5f-404e-4f20-babe-0cc8cac64e6e
+（対象 b795a04、High 3 / Medium 5 / Low 8）の16件を修正した。
+Codex のログインはユーザー設定の実行ファイルと strictEnv で起動し、生成は検証済み
+CLI 0.164.0 のツールを無効化して専用 transport で送受信を検査する。
+HOME は生成ごとに隔離し、CLI 版・ツール定義・ツール応答に不一致があれば停止する。
+送信先・モデル・費用・Local 資源設定は user-only と実行時上限を併用する。
+未追跡は既定 off でファイル名のみ、本文は利用者がステージしてから Git の bounded
+stream で取得する。provider redirect、巨大本文、無制限 download、digest のない
+カスタムモデルを拒否し、モデルキャッシュも検証する。Local は子が port 0 に bind
+した endpoint と一時 API key を使い、無認証推論を拒否する。
+
+公開 token は required reviewer と main / v* の ref 制限を持つ release Environment
+に移し、repository secrets は0件とした。main / v* は管理者以外の更新を拒否する
+active ruleset で保護する。build と publish を分離し、固定 SHA の action、lockfile、
+script 無効の publisher install、同一 run の artifact ID / digest 検証を使う。
+週次・バッジ workflow は read-only token で確認用 artifact を作り、管理者が反映する。
+この変更により、無承認の週次自動公開・main/tag push は行わない。
+
+確認した範囲は lint / typecheck / compile / build:media / 単体 / 隔離統合 / workflow
+契約検査 / npm audit、32言語・4モデル・3幅の384ブラウザー表示ケース、実 VS Code
+の隔離プロファイルへの VSIX install と SCM 反映である。独立した読取専用の修正前
+調査と候補レビューを各1回行った。レビューで見つかったカスタム SHA 設定エラーの
+未捕捉と、追加検査中の Local loading 表示を修正した。
+
+Codex の実接続は Luna / low の小さい fixture で2件、いずれも HTTP 200、入力合計812・
+出力46・推論0トークンだった。初回の MIME 欠落による転送不一致は、保存した同じ
+実応答を fixture として再生して修正し、追加の実接続は行っていない。通常の認証
+ファイルは変更していない。実 CLI のツール0と不正 tool call の実行前拒否も隔離
+fixture で検証した。別課金のクラウド API は呼んでいない。
+Qwen3.5 2B と b9441 を実取得・SHA-256 検証して Local 生成を行い、無認証要求の
+HTTP 401 を確認した。配布物の NLS は32、秘密情報・開発物は含まれない。
+macOS ARM64 で実 VS Code / 実 CLI / 実 Local 推論を確認し、他 OS の runtime 取得・
+起動は公開 CI で確認する。Windows npm shim のログイン実機操作は今回の対象外。
+
+公開先と workflow の最終結果は、成功後の記録に追記する。

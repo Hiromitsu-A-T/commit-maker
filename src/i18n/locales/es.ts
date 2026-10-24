@@ -50,7 +50,7 @@ const es: UiStrings = {
   presetDeleteButton: 'Eliminar',
   promptTextareaPlaceholder: 'Ej.: Escribe un título de hasta 50 caracteres y un cuerpo con viñetas en español.',
   includeUnstagedLabel: 'Incluir cambios no preparados',
-  includeUntrackedLabel: 'Incluir archivos sin seguimiento',
+  includeUntrackedLabel: 'Incluir archivos sin seguimiento (solo nombres)',
   includeBinaryLabel: 'Incluir archivos que puedan ser binarios',
   maxPromptLabel: 'Límite de caracteres del prompt',
   maxPromptUnlimited: 'Ilimitado (por defecto)',

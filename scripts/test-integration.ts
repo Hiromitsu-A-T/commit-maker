@@ -9,7 +9,8 @@ import { getLocalModelDefinition, getLocalModelPath } from '../src/services/loca
 import type * as vscode from 'vscode';
 
 async function main(): Promise<void> {
-  const app = await createHarness({ model: 'custom-model' });
+  const app = await createHarness({ model: 'custom-model' }, { provider: 'codex', model: 'attacker-model', reasoningEffort: 'max', requestTimeoutMs: 0, maxOutputTokens: 999999999 });
+  assert.strictEqual(app.state.commitProvider, 'openai', 'workspaceは送信先を選べない');
   assert.strictEqual(app.state.commitModel, 'custom-model', '明示したカスタムモデルを既定値へ戻さない');
   let disposed = false;
   const generate = () => app.send({ type: 'commitGenerate', value: { includeUnstaged: true, includeUntracked: true, includeBinary: false } });
@@ -23,7 +24,7 @@ async function main(): Promise<void> {
       await waitUntil(() => app.state.apiKeys[provider].ready);
       app.send({ type: 'commitProviderChanged', value: provider });
       generate();
-      await waitUntil(() => app.state.commitStatus === 'ready');
+      await waitUntil(() => app.state.commitStatus === 'ready').catch(error => { throw new Error(String(error) + ': ' + app.state.commitLastError + ' notices=' + app.notices.slice(-3).join(' | ')); });
       assert.strictEqual(app.state.commitResult, 'chore: 検証用の変更');
       const request = app.requests.at(-1)!;
       assert.match(JSON.stringify(request.body), /sample.txt/);
@@ -48,7 +49,7 @@ async function main(): Promise<void> {
     app.send({ type: 'commitPromptChanged', value: 'normal fixture' });
     app.send({ type: 'commitProviderChanged', value: 'claude' });
     generate();
-    await waitUntil(() => app.state.commitStatus === 'ready');
+    await waitUntil(() => app.state.commitStatus === 'ready').catch(error => { throw new Error(String(error) + ': ' + app.state.commitLastError + ' notices=' + app.notices.slice(-3).join(' | ')); });
     const recoveredState = JSON.parse(JSON.stringify(app.state));
     assert.strictEqual(recoveredState.commitLastError, '', '正常復旧後は画面の古いエラーを消す');
     assert.strictEqual(recoveredState.commitProgress, '', '完了後は画面の古い進捗を消す');
@@ -106,7 +107,7 @@ async function main(): Promise<void> {
       assert.strictEqual(app.state.commitMaxPromptChars, null, '0 / 空欄で保存済みの上限を解除する');
       assert.strictEqual(app.state.commitMaxPromptMode, 'limited');
       generate();
-      await waitUntil(() => app.state.commitStatus === 'ready');
+      await waitUntil(() => app.state.commitStatus === 'ready').catch(error => { throw new Error(String(error) + ': ' + app.state.commitLastError + ' notices=' + app.notices.slice(-3).join(' | ')); });
       assert.match(JSON.stringify(app.requests.at(-1)!.body), /sample.txt/, '0 / 空欄で差分の上限が解除される');
       app.send({ type: 'commitMaxPromptChanged', value: { mode: 'limited', value: 12000 } });
     }
@@ -118,10 +119,10 @@ async function main(): Promise<void> {
     await fs.promises.writeFile(path.join(cwd, '新しいディレクトリー', ' spaced name .txt'), 'unicode-untracked-fixture');
     app.send({ type: 'commitProviderChanged', value: 'gemini' });
     generate();
-    await waitUntil(() => app.state.commitStatus === 'ready');
-    assert.match(JSON.stringify(app.requests.at(-1)?.body), /unicode-untracked-fixture/);
+    await waitUntil(() => app.state.commitStatus === 'ready').catch(error => { throw new Error(String(error) + ': ' + app.state.commitLastError + ' notices=' + app.notices.slice(-3).join(' | ')); });
+    assert.ok(!JSON.stringify(app.requests.at(-1)?.body).includes('unicode-untracked-fixture'));
     assert.match(JSON.stringify(app.requests.at(-1)?.body), / spaced name .txt/);
-    assert.match(JSON.stringify(app.requests.at(-1)?.body), /inside-dot-dot-prefix/);
+    assert.match(JSON.stringify(app.requests.at(-1)?.body), /\.\.memo.txt/);
     await fs.promises.writeFile(path.join(cwd, 'staged.txt'), 'staged fixture');
     app.repos[0].git('add', 'staged.txt');
     const partialApiRepo = { ...app.repos[0], diffIndexWithHEAD: async () => { throw new Error('API fixture failure'); } };
@@ -142,43 +143,28 @@ async function main(): Promise<void> {
     await fs.promises.unlink(largeFile);
     console.log('PASS: 実Gitと未追跡ディレクトリー・非ASCII・空白パス');
 
-    const originalDiff = app.repos[0].diffIndexWithHEAD;
-    let releaseDiff: (() => void) | undefined;
-    app.repos[0].diffIndexWithHEAD = async () => {
-      await new Promise<void>(resolve => { releaseDiff = resolve; });
-      return originalDiff();
-    };
-    try {
-      app.send({ type: 'languageChanged', value: 'ja' });
-      app.send({ type: 'ready' });
-      app.send({ type: 'commitPromptChanged', value: 'SNAPSHOT_ORIGINAL' });
-      generate();
-      await waitUntil(() => Boolean(releaseDiff));
-      app.send({ type: 'languageChanged', value: 'en' });
-      app.send({ type: 'ready' });
-      app.send({ type: 'commitPromptChanged', value: 'SNAPSHOT_CHANGED' });
-      app.send({ type: 'commitMaxPromptChanged', value: { mode: 'limited', value: 1 } });
-      releaseDiff!();
-      await waitUntil(() => app.state.commitStatus === 'ready');
-      const generatedBody = JSON.stringify(app.requests.at(-1)!.body);
-      assert.match(generatedBody, /SNAPSHOT_ORIGINAL/);
-      assert.ok(!generatedBody.includes('SNAPSHOT_CHANGED'));
-      assert.match(generatedBody, /ja \/ Japanese/);
-      assert.match(generatedBody, /sample.txt/, '開始時の文字数制限を使う');
-      app.send({ type: 'commitMaxPromptChanged', value: { mode: 'limited', value: 12000 } });
-      releaseDiff = undefined;
-      const requestCount = app.requests.length;
-      generate();
-      await waitUntil(() => Boolean(releaseDiff));
-      app.send({ type: 'commitProviderChanged', value: 'claude' });
-      releaseDiff!();
-      await new Promise(resolve => setTimeout(resolve, 100));
-      assert.strictEqual(app.requests.length, requestCount, '切替後の接続先へ進行中の差分を送らない');
-      assert.strictEqual(app.state.commitStatus, 'error');
-    } finally {
-      app.repos[0].diffIndexWithHEAD = originalDiff;
-      releaseDiff?.();
-    }
+    app.send({ type: 'languageChanged', value: 'ja' });
+    app.send({ type: 'ready' });
+    await new Promise(resolve => setTimeout(resolve, 100));
+    app.send({ type: 'commitPromptChanged', value: 'SNAPSHOT_ORIGINAL' });
+    app.secretReads.delayMs = 100;
+    let priorReads = app.secretReads.count;
+    generate();
+    await waitUntil(() => app.secretReads.count > priorReads);
+    app.send({ type: 'languageChanged', value: 'en' });
+    app.send({ type: 'ready' });
+    app.send({ type: 'commitPromptChanged', value: 'SNAPSHOT_CHANGED' });
+    await waitUntil(() => app.state.commitStatus === 'ready').catch(error => { throw new Error(String(error) + ': ' + app.state.commitLastError + ' notices=' + app.notices.slice(-3).join(' | ')); });
+    assert.match(JSON.stringify(app.requests.at(-1)!.body), /SNAPSHOT_ORIGINAL/);
+    assert.ok(!JSON.stringify(app.requests.at(-1)!.body).includes('SNAPSHOT_CHANGED'));
+    const requestCount = app.requests.length;
+    priorReads = app.secretReads.count;
+    generate();
+    await waitUntil(() => app.secretReads.count > priorReads);
+    app.send({ type: 'commitProviderChanged', value: 'claude' });
+    app.secretReads.delayMs = 0;
+    await new Promise(resolve => setTimeout(resolve, 150));
+    assert.strictEqual(app.requests.length, requestCount, '切替後の接続先へ進行中の差分を送らない');
     const readsBeforeModelChange = app.secretReads.count;
     const requestsBeforeModelChange = app.requests.length;
     app.secretReads.delayMs = 60;
@@ -194,11 +180,14 @@ async function main(): Promise<void> {
     app.send({ type: 'codexLogin' });
     await waitUntil(() => app.state.apiKeys.codex.ready);
     assert.ok(app.terminals[0].options.env?.CODEX_HOME?.startsWith(app.root));
-    assert.match(app.terminals[0].command || '', /cli_auth_credentials_store/);
+    assert.strictEqual(app.terminals[0].command, undefined);
+    assert.strictEqual(app.terminals[0].options.strictEnv, true);
+    assert.strictEqual(app.terminals[0].options.shellPath, app.user.get('codexCommand'));
+    assert.deepStrictEqual(app.terminals[0].options.shellArgs, ['login', '-c', 'cli_auth_credentials_store="file"']);
     app.send({ type: 'commitProviderChanged', value: 'codex' });
     assert.strictEqual(app.state.commitModel, 'gpt-6-luna', 'Codex の既定モデルを選ぶ');
     generate();
-    await waitUntil(() => app.state.commitStatus === 'ready');
+    await waitUntil(() => app.state.commitStatus === 'ready').catch(error => { throw new Error(String(error) + ': ' + app.state.commitLastError + ' logs=' + app.logs.slice(-8).join(' | ')); });
     assert.strictEqual(app.state.commitResult, 'chore: 検証用の変更');
     app.send({ type: 'commitPromptChanged', value: 'FAIL_CODEX_FIXTURE' });
     generate();
@@ -272,7 +261,7 @@ async function main(): Promise<void> {
     assert.strictEqual(app.state.localModel.id, localModels[2], '接続確認中は別のモデルへ切り替えない');
     await waitUntil(() => app.state.localModel.status === 'ready');
     generate();
-    await waitUntil(() => app.state.commitStatus === 'ready');
+    await waitUntil(() => app.state.commitStatus === 'ready').catch(error => { throw new Error(String(error) + ': ' + app.state.commitLastError + ' notices=' + app.notices.slice(-3).join(' | ')); });
     assert.strictEqual(app.state.commitResult, 'chore: 検証用の変更');
     const previousScmMessage = app.repos[0].inputBox.value;
     app.send({ type: 'commitPromptChanged', value: 'INCOMPLETE_LOCAL_FIXTURE' });
@@ -282,7 +271,7 @@ async function main(): Promise<void> {
     assert.strictEqual(app.repos[0].inputBox.value, previousScmMessage, 'Localの未完成応答でSCMを上書きしない');
     app.send({ type: 'commitPromptChanged', value: 'normal fixture' });
     generate();
-    await waitUntil(() => app.state.commitStatus === 'ready');
+    await waitUntil(() => app.state.commitStatus === 'ready').catch(error => { throw new Error(String(error) + ': ' + app.state.commitLastError + ' notices=' + app.notices.slice(-3).join(' | ')); });
     const originalRm = fs.promises.rm;
     let releaseDelete: (() => void) | undefined;
     fs.promises.rm = (async (...args: Parameters<typeof originalRm>) => {

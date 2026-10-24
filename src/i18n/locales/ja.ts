@@ -50,7 +50,7 @@ const ja: UiStrings = {
   presetDeleteButton: '削除',
   promptTextareaPlaceholder: '例: 日本語で 50 文字以内のタイトルと箇条書き本文にしてください。',
   includeUnstagedLabel: 'ステージしていない変更も含める',
-  includeUntrackedLabel: '未追跡ファイルも含める',
+  includeUntrackedLabel: '未追跡ファイルも含める（ファイル名のみ）',
   includeBinaryLabel: 'バイナリの可能性があるファイルも含める',
   maxPromptLabel: 'プロンプトの文字数上限',
   maxPromptUnlimited: '無制限（デフォルト）',

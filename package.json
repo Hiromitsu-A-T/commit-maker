@@ -2,7 +2,7 @@
   "name": "commit-maker",
   "displayName": "Commit Maker – コミットメーカー",
   "description": "Git差分からコミットメッセージをAI生成。OpenAI GPT-6 Lunaを初期選択。BYOK、Codex、ローカルGGUFモデルに対応。",
-  "version": "0.18.7",
+  "version": "0.18.8",
   "publisher": "Hiromitsu",
   "license": "Apache-2.0",
   "repository": {
@@ -131,7 +131,8 @@
             "local"
           ],
           "default": "openai",
-          "description": "選択する LLM プロバイダー"
+          "description": "選択する LLM プロバイダー",
+          "scope": "application"
         },
         "commitMaker.endpoint": {
           "type": "string",
@@ -166,7 +167,8 @@
         "commitMaker.model": {
           "type": "string",
           "default": "gpt-6-luna",
-          "description": "コミット生成に使用するモデル ID"
+          "description": "コミット生成に使用するモデル ID",
+          "scope": "application"
         },
         "commitMaker.reasoningEffort": {
           "type": "string",
@@ -180,7 +182,8 @@
             "max"
           ],
           "default": "medium",
-          "description": "OpenAI Responses API 用 reasoning.effort"
+          "description": "OpenAI Responses API 用 reasoning.effort",
+          "scope": "application"
         },
         "commitMaker.codexReasoningEffort": {
           "type": "string",
@@ -191,7 +194,8 @@
             "xhigh"
           ],
           "default": "low",
-          "description": "Codex provider 用 model_reasoning_effort"
+          "description": "Codex provider 用 model_reasoning_effort",
+          "scope": "application"
         },
         "commitMaker.verbosity": {
           "type": "string",
@@ -201,7 +205,8 @@
             "high"
           ],
           "default": "medium",
-          "description": "OpenAI Responses API の text.verbosity"
+          "description": "OpenAI Responses API の text.verbosity",
+          "scope": "application"
         },
         "commitMaker.apiKeySecret": {
           "type": "string",
@@ -249,44 +254,63 @@
           "type": "string",
           "scope": "application",
           "default": "",
-          "description": "空なら選択モデルを使用。指定時は Local provider の GGUF モデル検証用 SHA256 を上書き"
+          "description": "カスタム GGUF モデル URL を指定する場合は64桁の SHA-256 が必須"
         },
         "commitMaker.localContextSize": {
           "type": "number",
           "default": 32768,
-          "description": "Local provider の llama.cpp context size"
+          "description": "Local provider の llama.cpp context size",
+          "scope": "application",
+          "minimum": 1024,
+          "maximum": 262144
         },
         "commitMaker.localThreads": {
           "type": "number",
           "default": 0,
-          "description": "Local provider の CPU スレッド数。0 で llama.cpp に任せる"
+          "description": "Local provider の CPU スレッド数。0 で llama.cpp に任せる",
+          "scope": "application",
+          "minimum": 0,
+          "maximum": 64
         },
         "commitMaker.localGpuLayers": {
           "type": "number",
           "default": 99,
-          "description": "Local provider の GPU offload layers"
+          "description": "Local provider の GPU offload layers",
+          "scope": "application",
+          "minimum": 0,
+          "maximum": 256
         },
         "commitMaker.localKeepAliveMs": {
           "type": "number",
           "default": 300000,
-          "description": "Local provider の llama-server を生成後に保持する時間（ミリ秒）。0 で自動停止しない"
+          "description": "Local runtime を生成後に保持する時間（1000〜300000ミリ秒）",
+          "scope": "application",
+          "minimum": 1000,
+          "maximum": 300000
         },
         "commitMaker.requestTimeoutMs": {
           "type": "number",
           "default": 300000,
-          "description": "LLM 呼び出しタイムアウト (ミリ秒)。0 で無制限"
+          "description": "LLM 呼び出しタイムアウト（1000〜600000ミリ秒）",
+          "scope": "application",
+          "minimum": 1000,
+          "maximum": 600000
         },
         "commitMaker.maxOutputTokens": {
           "type": "number",
           "default": 8192,
-          "description": "OpenAI /v1/responses へ送る max_output_tokens の上限"
+          "description": "OpenAI /v1/responses へ送る max_output_tokens の上限",
+          "scope": "application",
+          "minimum": 64,
+          "maximum": 16384
         },
         "commitMaker.diffCollectionLimitChars": {
           "type": "number",
           "scope": "application",
           "default": 33554432,
           "minimum": 1000000,
-          "description": "差分収集段階の安全上限（文字数）。最終プロンプト上限とは別で、長コンテキストモデル向けに必要なら引き上げ可能"
+          "description": "差分収集段階の安全上限（文字数）。最終プロンプト上限とは別で、長コンテキストモデル向けに必要なら引き上げ可能",
+          "maximum": 33554432
         },
         "commitMaker.logLlm": {
           "type": "boolean",
@@ -344,10 +368,13 @@
     "smoke:cloud:minimal": "ts-node --transpile-only scripts/smoke-cloud-minimal.ts",
     "smoke:local:runtime": "ts-node --project tsconfig.json scripts/smoke-local-runtime.ts",
     "test:integration": "ts-node --project tsconfig.scripts.json scripts/test-integration.ts",
-    "smoke:webview": "npm run build:media && ts-node --project tsconfig.scripts.json scripts/serve-webview-smoke.ts"
+    "smoke:webview": "npm run build:media && ts-node --project tsconfig.scripts.json scripts/serve-webview-smoke.ts",
+    "check:workflows": "node scripts/check-workflow-security.cjs",
+    "smoke:codex:text-only": "ts-node --project tsconfig.scripts.json scripts/smoke-codex-text-only.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/cli": "0.1.22",
     "@types/node": "^18.19.0",
     "@types/vscode": "1.94.0",
     "@vscode/vsce": "^4.0.0",
@@ -356,11 +383,15 @@
     "ovsx": "^1.2.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3",
-    "typescript-eslint": "^8.71.0"
+    "typescript-eslint": "^8.71.0",
+    "yaml": "2.9.1"
   },
   "overrides": {
     "ovsx": {
       "@vscode/vsce": "$@vscode/vsce"
+    },
+    "@azure/identity": {
+      "@azure/msal-node": "7.1.0"
     }
   }
 }

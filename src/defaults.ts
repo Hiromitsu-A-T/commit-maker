@@ -12,8 +12,8 @@ import {
 
 export const DEFAULT_INCLUDE_FLAGS = {
   includeUnstaged: true,
-  includeUntracked: true,
-  includeBinary: true
+  includeUntracked: false,
+  includeBinary: false
 };
 
 export const DEFAULT_PROMPT_LIMIT: { maxPromptChars: number | null; maxPromptMode: MaxPromptMode } = {

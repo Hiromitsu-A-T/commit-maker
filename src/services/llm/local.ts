@@ -1,5 +1,7 @@
 import * as fs from 'fs';
-import * as net from 'net';
+import { randomBytes } from 'crypto';
+import { buildCodexEnvironment } from '../codexCli';
+import { limitOutputTokens, limitTimeout, limitContext, limitThreads, limitGpuLayers, limitKeepAlive } from '../../resourceLimits';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
@@ -56,6 +58,7 @@ interface RuntimeState {
   key: RuntimeKey;
   process: ChildProcessWithoutNullStreams;
   endpoint: string;
+  apiKey: string;
   stopTimer?: ReturnType<typeof setTimeout>;
 }
 
@@ -79,6 +82,12 @@ export async function callLocalLlm({
   runtimeArgs = [],
   logger
 }: LocalLlmCallParams): Promise<string> {
+  maxOutputTokens = limitOutputTokens(maxOutputTokens);
+  timeoutMs = limitTimeout(timeoutMs);
+  contextSize = limitContext(contextSize);
+  threads = limitThreads(threads);
+  gpuLayers = limitGpuLayers(gpuLayers);
+  keepAliveMs = limitKeepAlive(keepAliveMs);
   const strings = getStrings(DEFAULT_LANGUAGE);
   if (!fs.existsSync(modelPath)) {
     throw new Error(strings.msgLocalModelMissing);
@@ -91,12 +100,13 @@ export async function callLocalLlm({
     const binaryPath = resolveLlamaServerPath(extensionUri, runtimePath);
     const key = { binaryPath, modelPath, contextSize, threads, gpuLayers, runtimeArgs };
     runtime = await ensureRuntime(key, controller.signal, logger);
+    assertChildAlive(runtime.process);
     return await postJsonWithBackoff(
       `${runtime.endpoint}/v1/chat/completions`,
       {
         label: 'Local',
         controller,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${runtime.apiKey}` },
         body: buildChatCompletionBody(prompt, maxOutputTokens, generation),
         parse: raw => {
           const data = asRecord(raw ? JSON.parse(raw) : undefined);
@@ -151,7 +161,7 @@ async function ensureRuntime(key: RuntimeKey, abortSignal: AbortSignal, logger?:
     abortSignal.throwIfAborted();
   }
   abortSignal.throwIfAborted();
-  if (activeRuntime && sameRuntime(activeRuntime.key, key) && !activeRuntime.process.killed) {
+  if (activeRuntime && sameRuntime(activeRuntime.key, key) && !activeRuntime.process.killed && activeRuntime.process.exitCode === null && activeRuntime.process.signalCode === null) {
     if (activeRuntime.stopTimer) {
       clearTimeout(activeRuntime.stopTimer);
       activeRuntime.stopTimer = undefined;
@@ -173,7 +183,7 @@ async function ensureRuntime(key: RuntimeKey, abortSignal: AbortSignal, logger?:
 }
 
 async function startRuntime(key: RuntimeKey, abortSignal: AbortSignal, logger?: (message: string) => void): Promise<RuntimeState> {
-  const port = await getFreePort();
+  const apiKey = randomBytes(32).toString('hex');
   abortSignal.throwIfAborted();
   const args = [
     '-m',
@@ -181,7 +191,7 @@ async function startRuntime(key: RuntimeKey, abortSignal: AbortSignal, logger?: 
     '--host',
     '127.0.0.1',
     '--port',
-    String(port),
+    '0',
     '-c',
     String(key.contextSize),
     '-ngl',
@@ -193,26 +203,33 @@ async function startRuntime(key: RuntimeKey, abortSignal: AbortSignal, logger?: 
   }
 
   logger?.(`Local: starting ${key.binaryPath} ${args.join(' ')}`);
-  const child = spawn(key.binaryPath, args, { stdio: 'pipe', cwd: path.dirname(key.binaryPath) });
+  const child = spawn(key.binaryPath, args, { stdio: 'pipe', cwd: path.dirname(key.binaryPath),
+    env: { ...buildCodexEnvironment(), LLAMA_API_KEY: apiKey } });
   const stderr: string[] = [];
   let spawnError: Error | undefined;
   child.once('error', error => {
     spawnError = error;
     stderr.push(error.message);
   });
-  child.stdout.on('data', chunk => logger?.(`Local: ${String(chunk).trim()}`));
-  child.stderr.on('data', chunk => {
-    const text = String(chunk).trim();
-    if (text) {
-      stderr.push(text);
-      logger?.(`Local: ${text}`);
+  let endpoint = '';
+  let startupLog = '';
+  const consume = (chunk: Buffer): void => {
+    const text = String(chunk).replaceAll(apiKey, '[REDACTED]').replaceAll(apiKey.slice(-4), '[REDACTED]');
+    startupLog = (startupLog + String(chunk)).slice(-8192);
+    const match = /server is listening on (http:\/\/127\.0\.0\.1:(\d+))/.exec(startupLog);
+    if (match) {
+      const port = Number(match[2]);
+      if (port < 1 || port > 65535 || (endpoint && endpoint !== match[1])) {
+        spawnError = new Error('Invalid Local runtime endpoint.');
+      } else endpoint = match[1];
     }
-  });
-
-  const endpoint = `http://127.0.0.1:${port}`;
-  const runtime = { key, process: child, endpoint };
+    if (text.trim()) { stderr.push(text.trim().slice(-2048)); if (stderr.length > 8) stderr.shift(); }
+    logger?.(`Local: ${text.trim().slice(-2048)}`);
+  };
+  child.stdout.on('data', consume);
+  child.stderr.on('data', consume);
   try {
-    await waitForServer(endpoint, child, stderr, () => spawnError, abortSignal);
+    await waitForServer(() => endpoint, child, stderr, () => spawnError, abortSignal);
   } catch (error) {
     child.kill();
     abortSignal.throwIfAborted();
@@ -225,6 +242,8 @@ async function startRuntime(key: RuntimeKey, abortSignal: AbortSignal, logger?: 
       activeRuntime = undefined;
     }
   });
+  const runtime = { key, process: child, endpoint, apiKey };
+  assertChildAlive(child);
   activeRuntime = runtime;
   return runtime;
 }
@@ -234,14 +253,14 @@ function scheduleStop(keepAliveMs: number): void {
   if (activeRuntime.stopTimer) {
     clearTimeout(activeRuntime.stopTimer);
   }
-  if (keepAliveMs <= 0) return;
+  keepAliveMs = limitKeepAlive(keepAliveMs);
   activeRuntime.stopTimer = setTimeout(() => {
     stopLocalLlmRuntime();
   }, keepAliveMs);
 }
 
 async function waitForServer(
-  endpoint: string,
+  getEndpoint: () => string,
   child: ChildProcessWithoutNullStreams,
   stderr: string[],
   getSpawnError: () => Error | undefined,
@@ -254,10 +273,12 @@ async function waitForServer(
     if (spawnError) {
       throw spawnError;
     }
-    if (child.exitCode !== null) {
+    if (child.killed || child.exitCode !== null || child.signalCode !== null) {
       throw new Error(stderr.slice(-5).join('\n') || `process exited with code ${child.exitCode}`);
     }
-    if (await canReachServer(endpoint, abortSignal)) {
+    const endpoint = getEndpoint();
+    if (endpoint && await canReachServer(endpoint, abortSignal)) {
+      assertChildAlive(child);
       return;
     }
     await delay(500);
@@ -266,10 +287,11 @@ async function waitForServer(
 }
 
 async function canReachServer(endpoint: string, abortSignal: AbortSignal): Promise<boolean> {
-  for (const pathName of ['/health', '/v1/models']) {
+  for (const pathName of ['/health']) {
     const { controller, dispose } = createAbortController(abortSignal, 2000);
     try {
-      const res = await fetch(`${endpoint}${pathName}`, { signal: controller.signal });
+      const res = await fetch(`${endpoint}${pathName}`, { signal: controller.signal, redirect: 'manual' });
+      await res.body?.cancel();
       if (res.ok) {
         return true;
       }
@@ -346,18 +368,10 @@ function sameStringList(a: string[], b: string[]): boolean {
   return a.length === b.length && a.every((value, index) => value === b[index]);
 }
 
-function getFreePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const server = net.createServer();
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', () => {
-      const address = server.address();
-      server.close(() => {
-        if (address && typeof address === 'object') resolve(address.port);
-        else reject(new Error('failed to allocate port'));
-      });
-    });
-  });
+function assertChildAlive(child: ChildProcessWithoutNullStreams): void {
+  if (child.killed || child.exitCode !== null || child.signalCode !== null) {
+    throw new Error('Local runtime is no longer running.');
+  }
 }
 
 function delay(ms: number): Promise<void> {

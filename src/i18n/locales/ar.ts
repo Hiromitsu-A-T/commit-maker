@@ -50,7 +50,7 @@ const ar: UiStrings = {
   presetDeleteButton: 'حذف',
   promptTextareaPlaceholder: 'مثال: اكتب عنواناً لا يتجاوز 50 حرفاً ونصاً على شكل قائمة نقطية باللغة العربية.',
   includeUnstagedLabel: 'تضمين التغييرات غير المجهزة',
-  includeUntrackedLabel: 'تضمين الملفات غير المتعقبة',
+  includeUntrackedLabel: 'تضمين الملفات غير المتعقبة (أسماء الملفات فقط)',
   includeBinaryLabel: 'تضمين الملفات المحتمل أن تكون ثنائية',
   maxPromptLabel: 'حد عدد أحرف الموجّه',
   maxPromptUnlimited: 'غير محدود (افتراضي)',

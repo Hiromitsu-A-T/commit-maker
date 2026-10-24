@@ -50,7 +50,7 @@ const tl: UiStrings = {
   presetDeleteButton: 'Tanggalin',
   promptTextareaPlaceholder: 'Hal.: Sumulat sa Filipino ng pamagat na hindi lalampas sa 50 karakter at nilalaman na nasa anyong listahan.',
   includeUnstagedLabel: 'Isama ang mga pagbabagong hindi pa na-stage',
-  includeUntrackedLabel: 'Isama ang mga hindi sinusubaybayang file',
+  includeUntrackedLabel: 'Isama ang mga hindi sinusubaybayang file (pangalan lang)',
   includeBinaryLabel: 'Isama ang mga file na maaaring binary',
   maxPromptLabel: 'Limitasyon ng karakter sa prompt',
   maxPromptUnlimited: 'Walang limitasyon (default)',

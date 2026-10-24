@@ -27,12 +27,19 @@ export function getUserConfigurationString(
   return getUserConfigurationValue<string | undefined>(config, key, fallback);
 }
 
+export function getExplicitUserConfigurationValue<T>(
+  config: vscode.WorkspaceConfiguration,
+  key: string
+): T | undefined {
+  const inspected = config.inspect<T>(key);
+  return inspected?.globalLanguageValue ?? inspected?.globalValue;
+}
+
 export function getExplicitUserConfigurationString(
   config: vscode.WorkspaceConfiguration,
   key: string
 ): string | undefined {
-  const inspected = config.inspect<string>(key);
-  return inspected?.globalLanguageValue ?? inspected?.globalValue;
+  return getExplicitUserConfigurationValue<string>(config, key);
 }
 
 /** 既定値を除く明示設定を、言語・folder・workspace・user の優先順で取得する。 */

@@ -79,7 +79,7 @@ release is available.
 - cloud provider は、ユーザーが選択した場合のみ生成に必要な差分を受け取ります。
 - Local provider は差分を端末内に留め、SHA-256 検証済みの llama.cpp runtime と
   GGUF モデルファイルを使用します。
-- release token と marketplace token は GitHub Actions secrets に保存し、
+- release token と marketplace token は承認付きの GitHub Environment `release` に限定し、
   リポジトリには含めないでください。
 
 - API keys are stored in VS Code SecretStorage.
@@ -88,5 +88,11 @@ release is available.
   the user selects that provider.
 - The Local provider keeps diffs on-device and uses downloaded llama.cpp runtime
   and GGUF model files after SHA-256 verification.
-- Release tokens and marketplace tokens must be stored in GitHub Actions
-  secrets, not in the repository.
+- Release tokens and marketplace tokens are stored only in the protected
+  `release` Environment with maintainer approval, never in repository secrets.
+
+- 未追跡ファイルは既定で除外し、有効時もファイル名のみを送信します。本文はステージ後のGit差分に含めます。
+- Untracked files are excluded by default. Opting in sends filenames only; stage a file to include its contents.
+- Codex generation uses the verified CLI version and a text-only request/response boundary; tool definitions and tool calls are rejected before execution.
+- Provider redirects, oversized response bodies and unverified custom model downloads are rejected. Local inference uses a per-process API key and a child-assigned loopback port.
+- Automated maintenance workflows create review artifacts with read-only tokens. Main and release tags are restricted to repository administrators.

@@ -50,7 +50,7 @@ const sv: UiStrings = {
   presetDeleteButton: 'Ta bort',
   promptTextareaPlaceholder: 'T.ex.: Skriv en titel på högst 50 tecken och en punktlista på svenska.',
   includeUnstagedLabel: 'Ta med ej förberedda ändringar',
-  includeUntrackedLabel: 'Ta med ospårade filer',
+  includeUntrackedLabel: 'Ta med ospårade filer (endast filnamn)',
   includeBinaryLabel: 'Ta med filer som kan vara binära',
   maxPromptLabel: 'Teckengräns för prompten',
   maxPromptUnlimited: 'Obegränsat (standard)',

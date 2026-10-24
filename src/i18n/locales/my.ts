@@ -50,7 +50,7 @@ const my: UiStrings = {
   presetDeleteButton: 'ဖျက်',
   promptTextareaPlaceholder: 'ဥပမာ - မြန်မာဘာသာဖြင့် အက္ခရာ 50 ထက်မပိုသော ခေါင်းစဉ်နှင့် အချက်လိုက်စာရင်းကို ရေးပါ။',
   includeUnstagedLabel: 'staging ထဲ မထည့်ရသေးသော ပြောင်းလဲမှုများ ထည့်သွင်းရန်',
-  includeUntrackedLabel: 'ခြေရာမခံထားသော ဖိုင်များ ထည့်သွင်း',
+  includeUntrackedLabel: 'ခြေရာမခံထားသော ဖိုင်များ ထည့်သွင်း (ဖိုင်အမည်သာ)',
   includeBinaryLabel: 'Binary ဖြစ်နိုင်သော ဖိုင်များ ထည့်သွင်း',
   maxPromptLabel: 'Prompt အက္ခရာအရေအတွက် ကန့်သတ်ချက်',
   maxPromptUnlimited: 'ကန့်သတ်မထား (မူလ)',

@@ -65,8 +65,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 ✅ **プロバイダー・モデルを自由に選択** – 同じ UI で OpenAI の GPT-6 Luna、Gemini / Claude / Codex、ローカル LLM（Qwen3.5 / Gemma 4 / LFM2.5 の GGUF モデル）を切り替え。コスト・速度・プライバシーを最適化できます。
 (English) **Flexible provider/model selection** – Switch between OpenAI, Gemini, Claude, Codex, and Local LLMs such as Qwen3.5, Gemma 4, and LFM2.5 models in GGUF format in the same UI.
 
-✅ **差分を完全に把握** – Staged / Unstaged / 未追跡 / バイナリを見出し付きで取得。デフォルトで未ステージ・未追跡も含めるため、Git commit 漏れを防止。  
-(English) **Complete diff coverage** – Fetch staged/unstaged/untracked/binary with headings; defaults include unstaged & untracked to prevent commit omissions.
+✅ **差分を見出し付きで確認** – ステージ済み・未ステージの変更を取得。未追跡は既定で除外し、有効にしてもファイル名だけを含めます。本文を含める場合は先にステージしてください。  
+(English) **Diffs with clear sections** – Collect staged and unstaged changes. Untracked files are excluded by default; enabling them includes filenames only. Stage a new file to include its contents.
 
 ---
 
@@ -98,8 +98,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
   (English) **API keys stay local** – Encrypted in VS Code SecretStorage, not synced across machines, Settings Sync disabled.
 - **差分は選択したプロバイダーのみに送信**: 拡張機能自体は外部にログを送信しません。
   (English) **Diffs sent only to your chosen provider** – The extension itself sends no external logs.
-- **Codex 選択時は拡張機能専用の Codex 認証を利用**: 通常の `~/.codex` とは別の `CODEX_HOME` を VS Code の globalStorage 配下に作成します。拡張機能が API キーや `~/.codex/auth.json` を直接読み取ることはありません。
-  (English) **Codex uses extension-dedicated authentication** – Commit Maker creates a separate `CODEX_HOME` under VS Code globalStorage instead of using your normal `~/.codex`. The extension does not read API keys or `~/.codex/auth.json` directly.
+- **Codex 選択時は拡張機能専用の Codex 認証を利用**: 通常の `~/.codex` とは別の `CODEX_HOME` を VS Code の globalStorage 配下に作成します。通常の `~/.codex/auth.json` を直接読み取らず、CLI が管理する専用認証を利用します。
+  (English) **Codex uses extension-dedicated authentication** – Commit Maker creates a separate `CODEX_HOME` under VS Code globalStorage instead of using your normal `~/.codex`. The extension does not read your normal `~/.codex/auth.json`; it uses authentication managed by the dedicated CLI home.
 - **Local 選択時は差分を外部送信しません**: llama.cpp runtime とローカルモデルはユーザー操作でダウンロードし、SHA-256 検証後に PC 内で実行します。
   (English) **Local keeps diffs on-device** – The llama.cpp runtime and model are downloaded only by user action, verified with SHA-256, and run locally.
 
@@ -119,8 +119,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 > 💡 **クラウド API の BYOK**: OpenAI / Gemini / Claude はご自身の API キーを使います。Codex は専用ログイン、Local は API キー不要です。
 > (OpenAI, Gemini, and Claude use your own API keys. Codex uses its dedicated sign-in; Local requires no API key.)
 
-Codex を選ぶ場合、事前に Codex CLI をインストールし、Commit Maker の Codex 欄から「ログイン」を押してください。GPT-6 Luna / Sol には CLI 0.157.0 以降、GPT-6.1 Sol には 0.159.1 以降が必要です。古い CLI はインストール方法に合わせて `brew upgrade --cask codex` または `npm install -g @openai/codex@latest` で更新してください。通常の Codex CLI とは別の `CODEX_HOME` でログインするため、CLI 側のログアウトや別アカウント利用の影響を受けません。Commit Maker は `codex exec` を read-only / ephemeral で呼び出し、最終コミットメッセージだけを受け取ります。
-(For Codex, install the Codex CLI, then press "Sign in" in Commit Maker's Codex section. GPT-6 Luna/Sol requires CLI 0.157.0 or later; GPT-6.1 Sol requires 0.159.1 or later. Update an older CLI with `brew upgrade --cask codex` or `npm install -g @openai/codex@latest`, matching your installation method. It signs in with a separate `CODEX_HOME`, so your normal Codex CLI logout or account choice does not affect Commit Maker. Commit Maker calls `codex exec` in read-only / ephemeral mode and uses only the final commit message.)
+Codex を選ぶ場合、検証済みの Codex CLI **0.164.0** を使用し、Commit Maker の Codex 欄から「ログイン」を押してください。通常の CLI とは別の `CODEX_HOME` を使います。生成ではツールを無効化し、送信・応答の両方を検査します。他の CLI 版は安全性を再検証するまで生成を停止します。
+(For Codex, use verified Codex CLI **0.164.0** and sign in from Commit Maker. Authentication uses a dedicated `CODEX_HOME`. Generation disables tools and validates both requests and responses. Other CLI versions are rejected until their safety contracts have been verified.)
 
 Local を選ぶ場合、API キーは不要です。上部のモデル欄で Qwen3.5 / Gemma 4 / LFM2.5 などの GGUF モデルを選び、「モデルをダウンロード」で llama.cpp runtime と選択モデルを取得し、以後は PC 内で生成します。
 (For Local, no API key is required. Choose a Qwen3.5, Gemma 4, or LFM2.5 model in GGUF format in the top model field, then use "Download model" to fetch the llama.cpp runtime and selected model. Generation runs on your machine.)
@@ -169,8 +169,8 @@ SCM ビューのタイトルバーにある **杖アイコン** から、パネ�
 個別にオン・オフ可能（Individually toggleable）:
 - **Staged** – ステージ済みの変更
 - **Unstaged** – 未ステージの変更（デフォルト: オン）
-- **Untracked** – 未追跡ファイル（デフォルト: オン、未ステージとセット）
-- **Binary** – バイナリファイル（デフォルト: オン）
+- **Untracked** – 未追跡のファイル名のみ（デフォルト: オフ、本文はステージ後に取得）
+- **Binary** – バイナリのファイル名も含める（デフォルト: オフ）
 
 ### モデルとプロンプト長 / Model & Prompt Length
 - **モデル選択**: 推奨モデルをプルダウンから選択、または独自モデル名を入力  
@@ -229,8 +229,11 @@ UIから切り替え可能（Switchable from UI）:
 
 **保存範囲 / Storage Scope:**
 - プロンプト本体・プリセット → PC内共通（globalState）
-- プロバイダー・モデル・差分範囲 → ワークスペース単位
+- 画面で明示選択したプロバイダー・モデル・差分範囲 → ワークスペース単位
 - API キー → SecretStorage、エンドポイント・実行ファイル・モデル取得 URL → ユーザー設定
+
+送信先・モデル・推論量・出力上限・タイムアウト・Local資源設定はユーザー設定のみを使用し、ワークスペース設定では変更しません。カスタムモデルのURLには64桁のSHA-256が必要です。
+(Provider, model, reasoning, output, timeout and local resource settings use user settings only. Custom model URLs require a 64-digit SHA-256.)
 
 (Prompts/presets: local globalState; provider/model/diff selection: per workspace; credentials: SecretStorage; endpoints/runtime paths/download URLs: user settings)
 

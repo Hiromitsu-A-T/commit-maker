@@ -1,265 +1,37 @@
 name: Weekly Patch Publish
-
 on:
-  workflow_dispatch:
   schedule:
     - cron: "15 0 * * 1"
-
 permissions:
   contents: read
-
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-  GIT_CONFIG_COUNT: "1"
-  GIT_CONFIG_KEY_0: init.defaultBranch
-  GIT_CONFIG_VALUE_0: main
-
-concurrency:
-  group: weekly-patch-publish
-  cancel-in-progress: false
-
 jobs:
   prepare:
-    name: Prepare weekly patch
+    name: Prepare patch for maintainer review
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      base_sha: ${{ steps.commit.outputs.base_sha }}
-      release_sha: ${{ steps.commit.outputs.release_sha }}
-      tag: ${{ steps.commit.outputs.tag }}
-      version: ${{ steps.commit.outputs.version }}
-      skip: ${{ steps.version-line.outputs.skip }}
     steps:
-      - name: Checkout main
-        uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          ref: main
-          fetch-depth: 0
+          ref: ${{ github.sha }}
           persist-credentials: false
-
-      - name: Use Node.js 22
-        uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 22
           cache: npm
-
-      - name: Check stable version line
-        id: version-line
-        shell: bash
+      - run: npm ci
+      - name: Prepare candidate without publication authority
         run: |
-          VERSION=$(node -p "require('./package.json').version")
           MINOR=$(node -p "require('./package.json').version.split('.')[1]")
-          if (( MINOR % 2 != 0 )); then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "Skipping weekly patch publish for preview version $VERSION."
-            exit 0
-          fi
-          echo "skip=false" >> "$GITHUB_OUTPUT"
-
-      - name: Install dependencies
-        if: steps.version-line.outputs.skip != 'true'
-        run: npm ci
-
-      - name: Prepare patch changes
-        if: steps.version-line.outputs.skip != 'true'
-        shell: bash
-        run: |
+          if (( MINOR % 2 != 0 )); then exit 0; fi
           npm version patch --no-git-tag-version --no-commit-hooks
           npm run update:badges
-
-      - name: Compile
-        if: steps.version-line.outputs.skip != 'true'
-        run: npm run compile
-
-      - name: Test
-        if: steps.version-line.outputs.skip != 'true'
-        run: npm test
-
-      - name: Check whitespace
-        if: steps.version-line.outputs.skip != 'true'
-        run: git diff --check -- . ':(exclude)package.json' ':(exclude)package-lock.json'
-
-      - name: Commit and push release branch
-        if: steps.version-line.outputs.skip != 'true'
-        id: commit
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          BASE_SHA=$(git rev-parse HEAD)
-          BRANCH="codex/weekly-patch-release"
-          VERSION=$(node -p "require('./package.json').version")
-          TAG="v${VERSION}"
-
-          git switch -c "$BRANCH"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json media/badges
-          git commit -m "chore: 週次パッチ ${VERSION} [skip ci]"
-          git push --force-with-lease "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$BRANCH"
-
-          {
-            echo "base_sha=$BASE_SHA"
-            echo "release_sha=$(git rev-parse HEAD)"
-            echo "tag=$TAG"
-            echo "version=$VERSION"
-          } >> "$GITHUB_OUTPUT"
-
-  local-runtime-smoke:
-    name: Local runtime smoke (${{ matrix.os }})
-    needs: prepare
-    if: needs.prepare.outputs.skip != 'true'
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
-          - windows-latest
-
-    steps:
-      - name: Checkout release commit
-        uses: actions/checkout@v6
+          npm run compile
+          npm test
+          git diff --binary > weekly-patch.diff
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          ref: ${{ needs.prepare.outputs.release_sha }}
-          persist-credentials: false
-
-      - name: Use Node.js 22
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run compile
-
-      - name: Smoke local runtime auto install
-        run: npm run smoke:local:runtime
-
-  publish:
-    name: Publish weekly patch
-    needs:
-      - prepare
-      - local-runtime-smoke
-    if: needs.prepare.outputs.skip != 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout release commit
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ needs.prepare.outputs.release_sha }}
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Use Node.js 22
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Lint and typecheck
-        run: npm run lint && npm run typecheck
-
-      - name: Build webview helpers
-        run: npm run build:media
-
-      - name: Build
-        run: npm run compile
-
-      - name: Test
-        run: npm test
-
-      - name: Isolated integration test
-        run: npm run test:integration
-
-      - name: Check main has not changed
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          git fetch "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" main:refs/remotes/origin/main
-          CURRENT_MAIN=$(git rev-parse origin/main)
-          BASE_SHA="${{ needs.prepare.outputs.base_sha }}"
-          if [ "$CURRENT_MAIN" != "$BASE_SHA" ]; then
-            echo "::error::main moved from $BASE_SHA to $CURRENT_MAIN. Stop before publishing."
-            exit 1
-          fi
-
-      - name: Package VSIX
-        shell: bash
-        run: |
-          VERSION="${{ needs.prepare.outputs.version }}"
-          npm run build:nls
-          trap 'npm run clean:nls' EXIT
-          npx vsce package --no-dependencies --no-rewrite-relative-links
-          mkdir -p vsix
-          mv "commit-maker-${VERSION}.vsix" vsix/
-
-      - name: Upload VSIX artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: commit-maker-weekly-vsix
-          path: vsix/*.vsix
-
-      - name: Publish to VS Marketplace
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        shell: bash
-        run: |
-          VERSION="${{ needs.prepare.outputs.version }}"
-          npx vsce publish --packagePath "vsix/commit-maker-${VERSION}.vsix" --skip-duplicate
-
-      - name: Ensure Open VSX namespace
-        env:
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        run: npx ovsx create-namespace Hiromitsu || true
-
-      - name: Publish to Open VSX
-        env:
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        shell: bash
-        run: |
-          VERSION="${{ needs.prepare.outputs.version }}"
-          npx ovsx publish "vsix/commit-maker-${VERSION}.vsix" --skip-duplicate
-
-      - name: Push main and tag release
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          TAG="${{ needs.prepare.outputs.tag }}"
-          BASE_SHA="${{ needs.prepare.outputs.base_sha }}"
-          git fetch "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" main:refs/remotes/origin/main --tags
-          CURRENT_MAIN=$(git rev-parse origin/main)
-          if [ "$CURRENT_MAIN" != "$BASE_SHA" ]; then
-            echo "::error::main moved from $BASE_SHA to $CURRENT_MAIN after publishing; main and tag were not updated."
-            exit 1
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
-
-          if git ls-remote --exit-code --tags "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists."
-            exit 0
-          fi
-
-          git tag "$TAG"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TAG"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" --delete codex/weekly-patch-release || true
-
-      - name: Clean stray VSIX and enforce limit
-        if: always()
-        run: npm run clean:vsix
+          name: weekly-patch-review
+          path: weekly-patch.diff
+          if-no-files-found: ignore

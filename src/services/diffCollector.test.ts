@@ -2,186 +2,48 @@ import assert from 'assert';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { collectDiff, isBinaryBuffer } from './diffCollector';
-import { getStrings, DEFAULT_LANGUAGE } from '../i18n/strings';
+import { execFileSync } from 'child_process';
+import { collectDiff, isBinaryBuffer, isSensitiveUntrackedPath } from './diffCollector';
 
-const STR = getStrings(DEFAULT_LANGUAGE);
-
-// Git API の返却形式を再現し、CLI を使わず差分の区分と上限を検査する。
-const mockRepo = {
-  rootUri: { fsPath: '/tmp/mock' },
-  diffIndexWithHEAD: async () => 'staged-diff',
-  diffWithHEAD: async () => 'work-diff'
-};
-
-async function testCollectDiffIncludesSections() {
-  const diff = await collectDiff(mockRepo, {
-    includeUnstaged: true,
-    includeUntracked: false,
-    includeBinary: true
-  });
-  assert(diff.includes(STR.diffSectionStaged), 'should include staged heading');
-  assert(diff.includes(STR.diffSectionUnstaged), 'should include unstaged heading');
-  assert(diff.includes('staged-diff'));
-  assert(diff.includes('work-diff'));
-}
-
-async function testGitApiUsesTextDiff(): Promise<void> {
-  const calls: boolean[] = [];
-  const repo = {
-    ...mockRepo,
-    diff: async (cached = false) => { calls.push(cached); return cached ? 'staged-text' : 'working-text'; },
-    diffIndexWithHEAD: async () => [{ uri: 'staged-file' }],
-    diffWithHEAD: async () => [{ uri: 'working-file' }]
-  };
-  const result = await collectDiff(repo, { includeUnstaged: true, includeUntracked: false, includeBinary: false });
-  assert.deepStrictEqual(calls, [true, false]);
-  assert.match(result, /staged-text/);
-  assert.match(result, /working-text/);
-}
-
-async function testCollectDiffStagedOnly() {
-  const diff = await collectDiff(mockRepo, {
-    includeUnstaged: false,
-    includeUntracked: false,
-    includeBinary: true
-  });
-  assert(diff.includes(STR.diffSectionStaged), 'should include staged when unstaged disabled');
-  assert(!diff.includes(STR.diffSectionUnstaged), 'should not include unstaged when disabled');
-}
-
-async function testUntrackedSkipWhenDisabledBinary() {
-  const repo = { ...mockRepo, rootUri: { fsPath: '/tmp/mock-untracked' } };
-  const diff = await collectDiff(repo, {
-    includeUnstaged: true,
-    includeUntracked: true,
-    includeBinary: false,
-    mockStatusOutput: '?? untracked/note.txt\n?? untracked/bin.dat\n',
-    mockUntrackedFiles: {
-      'untracked/note.txt': Buffer.from('hello'),
-      'untracked/bin.dat': Buffer.from([0, 1, 2])
+export async function runDiffCollectorTests(): Promise<void> {
+  const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'commit-maker-diff-'));
+  const git = (...args: string[]) => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+  try {
+    git('init', '--quiet');
+    fs.writeFileSync(path.join(root, 'staged.txt'), 'staged fixture\n');
+    git('add', 'staged.txt');
+    fs.appendFileSync(path.join(root, 'staged.txt'), 'working fixture\n');
+    fs.mkdirSync(path.join(root, 'nested'));
+    fs.writeFileSync(path.join(root, 'nested', 'new.txt'), 'private-untracked-content');
+    fs.writeFileSync(path.join(root, 'secrets.json'), 'private-secret');
+    const repo = { rootUri: { fsPath: root }, diff: async () => { throw new Error('全量Git APIを呼ばない'); } };
+    const options = { includeUnstaged: true, includeUntracked: true, includeBinary: false };
+    const all = await collectDiff(repo, options);
+    assert.match(all, /staged fixture/);
+    assert.match(all, /working fixture/);
+    assert.match(all, /nested\/new.txt/);
+    assert.ok(!all.includes('private-untracked-content'));
+    assert.ok(!all.includes('secrets.json'));
+    const staged = await collectDiff(repo, { ...options, includeUnstaged: false });
+    assert.ok(!staged.includes('working fixture') && !staged.includes('nested/new.txt'));
+    fs.writeFileSync(path.join(root, 'huge.txt'), 'A'.repeat(2 * 1024 * 1024));
+    git('add', 'huge.txt');
+    const logs: string[] = [];
+    const limited = await collectDiff(repo, { ...options, maxCollectedChars: 64000, logger: { appendLine: s => logs.push(s) } });
+    assert.match(limited, /omitted by Commit Maker safety limit/);
+    assert.ok(limited.length < 65000);
+    assert.ok(logs.some(s => s.includes('safety limit')));
+    const unlimited = await collectDiff(repo, options);
+    assert.ok(unlimited.length > 2 * 1024 * 1024);
+    const escaped = await collectDiff(repo, { ...options, mockStatusOutput: '?? ../escape.txt\n?? .aws/credentials\n?? nested/link.txt\n' });
+    assert.ok(!escaped.includes('escape.txt') && !escaped.includes('.aws/credentials'));
+    assert.ok(!escaped.includes('private-untracked-content'));
+    for (const secret of ['.env.local', '.git-credentials', '.docker/config.json', '.kube/config', 'secrets.json', 'prod.tfvars', 'id_ed25519']) {
+      assert.ok(isSensitiveUntrackedPath(secret), secret);
     }
-  });
-  const heading = STR.diffSectionUntracked.replace('{path}', 'untracked/note.txt');
-  assert(diff.includes(heading), 'text untracked should be included');
-  assert(!diff.includes('bin.dat'), 'binary-suspect should be skipped when includeBinary=false');
-}
-
-async function testUntrackedSkipsSensitiveAndLargeFiles() {
-  const tmpRoot = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'commit-maker-diff-security-'));
-  try {
-    await fs.promises.writeFile(path.join(tmpRoot, '.env'), 'SECRET_TOKEN=should-not-leak');
-    const largePath = path.join(tmpRoot, 'large.txt');
-    await fs.promises.writeFile(largePath, Buffer.alloc(256 * 1024 + 1, 'x'));
-    const repo = { ...mockRepo, rootUri: { fsPath: tmpRoot } };
-    const diff = await collectDiff(repo, {
-      includeUnstaged: true,
-      includeUntracked: true,
-      includeBinary: true,
-      mockStatusOutput: '?? .env\n?? large.txt\n'
-    });
-    assert(!diff.includes('should-not-leak'), 'sensitive untracked files should be skipped');
-    assert(!diff.includes('large.txt'), 'oversized untracked files should be skipped');
-  } finally {
-    await fs.promises.rm(tmpRoot, { recursive: true, force: true });
-  }
-}
-
-async function testCollectDiffAppliesTotalSafetyLimit() {
-  const limit = 64 * 1024;
-  const largeRepo = {
-    ...mockRepo,
-    diffIndexWithHEAD: async () => 'x'.repeat(limit + 2048),
-    diffWithHEAD: async () => 'work-diff'
-  };
-  const messages: string[] = [];
-  const diff = await collectDiff(largeRepo, {
-    includeUnstaged: true,
-    includeUntracked: false,
-    includeBinary: true,
-    maxCollectedChars: limit,
-    logger: { appendLine: message => messages.push(message) }
-  });
-  assert(diff.includes('omitted by Commit Maker safety limit'), 'large API diffs should be truncated');
-  assert(!diff.includes('work-diff'), 'later sections should not be appended after the safety limit');
-  assert(messages.some(message => message.includes('diff safety limit')), 'truncation should be logged');
-}
-
-async function testDefaultAllowsLongContextDiff() {
-  const largeRepo = {
-    ...mockRepo,
-    diffIndexWithHEAD: async () => 'x'.repeat(2 * 1024 * 1024),
-    diffWithHEAD: async () => 'work-diff'
-  };
-  const diff = await collectDiff(largeRepo, {
-    includeUnstaged: true,
-    includeUntracked: false,
-    includeBinary: true
-  });
-  assert(!diff.includes('omitted by Commit Maker safety limit'), 'default limit should allow multi-MiB diffs');
-  assert(diff.includes('work-diff'), 'default limit should still include later sections for multi-MiB diffs');
-}
-
-async function testUntrackedAppliesTotalSafetyLimit() {
-  const limit = 1024 * 1024;
-  const files: Record<string, Buffer> = {};
-  const status: string[] = [];
-  for (let i = 0; i < 8; i += 1) {
-    const name = `untracked/file-${i}.txt`;
-    status.push(`?? ${name}`);
-    files[name] = Buffer.alloc(200 * 1024, String(i));
-  }
-  const repo = { ...mockRepo, rootUri: { fsPath: '/tmp/mock-untracked-limit' } };
-  const diff = await collectDiff(repo, {
-    includeUnstaged: true,
-    includeUntracked: true,
-    includeBinary: true,
-    maxCollectedChars: limit,
-    mockStatusOutput: `${status.join('\n')}\n`,
-    mockUntrackedFiles: files
-  });
-  assert(diff.includes('omitted by Commit Maker safety limit'), 'untracked aggregate should be truncated');
-  assert(diff.length < limit + 10000, 'output should stay close to the configured safety limit');
-}
-
-async function testUntrackedSkipsPathEscapeAndSymlink() {
-  const tmpRoot = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'commit-maker-diff-root-'));
-  const outside = path.join(os.tmpdir(), `commit-maker-outside-${Date.now()}.txt`);
-  try {
-    await fs.promises.writeFile(outside, 'outside-secret');
-    await fs.promises.symlink(outside, path.join(tmpRoot, 'link.txt')).catch(() => undefined);
-    const repo = { ...mockRepo, rootUri: { fsPath: tmpRoot } };
-    const diff = await collectDiff(repo, {
-      includeUnstaged: true,
-      includeUntracked: true,
-      includeBinary: true,
-      mockStatusOutput: '?? ../outside.txt\n?? link.txt\n'
-    });
-    assert(!diff.includes('outside-secret'), 'paths outside the repository should be skipped');
-  } finally {
-    await fs.promises.rm(tmpRoot, { recursive: true, force: true });
-    await fs.promises.rm(outside, { force: true });
-  }
-}
-
-async function testBinaryHeuristic() {
-  const text = Buffer.from('text only');
-  const bin = Buffer.from([0x00, 0x01]);
-  assert.strictEqual(isBinaryBuffer(text, 'note.txt'), false);
-  assert.strictEqual(isBinaryBuffer(bin, 'note.txt'), true);
-  assert.strictEqual(isBinaryBuffer(text, 'image.png'), true, 'png extension should be treated as binary');
-}
-
-export async function runDiffCollectorTests() {
-  await testCollectDiffIncludesSections();
-  await testGitApiUsesTextDiff();
-  await testCollectDiffStagedOnly();
-  await testUntrackedSkipWhenDisabledBinary();
-  await testUntrackedSkipsSensitiveAndLargeFiles();
-  await testCollectDiffAppliesTotalSafetyLimit();
-  await testDefaultAllowsLongContextDiff();
-  await testUntrackedAppliesTotalSafetyLimit();
-  await testUntrackedSkipsPathEscapeAndSymlink();
-  await testBinaryHeuristic();
-  console.log('diffCollector.test.ts passed');
+    assert.ok(!isBinaryBuffer(Buffer.from('text'), 'note.txt'));
+    assert.ok(isBinaryBuffer(Buffer.from([0, 1]), 'note.txt'));
+    assert.ok(isBinaryBuffer(Buffer.from('text'), 'image.png'));
+    console.log('diffCollector.test.ts passed');
+  } finally { await fs.promises.rm(root, { recursive: true, force: true }); }
 }

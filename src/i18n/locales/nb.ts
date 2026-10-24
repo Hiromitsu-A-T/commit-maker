@@ -50,7 +50,7 @@ const nb: UiStrings = {
   presetDeleteButton: 'Slett',
   promptTextareaPlaceholder: 'F.eks.: Skriv en tittel på høyst 50 tegn og en punktliste på norsk.',
   includeUnstagedLabel: 'Ta med ikke-klargjorte endringer',
-  includeUntrackedLabel: 'Ta med usporede filer',
+  includeUntrackedLabel: 'Ta med usporede filer (kun filnavn)',
   includeBinaryLabel: 'Ta med mulige binærfiler',
   maxPromptLabel: 'Tegngrense for ledeteksten',
   maxPromptUnlimited: 'Ubegrenset (standard)',

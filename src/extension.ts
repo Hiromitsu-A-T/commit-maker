@@ -6,10 +6,10 @@ import { getApiKeySecretName, getApiKeyEnvironmentNames } from './providerSettin
 import { buildProviderCapabilities, COMMIT_LANGUAGE_STORAGE_KEY } from './constants';
 import { getStrings, DEFAULT_LANGUAGE } from './i18n/strings';
 import {
-  buildCodexLoginCommand,
   buildCodexTerminalEnvironment,
   ensureCodexHome,
   getCodexCommand,
+  resolveCodexExecutable,
   inspectCodexCli,
   logoutCodexCli
 } from './services/codexCli';
@@ -190,10 +190,14 @@ async function openCodexLoginTerminal(context: vscode.ExtensionContext, panel: C
     const codexHome = await ensureCodexHome(context);
     const terminal = vscode.window.createTerminal({
       name: 'Commit Maker Codex',
+      shellPath: resolveCodexExecutable(getCodexCommand(config)),
+      shellArgs: ['login', '-c', 'cli_auth_credentials_store="file"'],
+      cwd: codexHome,
+      strictEnv: true,
+      isTransient: true,
       env: buildCodexTerminalEnvironment(codexHome)
     });
     terminal.show(true);
-    terminal.sendText(buildCodexLoginCommand(getCodexCommand(config)));
     startCodexLoginAutoRefresh(context, panel);
     void vscode.window.showInformationMessage(
       strings.msgCodexLoginTerminalOpened ?? 'Codex login started in a dedicated Commit Maker terminal.'

@@ -50,6 +50,9 @@ export function getLocalModelDefinition(
     : url === base.url
       ? base.sha256
       : '';
+  if (!/^[a-f0-9]{64}$/i.test(sha256)) {
+    throw new Error('A valid 64-character SHA-256 is required for the model URL.');
+  }
   const filename = sanitizeFilename(configuredFilename?.trim() || base.filename);
   return {
     ...base,
@@ -75,13 +78,19 @@ export async function inspectLocalModel(
   config: vscode.WorkspaceConfiguration,
   modelId?: string
 ): Promise<LocalModelState> {
-  const model = getLocalModelDefinition(config, modelId);
+  let model: LocalModelDefinition;
+  try {
+    model = getLocalModelDefinition(config, modelId);
+  } catch (error) {
+    return { ...createDefaultLocalModelState(modelId), status: 'error',
+      error: error instanceof Error ? error.message : String(error) };
+  }
   const modelPaths = getLocalModelPaths(context, model);
   const [modelPath] = modelPaths;
   for (const candidatePath of modelPaths) {
     try {
       const stat = await fs.promises.stat(candidatePath);
-      if (stat.isFile() && stat.size > 0) {
+      if (stat.isFile() && stat.size > 0 && (await sha256File(candidatePath)).toLowerCase() === model.sha256.toLowerCase()) {
         return {
           id: model.id,
           label: model.label,
@@ -141,13 +150,13 @@ export async function downloadLocalModel(
 
   try {
     validateDownloadUrl(model.url);
-    await downloadToFile(model.url, tmpPath, abortSignal, progress => {
+    await downloadToFile(model.url, tmpPath, { maxBytes: Math.min(8 * 1024 ** 3, Math.ceil(model.sizeBytes * 1.1)), timeoutMs: 1800000 }, abortSignal, progress => {
       onProgress({
         downloadedBytes: progress.downloadedBytes,
         totalBytes: progress.totalBytes ?? model.sizeBytes
       });
     });
-    if (model.sha256) {
+    {
       const actual = await sha256File(tmpPath, abortSignal);
       if (actual.toLowerCase() !== model.sha256.toLowerCase()) {
         throw new Error(`SHA256 mismatch: expected ${model.sha256}, got ${actual}`);

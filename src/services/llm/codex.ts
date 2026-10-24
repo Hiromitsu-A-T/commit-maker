@@ -1,7 +1,10 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { spawn } from 'child_process';
+import { spawn, execFile } from 'child_process';
+import { promisify } from 'util';
+import { startCodexTransport } from './codexTransport';
+import { limitTimeout } from '../../resourceLimits';
 import { CodexReasoningEffort } from '../../types';
 import { asRecord, sanitizeLlmErrorText } from './shared';
 import { buildCodexEnvironment } from '../codexCli';
@@ -46,16 +49,21 @@ export async function callCodex({
   timeoutMs,
   logger
 }: CodexCallParams): Promise<string> {
+  timeoutMs = limitTimeout(timeoutMs);
   const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'commit-maker-codex-'));
   const outputPath = path.join(tempDir, 'last-message.json');
   const schemaPath = path.join(tempDir, 'schema.json');
+  const catalogPath = path.join(tempDir, 'models.json');
+  const transport = await startCodexTransport(abortSignal);
   try {
+    await writeTextOnlyCatalog(codexCommand, codexHome, model, catalogPath, abortSignal);
     await fs.promises.writeFile(schemaPath, JSON.stringify(CODEX_OUTPUT_SCHEMA), 'utf8');
-    const args = buildCodexExecArgs({ model, outputPath, schemaPath, cwd: tempDir, reasoning });
+    const args = buildCodexExecArgs({ model, outputPath, schemaPath, cwd: tempDir, reasoning, catalogPath, baseUrl: transport.baseUrl });
     logger?.(`Codex: ${codexCommand} ${args.map(quoteArgForLog).join(' ')}`);
     const result = await runCodexExec(codexCommand, args, buildCodexPrompt(prompt), {
       abortSignal,
       codexHome,
+      requestHome: tempDir,
       timeoutMs
     });
     if (result.code !== 0) {
@@ -69,6 +77,7 @@ export async function callCodex({
     }
     return parsed;
   } finally {
+    await transport.dispose();
     await fs.promises.rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
   }
 }
@@ -99,13 +108,17 @@ export function buildCodexExecArgs({
   outputPath,
   schemaPath,
   cwd,
-  reasoning = 'low'
+  reasoning = 'low',
+  catalogPath,
+  baseUrl
 }: {
   model: string;
   outputPath: string;
   schemaPath: string;
   cwd: string;
   reasoning?: CodexReasoningEffort;
+  catalogPath?: string;
+  baseUrl?: string;
 }): string[] {
   const args = [
     'exec',
@@ -132,6 +145,10 @@ export function buildCodexExecArgs({
     '-c',
     'web_search="disabled"'
   ];
+  for (const key of TEXT_ONLY_FEATURES) args.push('-c', `features.${key}=false`);
+  for (const value of ['agents.enabled=false', 'tools.update_plan.enabled=false', 'tools.experimental_request_user_input.enabled=false', 'skills.bundled.enabled=false', 'skills.include_instructions=false', 'cloud.skills.enabled=false', 'token_budget.enabled=false', 'token_budget.use_history_notes_extension=false']) args.push('-c', value);
+  if (catalogPath) args.push('-c', `model_catalog_json=${JSON.stringify(catalogPath)}`);
+  if (baseUrl) args.push('-c', `openai_base_url=${JSON.stringify(baseUrl)}`);
   const normalizedModel = model.trim();
   if (normalizedModel) {
     args.push('--model', normalizedModel);
@@ -189,12 +206,13 @@ function runCodexExec(
   command: string,
   args: string[],
   stdin: string,
-  options: { abortSignal?: AbortSignal; codexHome?: string; timeoutMs: number }
+  options: { abortSignal?: AbortSignal; codexHome?: string; requestHome: string; timeoutMs: number }
 ): Promise<SpawnResult> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       stdio: ['pipe', 'pipe', 'pipe'],
-      env: buildCodexEnvironment(options.codexHome)
+      cwd: options.requestHome,
+      env: { ...buildCodexEnvironment(options.codexHome), HOME: options.requestHome, USERPROFILE: options.requestHome, APPDATA: options.requestHome, LOCALAPPDATA: options.requestHome }
     });
     const stdout: string[] = [];
     const stderr: string[] = [];
@@ -259,4 +277,31 @@ function runCodexExec(
 
 function quoteArgForLog(value: string): string {
   return /^[A-Za-z0-9_./:=\-"]+$/.test(value) ? value : JSON.stringify(value);
+}
+
+// このCLI版の登録条件を確認したうえで、モデルカタログと送信時検査を併用する。
+const TEXT_ONLY_FEATURES = [
+  'shell_tool', 'view_image', 'apps', 'plugins', 'image_generation', 'goals', 'memories',
+  'multi_agent', 'multi_agent_v2', 'code_mode', 'code_mode_only', 'hooks', 'token_budget',
+  'skill_search', 'executor_capability_discovery', 'executor_capability_discovery_v2',
+  'tool_suggest', 'sleep_tool', 'request_permissions_tool', 'send_message_to_user_async',
+  'deferred_executor', 'multi_env_copy_file', 'agent_message_board', 'responses_websockets',
+  'responses_websockets_v2', 'enable_request_compression'
+];
+
+async function writeTextOnlyCatalog(command: string, codexHome: string | undefined, model: string, file: string, signal?: AbortSignal): Promise<void> {
+  const run = promisify(execFile);
+  const options = { env: buildCodexEnvironment(codexHome), signal, timeout: 10000, maxBuffer: 4 * 1024 * 1024 };
+  const version = await run(command, ['--version'], options);
+  if (version.stdout.trim() !== 'codex-cli 0.164.0') throw new Error('Commit Maker requires verified Codex CLI 0.164.0 for text-only generation.');
+  const bundled = await run(command, ['debug', 'models', '--bundled'], options);
+  const catalog = asRecord(JSON.parse(bundled.stdout));
+  const entries = Array.isArray(catalog.models) ? catalog.models : [];
+  const base = asRecord(entries.find(item => asRecord(item).slug === model) ?? entries.find(item => asRecord(item).slug === 'gpt-6-luna'));
+  if (!base.slug) throw new Error('Codex model metadata is missing.');
+  const textOnly = { ...base, slug: model, display_name: model, shell_type: 'disabled', apply_patch_tool_type: null,
+    experimental_supported_tools: [], tool_mode: 'direct', multi_agent_version: 'disabled',
+    supports_search_tool: false, input_modalities: ['text'], node_repl_disabled: true,
+    model_messages: null, use_responses_lite: false, base_instructions: 'Generate only the requested commit message. No tools are available.' };
+  await fs.promises.writeFile(file, JSON.stringify({ models: [textOnly] }), { mode: 0o600 });
 }

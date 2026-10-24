@@ -50,7 +50,7 @@ const zh: UiStrings = {
   presetDeleteButton: '删除',
   promptTextareaPlaceholder: '例如：请用中文撰写不超过50个字符的标题和项目符号正文。',
   includeUnstagedLabel: '包含未暂存更改',
-  includeUntrackedLabel: '包含未跟踪文件',
+  includeUntrackedLabel: '包含未跟踪文件（仅文件名）',
   includeBinaryLabel: '包含可能为二进制的文件',
   maxPromptLabel: '提示词长度上限',
   maxPromptUnlimited: '无限制（默认）',

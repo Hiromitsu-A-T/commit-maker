@@ -50,7 +50,7 @@ const ru: UiStrings = {
   presetDeleteButton: 'Удалить',
   promptTextareaPlaceholder: 'Напр.: заголовок до 50 символов и пункты списка на русском.',
   includeUnstagedLabel: 'Включать неиндексированные изменения',
-  includeUntrackedLabel: 'Включать неотслеживаемые файлы',
+  includeUntrackedLabel: 'Включать неотслеживаемые файлы (только имена)',
   includeBinaryLabel: 'Включать файлы, которые могут быть двоичными',
   maxPromptLabel: 'Лимит символов в промпте',
   maxPromptUnlimited: 'Без лимита (по умолчанию)',

@@ -1,3 +1,4 @@
+import { limitOutputTokens, limitTimeout, limitContext, limitThreads, limitGpuLayers, limitKeepAlive } from './resourceLimits';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import {
@@ -83,7 +84,7 @@ import {
   getDefaultVerbosityForModel
 } from './modelCapabilities';
 import { buildProviderCapabilities } from './constants';
-import { getExplicitConfigurationValue, getUserConfigurationValue } from './configScope';
+import { getExplicitUserConfigurationString, getExplicitUserConfigurationValue, getUserConfigurationValue } from './configScope';
 
 interface GitRepository extends GitRepositoryLike {
   rootUri: vscode.Uri;
@@ -289,7 +290,7 @@ export class CommitController implements vscode.Disposable {
       void this.context.globalState.update(COMMIT_PROMPT_STORAGE_KEY, promptFromWorkspace);
     }
     const config = vscode.workspace.getConfiguration('commitMaker');
-    const configuredProvider = config.get<string>('provider', DEFAULT_PROVIDER);
+    const configuredProvider = getUserConfigurationValue(config, 'provider', DEFAULT_PROVIDER);
     const defaultProvider = isProviderId(configuredProvider) ? configuredProvider : DEFAULT_PROVIDER;
     const storedProvider = this.context.workspaceState.get<string>(COMMIT_PROVIDER_STORAGE_KEY);
     const provider = isProviderId(storedProvider) ? storedProvider : defaultProvider;
@@ -299,7 +300,7 @@ export class CommitController implements vscode.Disposable {
     const storedLocalModelId = this.context.workspaceState.get<string>(COMMIT_LOCAL_MODEL_STORAGE_KEY);
     const storedGlobalLocalModelId = this.context.globalState.get<string>(COMMIT_LOCAL_MODEL_STORAGE_KEY);
     const localModelId = resolveLocalModelId(storedLocalModelId || storedGlobalLocalModelId || (provider === 'local' ? storedModel : undefined));
-    const configuredModel = getExplicitConfigurationValue<string>(config, 'model');
+    const configuredModel = getExplicitUserConfigurationString(config, 'model');
     const model = provider === 'local'
       ? resolveLocalModelId(storedModel || localModelId)
       : storedModel || configuredModel?.trim() || getDefaultModelForProvider(provider);
@@ -319,13 +320,13 @@ export class CommitController implements vscode.Disposable {
       COMMIT_MAX_PROMPT_CHARS_STORAGE_KEY,
       DEFAULT_PROMPT_LIMIT.maxPromptChars
     );
-    const configuredReasoning = config.get<string>('reasoningEffort', DEFAULT_REASONING_EFFORT);
+    const configuredReasoning = getUserConfigurationValue(config, 'reasoningEffort', DEFAULT_REASONING_EFFORT);
     const storedReasoning = this.context.workspaceState.get<string>(COMMIT_REASONING_STORAGE_KEY);
     const reasoning = resolveReasoningSetting(storedReasoning, configuredReasoning);
-    const configuredCodexReasoning = config.get<string>('codexReasoningEffort', DEFAULT_CODEX_REASONING_EFFORT);
+    const configuredCodexReasoning = getUserConfigurationValue(config, 'codexReasoningEffort', DEFAULT_CODEX_REASONING_EFFORT);
     const storedCodexReasoning = this.context.workspaceState.get<string>(COMMIT_CODEX_REASONING_STORAGE_KEY);
     const codexReasoning = resolveCodexReasoningSetting(storedCodexReasoning, configuredCodexReasoning);
-    const configuredVerbosity = config.get<string>('verbosity', DEFAULT_VERBOSITY);
+    const configuredVerbosity = getUserConfigurationValue(config, 'verbosity', DEFAULT_VERBOSITY);
     const storedVerbosity = this.context.workspaceState.get<string>(COMMIT_VERBOSITY_STORAGE_KEY);
     const verbosity = resolveVerbositySetting(storedVerbosity, configuredVerbosity);
     return {
@@ -862,7 +863,7 @@ export class CommitController implements vscode.Disposable {
     const config = vscode.workspace.getConfiguration('commitMaker');
     const maxOutputTokens = this.getConfiguredMaxOutputTokens(config, DEFAULT_LOCAL_MAX_OUTPUT_TOKENS);
     const promptLimit = getLocalPromptCharLimit(
-      config.get<number>('localContextSize', DEFAULT_LOCAL_CONTEXT_SIZE),
+      limitContext(getUserConfigurationValue(config, 'localContextSize', DEFAULT_LOCAL_CONTEXT_SIZE)),
       maxOutputTokens
     );
     const prompt = buildCommitPrompt(diff, state);
@@ -962,7 +963,7 @@ export class CommitController implements vscode.Disposable {
     const endpoint = getEndpoint(config, provider);
     const model = selectedModel.trim() || getDefaultModelForProvider(provider);
     if (provider === 'local' || provider === 'codex') {
-      const timeout = config.get<number>('requestTimeoutMs', 300000);
+      const timeout = limitTimeout(getUserConfigurationValue(config, 'requestTimeoutMs', 300000));
       const maxOutputTokens = this.getConfiguredMaxOutputTokens(config, DEFAULT_LOCAL_MAX_OUTPUT_TOKENS);
       return { endpoint, model, apiKey: '', timeout, maxOutputTokens };
     }
@@ -974,14 +975,13 @@ export class CommitController implements vscode.Disposable {
     if (!apiKey) {
       throw new Error(this.strings.msgApiKeyMissing.replace('{provider}', this.providerLabels[provider] || provider));
     }
-    const timeout = config.get<number>('requestTimeoutMs', 300000);
-    const maxOutputTokens = config.get<number>('maxOutputTokens', DEFAULT_MAX_OUTPUT_TOKENS);
+    const timeout = limitTimeout(getUserConfigurationValue(config, 'requestTimeoutMs', 300000));
+    const maxOutputTokens = limitOutputTokens(getUserConfigurationValue(config, 'maxOutputTokens', DEFAULT_MAX_OUTPUT_TOKENS));
     return { endpoint, model, apiKey, timeout, maxOutputTokens };
   }
 
   private getConfiguredMaxOutputTokens(config: vscode.WorkspaceConfiguration, fallback: number): number {
-    const configured = getExplicitConfigurationValue<number>(config, 'maxOutputTokens');
-    return typeof configured === 'number' && configured > 0 ? configured : fallback;
+    return limitOutputTokens(getExplicitUserConfigurationValue<number>(config, 'maxOutputTokens'), fallback);
   }
 
   private async getLocalRuntimeConfig(
@@ -989,12 +989,13 @@ export class CommitController implements vscode.Disposable {
     modelSnapshot = this.state.localModel
   ): Promise<Omit<LocalLlmCallParams, 'prompt' | 'abortSignal' | 'maxOutputTokens'>> {
     const config = vscode.workspace.getConfiguration('commitMaker');
-    let localModel = modelSnapshot;
-    if (!localModel || localModel.status !== 'ready' || !localModel.path) {
+    let localModel: typeof modelSnapshot;
+    { // native runtime へ渡す直前にもキャッシュの SHA-256 を検証する。
       localModel = await inspectLocalModel(this.context, config, modelSnapshot?.id || this.state.localModelId);
       abortSignal?.throwIfAborted();
-      this.state.localModel = localModel;
-      this.panel.updateState({ localModel });
+      this.state.localModel = this.currentLocalTestAbortController
+        ? { ...localModel, status: 'loading' } : localModel;
+      this.panel.updateState({ localModel: this.state.localModel });
     }
     if (!localModel.path || localModel.status !== 'ready') {
       throw new Error(this.strings.msgLocalModelMissing);
@@ -1010,11 +1011,11 @@ export class CommitController implements vscode.Disposable {
       modelPath: localModel.path,
       extensionUri: this.context.extensionUri,
       runtimePath,
-      timeoutMs: config.get<number>('requestTimeoutMs', 300000),
-      contextSize: config.get<number>('localContextSize', DEFAULT_LOCAL_CONTEXT_SIZE),
-      threads: config.get<number>('localThreads', 0),
-      gpuLayers: config.get<number>('localGpuLayers', DEFAULT_LOCAL_GPU_LAYERS),
-      keepAliveMs: config.get<number>('localKeepAliveMs', DEFAULT_LOCAL_KEEP_ALIVE_MS),
+      timeoutMs: limitTimeout(getUserConfigurationValue(config, 'requestTimeoutMs', 300000)),
+      contextSize: limitContext(getUserConfigurationValue(config, 'localContextSize', DEFAULT_LOCAL_CONTEXT_SIZE)),
+      threads: limitThreads(getUserConfigurationValue(config, 'localThreads', 0)),
+      gpuLayers: limitGpuLayers(getUserConfigurationValue(config, 'localGpuLayers', DEFAULT_LOCAL_GPU_LAYERS)),
+      keepAliveMs: limitKeepAlive(getUserConfigurationValue(config, 'localKeepAliveMs', DEFAULT_LOCAL_KEEP_ALIVE_MS)),
       generation: resolveLocalGenerationSettings(localModelDefinition),
       runtimeArgs: resolveLocalRuntimeArgs(localModelDefinition),
       logger

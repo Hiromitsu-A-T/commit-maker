@@ -50,7 +50,7 @@ const id: UiStrings = {
   presetDeleteButton: 'Hapus',
   promptTextareaPlaceholder: 'Contoh: tulis judul maksimal 50 karakter dan rincian berbentuk daftar dalam bahasa Indonesia.',
   includeUnstagedLabel: 'Sertakan perubahan yang belum masuk staging',
-  includeUntrackedLabel: 'Sertakan berkas yang belum dilacak',
+  includeUntrackedLabel: 'Sertakan berkas yang belum dilacak (hanya nama berkas)',
   includeBinaryLabel: 'Sertakan berkas yang mungkin biner',
   maxPromptLabel: 'Batas karakter prompt',
   maxPromptUnlimited: 'Tanpa batas (bawaan)',

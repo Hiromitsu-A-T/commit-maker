@@ -50,7 +50,7 @@ const ko: UiStrings = {
   presetDeleteButton: '삭제',
   promptTextareaPlaceholder: '예: 한국어로 50자 이내 제목과 글머리표 본문을 작성하세요.',
   includeUnstagedLabel: '스테이징되지 않은 변경 포함',
-  includeUntrackedLabel: '추적되지 않은 파일 포함',
+  includeUntrackedLabel: '추적되지 않은 파일 포함 (파일명만)',
   includeBinaryLabel: '바이너리일 수 있는 파일 포함',
   maxPromptLabel: '프롬프트 길이 제한',
   maxPromptUnlimited: '무제한 (기본값)',

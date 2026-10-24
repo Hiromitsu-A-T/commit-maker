@@ -1,3 +1,5 @@
+import { readBoundedText, rejectRedirect } from '../httpResponse';
+import { limitOutputTokens, limitTimeout } from '../../resourceLimits';
 import {
   getAllowedReasoningOptions,
   getDefaultReasoningForModel,
@@ -65,7 +67,7 @@ export async function callOpenAi({
   const strings = getStrings(DEFAULT_LANGUAGE);
 
   validateHttps(endpoint, 'OpenAI endpoint');
-  const { controller, dispose } = createAbortController(abortSignal, timeoutMs);
+  const { controller, dispose } = createAbortController(abortSignal, limitTimeout(timeoutMs));
   try {
     controller.signal.throwIfAborted();
     const resolvedModel = await ensureModelExists(model, apiKey, endpoint, controller.signal, logger);
@@ -84,7 +86,7 @@ export async function callOpenAi({
         const body: Record<string, unknown> = {
           model: resolvedModel,
           input: prompt,
-          max_output_tokens: maxOutputTokens
+          max_output_tokens: limitOutputTokens(maxOutputTokens)
         };
         if (effectiveReasoning) {
           body.reasoning = { effort: effectiveReasoning };
@@ -163,15 +165,18 @@ async function listAvailableModels(
     const url = `${origin}/v1/models`;
     const res = await fetch(url, {
       signal: abortSignal,
+      redirect: 'manual',
       headers: {
         Authorization: `Bearer ${apiKey}`
       }
     });
+    await rejectRedirect(res);
     if (!res.ok) {
+      await res.body?.cancel();
       logger?.(`OpenAI: /models returned ${res.status}, skipping availability check`);
       throw new Error(`models list failed: ${res.status}`);
     }
-    const data = asRecord(await res.json());
+    const data = asRecord(JSON.parse(await readBoundedText(res)));
     const list = Array.isArray(data.data) ? data.data : [];
     const ids = new Set(list.map(item => asRecord(item).id)
       .filter((id): id is string => typeof id === 'string' && Boolean(id)));

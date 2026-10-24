@@ -50,7 +50,7 @@ const ur: UiStrings = {
   presetDeleteButton: 'حذف کریں',
   promptTextareaPlaceholder: 'مثلاً: اردو میں زیادہ سے زیادہ 50 حروف کا عنوان اور نکات کی صورت میں تفصیل لکھیں۔',
   includeUnstagedLabel: 'غیر اسٹیجڈ تبدیلیاں شامل کریں',
-  includeUntrackedLabel: 'غیر ٹریک شدہ فائلیں شامل کریں',
+  includeUntrackedLabel: 'غیر ٹریک شدہ فائلیں شامل کریں (صرف فائل کے نام)',
   includeBinaryLabel: 'ممکنہ بائنری فائلیں شامل کریں',
   maxPromptLabel: 'پرامپٹ میں حروف کی حد',
   maxPromptUnlimited: 'غیر محدود (ڈیفالٹ)',

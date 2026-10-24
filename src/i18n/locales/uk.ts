@@ -50,7 +50,7 @@ const uk: UiStrings = {
   presetDeleteButton: 'Видалити',
   promptTextareaPlaceholder: 'Наприклад: напишіть заголовок до 50 символів і маркований список українською.',
   includeUnstagedLabel: 'Включати неіндексовані зміни',
-  includeUntrackedLabel: 'Включати невідстежувані файли',
+  includeUntrackedLabel: 'Включати невідстежувані файли (лише назви)',
   includeBinaryLabel: 'Включати файли, які можуть бути двійковими',
   maxPromptLabel: 'Обмеження кількості символів у промпті',
   maxPromptUnlimited: 'Без обмежень (за замовчуванням)',

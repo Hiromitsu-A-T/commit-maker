@@ -50,7 +50,7 @@ const ro: UiStrings = {
   presetDeleteButton: 'Șterge',
   promptTextareaPlaceholder: 'Ex.: Scrie un titlu de maximum 50 de caractere și un text sub formă de listă cu marcatori în română.',
   includeUnstagedLabel: 'Include modificările neindexate',
-  includeUntrackedLabel: 'Include fișierele neversionate',
+  includeUntrackedLabel: 'Include fișierele neversionate (doar nume)',
   includeBinaryLabel: 'Include fișierele posibil binare',
   maxPromptLabel: 'Limita de caractere a promptului',
   maxPromptUnlimited: 'Nelimitat (implicit)',

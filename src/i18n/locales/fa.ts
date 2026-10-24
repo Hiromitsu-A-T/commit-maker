@@ -50,7 +50,7 @@ const fa: UiStrings = {
   presetDeleteButton: 'حذف',
   promptTextareaPlaceholder: 'مثلاً عنوانی با حداکثر ۵۰ کاراکتر و توضیحی به‌صورت فهرست گلوله‌ای به فارسی بنویسید.',
   includeUnstagedLabel: 'شامل کردن تغییرات مرحله‌بندی‌نشده',
-  includeUntrackedLabel: 'شامل کردن فایل‌های ردیابی‌نشده',
+  includeUntrackedLabel: 'شامل کردن فایل‌های ردیابی‌نشده (فقط نام فایل‌ها)',
   includeBinaryLabel: 'شامل کردن فایل‌هایی که ممکن است باینری باشند',
   maxPromptLabel: 'حد تعداد کاراکترهای پرامپت',
   maxPromptUnlimited: 'نامحدود (پیش‌فرض)',
