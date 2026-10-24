@@ -11,6 +11,11 @@ for (const filename of fs.readdirSync(directory).filter(name => name.endsWith('.
   assert.notStrictEqual(workflow.permissions?.contents, 'write', filename);
   for (const job of Object.values(workflow.jobs)) {
     assert.notStrictEqual(job.permissions?.contents, 'write', filename);
+    if (job.uses === './.github/workflows/_publish-core.yml') {
+      for (const secret of ['VSCE_PAT', 'OVSX_PAT']) {
+        assert.strictEqual(job.secrets?.[secret], '${{ secrets.' + secret + ' }}', filename);
+      }
+    }
     for (const step of job.steps ?? []) {
       if (step.uses && !step.uses.startsWith('./')) assert.match(step.uses, /@[a-f0-9]{40}$/, filename);
       if (JSON.stringify(step).includes('secrets.')) assert.strictEqual(job.environment, 'release', filename);
@@ -19,6 +24,7 @@ for (const filename of fs.readdirSync(directory).filter(name => name.endsWith('.
 }
 const core = YAML.parse(fs.readFileSync(path.join(directory, '_publish-core.yml'), 'utf8'));
 assert.strictEqual(core.jobs.publish.environment, 'release');
+for (const secret of ['VSCE_PAT', 'OVSX_PAT']) assert.strictEqual(core.on.workflow_call.secrets[secret].required, true);
 assert.ok(!core.jobs.publish.steps.some(step => /npm run|npm ci(?! --ignore-scripts)/.test(step.run ?? '')));
 assert.ok(core.jobs.publish.steps.some(step => (step.run ?? '').includes('sha256sum --check --strict')));
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'commit-maker-release-contract-'));

@@ -8,6 +8,11 @@ on:
       pre_release:
         required: true
         type: boolean
+    secrets:
+      VSCE_PAT:
+        required: true
+      OVSX_PAT:
+        required: true
 permissions:
   contents: read
 env:
@@ -151,6 +156,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test -n "$VSCE_PAT" && test -n "$OVSX_PAT"
           ARGS=(--packagePath "vsix/commit-maker-$VERSION.vsix" --skip-duplicate)
           OVSX_ARGS=("vsix/commit-maker-$VERSION.vsix" --skip-duplicate)
           if [ "$PRE_RELEASE" = true ]; then ARGS+=(--pre-release); OVSX_ARGS+=(--pre-release); fi
