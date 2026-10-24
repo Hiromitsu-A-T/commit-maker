@@ -631,3 +631,31 @@ macOS ARM64 で実 VS Code / 実 CLI / 実 Local 推論を確認し、他 OS の
 起動は公開 CI で確認する。Windows npm shim のログイン実機操作は今回の対象外。
 
 公開先と workflow の最終結果は、成功後の記録に追記する。
+
+
+## 0.18.8の公開結果
+
+2026-10-24 20:30 JSTに Marketplace / Open VSX の双方で最新版0.18.8を確認した。
+公開コードはea580989a381f515a109da2190ad036e388560e3、タグv0.18.8。
+[main CI](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/40087353838) と
+[公開ビルド](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/40088820004) の
+lint・型検査・ビルド・単体・統合・audit、Windows/macOS/Linuxのruntime検証が成功した。
+
+最初の公開jobは再利用workflowへのEnvironment secretの明示的な受け渡しがなく、
+値が空になって失敗した。依存検査の失敗ではない。2672bb9でcallerの同名マッピング、
+workflow_callの必須宣言、公開前の空値チェックを追加し、契約検査にも含めた。
+[修正後のCI](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/40089592353) は成功。
+公開済みタグは動かさず、同じ確認済みartifactだけを扱う一時workflowを管理者が承認し、
+[復旧公開](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/40089592832) が成功した。
+一時workflowは公開後に削除し、通常のstable/previewには修正した渡し方を保持した。
+
+両ストアから実取得したVSIXのSHA-256はCI成果物と完全一致した。
+`3e8c76345d7ac4f1e6b5fb9e7b584b1d49a38304ba94c743729b3e028e9d870b`
+内部129 entriesも実VS Codeで検証した候補と全件byte一致し、NLS32、秘密・開発物なし。
+vsix/commit-maker-0.18.8.vsixにはCI成果物を保存した。
+
+依存はfollow-redirects 1.16.1 / @azure/msal-node 7.1.0へ更新済みで、npm auditは0件。
+GitHubのDependabot #44/#45は10月19日の依存グラフに基づく表示が残っていたため、
+ブラウザーのRefresh Dependabot alertsを実行し、受付を確認した。
+20:30 JST時点ではGitHub側の再計算待ちでopen 2件。警告の手動dismissは行っていない。
+通常の利用者の認証・設定・SCMは変更せず、隔離VS Codeの終了も成功した。

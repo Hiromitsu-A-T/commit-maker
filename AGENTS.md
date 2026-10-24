@@ -49,6 +49,7 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
   6. Actions で `Publish Extension (Stable)` が成功したら Marketplace / Open VSX へ同時反映される。
 - Preview 手順: `package.json` を奇数 MINOR（例 `0.5.0`）に上げ、commit/push 後に Actions から `Publish Extension (Preview)` を `workflow_dispatch` で実行する。preview ではタグを切らない。実機検証完了後、安定版は次の偶数 MINOR（例 `0.6.0`）で通常リリースする。
 - 必要シークレット: `release` Environment の `VSCE_PAT`, `OVSX_PAT`（repository secrets は空）
+- Environment 内だけにある secret でも、再利用 workflow の `workflow_call.secrets` で必須宣言し、呼び出し元で同名を明示的に渡す。公開直前に値が空でないことも検査する。
 - 処理概要: version/channel 検証 → runtime smoke（Ubuntu/macOS/Windows）→ `npm ci` → `npm run compile` → `npm test` → `vsce package --no-dependencies --no-rewrite-relative-links` → `vsce publish --packagePath ... --skip-duplicate` → `ovsx publish --skip-duplicate`。preview の場合は package/publish に `--pre-release` を付与する。完了後 `vsix/` に成果物を保存し、VSIX artifact もアップロードする。
 
 ## 手動配布と整理
