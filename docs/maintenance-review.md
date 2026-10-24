@@ -693,4 +693,11 @@ Windowsの実CLI操作と未公開の将来版は今回の実行環境では未�
 常設CLIの実接続はLuna / lowの固定差分1件のみ。出力schemaは80文字上限、
 20秒で打ち切る条件とし、HTTP 200・入力416・出力21・推論0、所要2906msだった。
 Codex契約枠を使い、別課金APIの呼出しは0件。通常の認証は変更せず、一時コピーを削除した。
-公開結果は成功後に追記する。
+通常の[stable公開CI](https://github.com/Hiromitsu-A-T/commit-maker/actions/runs/40095971225)が
+成功し、Ubuntu / macOS / Windowsのruntime検証も成功した。ソースは
+3fa73bb6d55d6b9a102476c47d034d9d0189fb28、タグv0.18.9。
+2026-10-24 22:03 JST、Marketplace / Open VSXの双方から0.18.9を取得し、
+CI成果物とSHA-256が一致した。
+`06a52d710ec5a41c4851830ac02d775a2fb72e78b89801f6a82b0a4376299bef`
+CI artifact 12560404865は実VS Codeで確認した候補と内部129件が全件byte一致した。
+vsix/commit-maker-0.18.9.vsixには同じCI成果物を保存した。
