@@ -103,7 +103,7 @@ Git の差分からコミットメッセージを生成し、SCM 入力欄へ書
 - 全ファイルのレビューと検証記録は `docs/maintenance-review.md` を参照する。
 - Webview CSP は nonce 付き。スタイル/スクリプトは同梱のみ。
 - プロバイダー並びとデフォルト: 「OpenAI → Gemini → Claude → Codex → Local」、初期モデルは `gpt-6-luna`。Local は API キー不要で、ユーザーが明示的にモデルをダウンロードした場合のみ利用する。llama.cpp runtime は未指定なら OS/CPU 別に自動取得し、SHA-256 検証後に globalStorage へ展開する。`commitMaker.localRuntimePath` は開発・検証用の上書き設定として扱う。
-- Codex の生成は検証済み CLI 0.164.0 のみを使用する。モデルのツール metadata と機能を無効化し、専用 loopback transport でツール定義とツール応答を拒否する。他版は安全性を再検証してから対応する。`npm run smoke:codex:text-only` は実CLIと隔離した応答fixtureで検証し、有料APIを呼ばない。
+- Codex の生成は版番号を固定せず、必要な exec フラグ・bundled model catalog・features list の契約で互換性を確認する。機能一覧を動的に無効化し、モデルのツール metadata も無効化する。実際の差分と認証を渡す前に、偽認証・ローカル応答による同じ CLI 経路の検査を毎回行う。専用 provider の loopback transport は、許可したテキスト要求・応答だけを再構築し、未知の item / event 型やツール定義を拒否する。安全な通信経路を経ない出力は採用しない。`npm run smoke:codex:text-only` は常設実CLIと隔離した応答fixtureで検証し、有料APIを呼ばない。将来の互換CLIは継続利用できるが、安全契約の破壊的変更を検出した場合は生成を停止する。
 - Codex の既定モデルは `gpt-6-luna`。GPT-6 Luna / Sol は CLI 0.157.0 以降、GPT-6.1 Sol は 0.159.1 以降で対応する。候補からモデルを除外する前に、公式の更新履歴と現行 CLI のモデル一覧・実接続を確認し、古い CLI の拒否とサービス側の非対応を区別する。利用者が保存したカスタムモデルを別モデルへ自動置換しない。
 - Codex の実接続検証前に、PC に常設された CLI をインストール方法に合わせて最新安定版へ更新する（Homebrew: `brew update` → `brew upgrade --cask codex`、npm: `npm install -g @openai/codex@latest`）。更新が不要な場合も、公式の最新安定版と `codex --version` の一致および実行ファイルのパスを記録する。一時導入した CLI だけで代用しない。認証・Git・SCM の検証データは従来どおり隔離する。
 - 実API検証は変更箇所に必要なモデル・設定と最小の入力に限定する。異常応答・競合・全組み合わせの回帰検査は原則fixtureで行い、送信契約やモデル定義が同じ場合は配布コードの一致を確認して既存の実接続結果を再利用する。実行前に呼び出し数・出力上限・推論を含む料金見積りを確認し、実行後に使用量と中断・再試行も記録する。全件の実API検証は必要な差分がある場合に限り、指定された予算・回数を超えて続行しない。

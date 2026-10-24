@@ -170,7 +170,9 @@ export async function createHarness(initialSettings: Record<string, unknown> = {
   global.fetch = async (target, options) => {
     const url = String(target);
     if (url.startsWith('http://127.0.0.1:')) return originalFetch(target, options);
-    assert.ok(url.startsWith('https://fixture.example/'), `隔離対象外の通信: ${url}`);
+    const codexRequest = url === 'https://api.openai.com/v1/responses';
+    assert.ok(url.startsWith('https://fixture.example/') || codexRequest, `隔離対象外の通信: ${url}`);
+    if (codexRequest) assert.strictEqual((options?.headers as Record<string, string>).Authorization, 'Bearer isolated-fixture');
     options?.signal?.throwIfAborted();
     if (url.endsWith('/model.gguf')) {
       let timer: ReturnType<typeof setTimeout>;
@@ -224,16 +226,30 @@ export async function createHarness(initialSettings: Record<string, unknown> = {
   await fs.promises.writeFile(codexPath, `#!/usr/bin/env node
 const fs = require('fs'); const path = require('path'); const args = process.argv.slice(2);
 const auth = path.join(process.env.CODEX_HOME, 'auth.fixture');
-if (args[0] === '--version') { console.log('codex-cli 0.164.0'); }
+if (args[0] === '--version') { console.log('codex-cli 0.165.0'); }
+else if (args[0] === 'exec' && args[1] === '--help') { console.log('--sandbox read-only --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check --output-schema --output-last-message'); }
+else if (args[0] === 'features') { console.log('shell_tool stable true\\nfuture_exec stable true'); }
 else if (args[0] === 'debug') { console.log(JSON.stringify({models:[{slug:'gpt-6-luna'}]})); }
 else if (args[0] === 'login') { if (fs.existsSync(auth)) console.log('Logged in using fixture'); else process.exitCode = 1; }
 else if (args[0] === 'logout') { fs.rmSync(auth, {force: true}); }
-else if (args[0] === 'exec') { let prompt=''; process.stdin.setEncoding('utf8'); process.stdin.on('data', text => { prompt+=text; }); process.stdin.on('end', () => {
+else if (args[0] === 'exec') { let prompt=''; process.stdin.setEncoding('utf8'); process.stdin.on('data', text => { prompt+=text; }); process.stdin.on('end', async () => {
   if (prompt.includes('FAIL_CODEX_FIXTURE')) {
     process.stderr.write(prompt+'\\nERROR: '+JSON.stringify({error:{message:'The model is not supported. Bearer sk-proj-fixture1234567890'}})+'\\n');
     process.exitCode=1; return;
   }
-  fs.writeFileSync(args[args.indexOf('--output-last-message') + 1], JSON.stringify({message: 'chore: 検証用の変更'}));
+  try {
+    if (!args.some(arg => arg.startsWith('features={') && arg.includes('"future_exec"=false'))) throw new Error('future feature was not disabled');
+    const base = JSON.parse(args.find(arg => arg.startsWith('model_providers.commit_maker.base_url=')).split('=').slice(1).join('='));
+    const response = await fetch(base+'/responses', {method:'POST', headers:{authorization:'Bearer isolated-fixture'},
+      body:JSON.stringify({model:'gpt-6-luna',input:[{role:'user',content:prompt}],tools:[]})});
+    const text = await response.text(); if (!response.ok) throw new Error(text);
+    let message;
+    if (text.startsWith('event:')) {
+      const event = text.split('\\n').filter(line => line.startsWith('data:')).map(line => JSON.parse(line.slice(5))).find(event => event.item?.type === 'message');
+      message = JSON.parse(event.item.content[0].text).message;
+    } else message = JSON.parse(text).output_text;
+    fs.writeFileSync(args[args.indexOf('--output-last-message') + 1], JSON.stringify({message}));
+  } catch(error) { console.error('ERROR: '+error.message); process.exitCode=1; }
 }); } else process.exitCode = 1;
 `, { mode: 0o755 });
   user.set('codexCommand', codexPath);

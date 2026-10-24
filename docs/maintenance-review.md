@@ -659,3 +659,38 @@ GitHubのDependabot #44/#45は10月19日の依存グラフに基づく表示が�
 ブラウザーのRefresh Dependabot alertsを実行し、受付を確認した。
 20:30 JST時点ではGitHub側の再計算待ちでopen 2件。警告の手動dismissは行っていない。
 通常の利用者の認証・設定・SCMは変更せず、隔離VS Codeの終了も成功した。
+
+## 0.18.9のCodex CLI互換性修正
+
+2026-10-24。CLI 0.164.0との完全一致で更新後の生成を拒否していた処理を、
+必要なexecフラグ・bundled catalog・features listの互換性検査へ置き換えた。
+CLIが公開する全機能を無効化し、モデルのツールmetadataも無効化する。
+機能名に「.」が含まれる場合も扱えるよう、featuresはTOMLのtableで渡す。
+専用providerのloopbackへ接続し、実際の差分と認証を渡す前に、偽認証と
+ランダムなローカル応答で同じCLI経路を検証する。この検査は外部推論を呼ばない。
+
+要求・JSON/SSE応答は許可したテキスト項目から再構築し、未知の制御フィールドを
+渡さない。未知のitem/event型、ツール定義・ツール出力、不一致のSSE eventを拒否する。
+応答全体の検査前にはCLIへ返さず、安全なtransportを経ない最終出力も採用しない。
+互換性検査を含む全体へ取消・timeoutを適用する。安全契約を維持する更新は使えるが、
+CLIの破壊的変更で契約を満たさなくなった場合は生成を停止する。
+
+常設CLIは公式の最新安定版と一致する0.164.0（/opt/homebrew/bin/codex）。
+次期版0.165.0-alpha.1は公式配布物を一時領域へ取得して検証し、常設CLIは変更しない。
+取得archiveのSHA-256はGitHubのdigestと一致した。
+`30df255f391bea206e104732e7e36d5c0dd8639c36f1316d0caf89bf1fee56d6`
+両版の実プロセスでAPI/OAuthの架空認証、カスタムモデル、正常SSE、ツール0、
+不正応答6種（正常完了後に混入する未知の実行項目を含む）の拒否を確認した。
+将来版を模したfixtureでも正常生成し、機能不足・不正catalog・経路の迂回・
+ツール復活等では実差分のcanaryをCLIへ渡す前に失敗することを確認した。
+独立した読取専用の境界調査と候補レビューを各1回行い、具体的な残存bypassは未確認。
+
+lint / typecheck / compile / build:media / npm test / test:integration / check:workflows
+が成功し、npm auditは0件。公開用VSIXは129 entries・NLS32で、開発物・秘密情報なし。
+実VS Code 1.131.0の隔離profileへVSIXを導入し、標準Git SCMへの反映と終了を確認した。
+Windowsの実CLI操作と未公開の将来版は今回の実行環境では未検証である。
+
+常設CLIの実接続はLuna / lowの固定差分1件のみ。出力schemaは80文字上限、
+20秒で打ち切る条件とし、HTTP 200・入力416・出力21・推論0、所要2906msだった。
+Codex契約枠を使い、別課金APIの呼出しは0件。通常の認証は変更せず、一時コピーを削除した。
+公開結果は成功後に追記する。

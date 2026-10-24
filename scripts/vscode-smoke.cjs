@@ -8,9 +8,14 @@ exports.run = async function () {
   const resultPath = process.env.COMMIT_MAKER_SMOKE_RESULT;
   let panelState = {};
   let restorePanel;
+  const originalFetch = global.fetch;
   try {
     assert.ok(resultPath && process.env.COMMIT_MAKER_SMOKE_ROOT, '隔離領域の指定が必要');
     const root = process.env.COMMIT_MAKER_SMOKE_ROOT;
+    global.fetch = async url => {
+      assert.strictEqual(String(url), 'https://api.openai.com/v1/responses');
+      return new Response(JSON.stringify({ output_text: 'chore: 実VS Codeの検証' }));
+    };
     const cliPath = path.join(root, 'codex-fixture');
     await vscode.workspace.getConfiguration('commitMaker').update('provider', 'codex', vscode.ConfigurationTarget.Global);
     await vscode.workspace.getConfiguration('commitMaker').update('codexCommand', cliPath, vscode.ConfigurationTarget.Global);
@@ -37,6 +42,7 @@ exports.run = async function () {
     if (resultPath) fs.writeFileSync(resultPath, JSON.stringify({status:'failed', error:String(error), provider:panelState.commitProvider, model:panelState.commitModel, generationError:panelState.commitLastError}, null, 2));
     throw error;
   } finally {
+    global.fetch = originalFetch;
     restorePanel?.();
     await vscode.commands.executeCommand('workbench.action.closeWindow');
   }

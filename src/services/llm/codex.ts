@@ -3,6 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { spawn, execFile } from 'child_process';
 import { promisify } from 'util';
+import { randomBytes } from 'crypto';
 import { startCodexTransport } from './codexTransport';
 import { limitTimeout } from '../../resourceLimits';
 import { CodexReasoningEffort } from '../../types';
@@ -54,11 +55,21 @@ export async function callCodex({
   const outputPath = path.join(tempDir, 'last-message.json');
   const schemaPath = path.join(tempDir, 'schema.json');
   const catalogPath = path.join(tempDir, 'models.json');
-  const transport = await startCodexTransport(abortSignal);
+  const externalSignal = abortSignal;
+  const controller = new AbortController();
+  const cancel = (): void => controller.abort();
+  externalSignal?.addEventListener('abort', cancel, { once: true });
+  if (externalSignal?.aborted) controller.abort();
+  abortSignal = controller.signal;
+  let timedOut = false;
+  const deadline = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
+  let transport: Awaited<ReturnType<typeof startCodexTransport>> | undefined;
   try {
-    await writeTextOnlyCatalog(codexCommand, codexHome, model, catalogPath, abortSignal);
+    const features = await prepareTextOnlyCli(codexCommand, model, catalogPath, abortSignal);
     await fs.promises.writeFile(schemaPath, JSON.stringify(CODEX_OUTPUT_SCHEMA), 'utf8');
-    const args = buildCodexExecArgs({ model, outputPath, schemaPath, cwd: tempDir, reasoning, catalogPath, baseUrl: transport.baseUrl });
+    await verifyTextOnlyCli(codexCommand, { model, cwd: tempDir, schemaPath, catalogPath, features, reasoning, abortSignal, timeoutMs: Math.min(timeoutMs, 15000) });
+    transport = await startCodexTransport(abortSignal);
+    const args = buildCodexExecArgs({ model, outputPath, schemaPath, cwd: tempDir, reasoning, catalogPath, baseUrl: transport.baseUrl, features });
     logger?.(`Codex: ${codexCommand} ${args.map(quoteArgForLog).join(' ')}`);
     const result = await runCodexExec(codexCommand, args, buildCodexPrompt(prompt), {
       abortSignal,
@@ -70,14 +81,20 @@ export async function callCodex({
       const detail = getCodexFailureDetail(result.stderr || result.stdout || `exit code ${result.code}`);
       throw new Error(`Codex execution failed: ${detail}`);
     }
+    if (!transport.completed) throw new Error('Codex CLI bypassed the text-only transport.');
     const output = await readOutputFile(outputPath, result.stdout);
     const parsed = parseCodexOutput(output);
     if (!parsed.trim()) {
       throw new Error('Codex response was empty.');
     }
     return parsed;
+  } catch (error) {
+    if (timedOut) throw new Error('Codex execution timed out.', { cause: error });
+    throw error;
   } finally {
-    await transport.dispose();
+    clearTimeout(deadline);
+    externalSignal?.removeEventListener('abort', cancel);
+    await transport?.dispose();
     await fs.promises.rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
   }
 }
@@ -110,7 +127,8 @@ export function buildCodexExecArgs({
   cwd,
   reasoning = 'low',
   catalogPath,
-  baseUrl
+  baseUrl,
+  features = []
 }: {
   model: string;
   outputPath: string;
@@ -119,6 +137,7 @@ export function buildCodexExecArgs({
   reasoning?: CodexReasoningEffort;
   catalogPath?: string;
   baseUrl?: string;
+  features?: readonly string[];
 }): string[] {
   const args = [
     'exec',
@@ -145,10 +164,17 @@ export function buildCodexExecArgs({
     '-c',
     'web_search="disabled"'
   ];
-  for (const key of TEXT_ONLY_FEATURES) args.push('-c', `features.${key}=false`);
+  // CLIのdotted-path overrideは機能名内の「.」も分割するため、tableとして渡す。
+  const disabled = [...new Set([...TEXT_ONLY_FEATURES, ...features])].map(key => `${JSON.stringify(key)}=false`).join(',');
+  args.push('-c', `features={${disabled}}`);
   for (const value of ['agents.enabled=false', 'tools.update_plan.enabled=false', 'tools.experimental_request_user_input.enabled=false', 'skills.bundled.enabled=false', 'skills.include_instructions=false', 'cloud.skills.enabled=false', 'token_budget.enabled=false', 'token_budget.use_history_notes_extension=false']) args.push('-c', value);
   if (catalogPath) args.push('-c', `model_catalog_json=${JSON.stringify(catalogPath)}`);
-  if (baseUrl) args.push('-c', `openai_base_url=${JSON.stringify(baseUrl)}`);
+  if (baseUrl) {
+    for (const value of ['model_provider="commit_maker"', 'model_providers.commit_maker.name="Commit Maker"',
+      `model_providers.commit_maker.base_url=${JSON.stringify(baseUrl)}`, 'model_providers.commit_maker.wire_api="responses"',
+      'model_providers.commit_maker.requires_openai_auth=true', 'model_providers.commit_maker.supports_websockets=false',
+      'model_providers.commit_maker.request_max_retries=0', 'model_providers.commit_maker.stream_max_retries=0']) args.push('-c', value);
+  }
   const normalizedModel = model.trim();
   if (normalizedModel) {
     args.push('--model', normalizedModel);
@@ -212,7 +238,7 @@ function runCodexExec(
     const child = spawn(command, args, {
       stdio: ['pipe', 'pipe', 'pipe'],
       cwd: options.requestHome,
-      env: { ...buildCodexEnvironment(options.codexHome), HOME: options.requestHome, USERPROFILE: options.requestHome, APPDATA: options.requestHome, LOCALAPPDATA: options.requestHome }
+      env: buildIsolatedEnvironment(options.codexHome, options.requestHome)
     });
     const stdout: string[] = [];
     const stderr: string[] = [];
@@ -279,7 +305,7 @@ function quoteArgForLog(value: string): string {
   return /^[A-Za-z0-9_./:=\-"]+$/.test(value) ? value : JSON.stringify(value);
 }
 
-// このCLI版の登録条件を確認したうえで、モデルカタログと送信時検査を併用する。
+// 既知の防御設定に加え、そのCLIが公開する機能を毎回無効化する。
 const TEXT_ONLY_FEATURES = [
   'shell_tool', 'view_image', 'apps', 'plugins', 'image_generation', 'goals', 'memories',
   'multi_agent', 'multi_agent_v2', 'code_mode', 'code_mode_only', 'hooks', 'token_budget',
@@ -289,13 +315,43 @@ const TEXT_ONLY_FEATURES = [
   'responses_websockets_v2', 'enable_request_compression'
 ];
 
-async function writeTextOnlyCatalog(command: string, codexHome: string | undefined, model: string, file: string, signal?: AbortSignal): Promise<void> {
+async function prepareTextOnlyCli(command: string, model: string, file: string, signal?: AbortSignal): Promise<string[]> {
   const run = promisify(execFile);
-  const options = { env: buildCodexEnvironment(codexHome), signal, timeout: 10000, maxBuffer: 4 * 1024 * 1024 };
-  const version = await run(command, ['--version'], options);
-  if (version.stdout.trim() !== 'codex-cli 0.164.0') throw new Error('Commit Maker requires verified Codex CLI 0.164.0 for text-only generation.');
-  const bundled = await run(command, ['debug', 'models', '--bundled'], options);
-  const catalog = asRecord(JSON.parse(bundled.stdout));
+  const home = path.dirname(file);
+  // 機能検出は認証も利用者の設定も必要としない。
+  const options = { cwd: home, env: buildIsolatedEnvironment(home, home), signal, timeout: 10000, maxBuffer: 4 * 1024 * 1024 };
+  const [help, featureList, bundled] = await Promise.all([
+    run(command, ['exec', '--help'], options),
+    run(command, ['features', 'list'], options),
+    run(command, ['debug', 'models', '--bundled'], options)
+  ]);
+  assertCodexCapabilities(help.stdout);
+  const features = parseCodexFeatures(featureList.stdout);
+  const textOnly = buildTextOnlyCatalog(JSON.parse(bundled.stdout), model);
+  await fs.promises.writeFile(file, JSON.stringify(textOnly), { mode: 0o600 });
+  return features;
+}
+
+export function assertCodexCapabilities(help: string): void {
+  for (const flag of ['--sandbox', '--ephemeral', '--ignore-user-config', '--ignore-rules', '--skip-git-repo-check', '--output-schema', '--output-last-message']) {
+    if (!help.includes(flag)) throw new Error(`Codex CLI is missing the text-only capability ${flag}. Update Codex CLI or Commit Maker.`);
+  }
+  if (!help.includes('read-only')) throw new Error('Codex CLI does not advertise the read-only sandbox.');
+}
+
+export function parseCodexFeatures(text: string): string[] {
+  const keys = new Set<string>();
+  for (const line of text.trim().split(/\r?\n/)) {
+    const match = line.trim().match(/^([a-z][a-z0-9_.-]*)\s+.+?\s+(true|false)$/);
+    if (!match) throw new Error('Codex CLI feature discovery is incompatible with text-only generation.');
+    keys.add(match[1]);
+  }
+  if (!keys.size) throw new Error('Codex CLI feature discovery returned no capabilities.');
+  return [...keys];
+}
+
+export function buildTextOnlyCatalog(value: unknown, model: string): { models: Record<string, unknown>[] } {
+  const catalog = asRecord(value);
   const entries = Array.isArray(catalog.models) ? catalog.models : [];
   const base = asRecord(entries.find(item => asRecord(item).slug === model) ?? entries.find(item => asRecord(item).slug === 'gpt-6-luna'));
   if (!base.slug) throw new Error('Codex model metadata is missing.');
@@ -303,5 +359,31 @@ async function writeTextOnlyCatalog(command: string, codexHome: string | undefin
     experimental_supported_tools: [], tool_mode: 'direct', multi_agent_version: 'disabled',
     supports_search_tool: false, input_modalities: ['text'], node_repl_disabled: true,
     model_messages: null, use_responses_lite: false, base_instructions: 'Generate only the requested commit message. No tools are available.' };
-  await fs.promises.writeFile(file, JSON.stringify({ models: [textOnly] }), { mode: 0o600 });
+  return { models: [textOnly] };
+}
+
+function buildIsolatedEnvironment(codexHome: string | undefined, requestHome: string): NodeJS.ProcessEnv {
+  return { ...buildCodexEnvironment(codexHome), HOME: requestHome, USERPROFILE: requestHome, APPDATA: requestHome, LOCALAPPDATA: requestHome };
+}
+
+/** 差分と実認証を渡す前に、同じ実行経路をローカルの応答だけで検証する。 */
+async function verifyTextOnlyCli(command: string, options: {
+  model: string; cwd: string; schemaPath: string; catalogPath: string; features: string[];
+  reasoning: CodexReasoningEffort; abortSignal?: AbortSignal; timeoutMs: number;
+}): Promise<void> {
+  const home = path.join(options.cwd, 'probe-auth');
+  const outputPath = path.join(options.cwd, 'probe-output.json');
+  await fs.promises.mkdir(home, { mode: 0o700 });
+  await fs.promises.writeFile(path.join(home, 'auth.json'), JSON.stringify({ OPENAI_API_KEY: 'sk-commit-maker-offline-probe' }), { mode: 0o600 });
+  const message = randomBytes(32).toString('hex');
+  const transport = await startCodexTransport(options.abortSignal, message);
+  try {
+    const args = buildCodexExecArgs({ ...options, outputPath, baseUrl: transport.baseUrl });
+    const result = await runCodexExec(command, args, buildCodexPrompt('Return the transport fixture message.'), {
+      codexHome: home, requestHome: options.cwd, timeoutMs: options.timeoutMs, abortSignal: options.abortSignal
+    });
+    if (result.code !== 0 || !transport.completed || parseCodexOutput(await readOutputFile(outputPath, result.stdout)) !== message) {
+      throw new Error('Codex CLI failed the offline text-only compatibility check. Update Codex CLI or Commit Maker.');
+    }
+  } finally { await transport.dispose(); }
 }

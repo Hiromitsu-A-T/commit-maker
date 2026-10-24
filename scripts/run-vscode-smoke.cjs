@@ -83,13 +83,28 @@ async function main() {
     const cliScript = path.join(root, 'codex-fixture.cjs');
     fs.writeFileSync(cliScript, `const fs = require('fs');
   const args = process.argv.slice(2);
-  if (args[0] === '--version') console.log('codex-cli 0.164.0');
+  if (args[0] === '--version') console.log('codex-cli 0.165.0');
+  else if (args[0] === 'exec' && args[1] === '--help') console.log('--sandbox read-only --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check --output-schema --output-last-message');
+  else if (args[0] === 'features') console.log('shell_tool stable true\\nfuture_exec stable true');
   else if (args[0] === 'debug') console.log(JSON.stringify({models:[{slug:'gpt-6-luna'}]}));
   else if (args[0] === 'login') console.log('Logged in using fixture');
   else if (args[0] === 'exec') {
     process.stdin.resume();
-    process.stdin.on('end', () => fs.writeFileSync(args[args.indexOf('--output-last-message') + 1],
-      JSON.stringify({message:'chore: 実VS Codeの検証'})));
+    process.stdin.on('end', async () => {
+      try {
+        if (!args.some(arg => arg.startsWith('features={') && arg.includes('"future_exec"=false'))) throw new Error('future feature was not disabled');
+        const base = JSON.parse(args.find(arg => arg.startsWith('model_providers.commit_maker.base_url=')).split('=').slice(1).join('='));
+        const response = await fetch(base+'/responses', {method:'POST', headers:{authorization:'Bearer isolated-fixture'},
+          body:JSON.stringify({model:'gpt-6-luna',input:[{role:'user',content:'isolated fixture'}],tools:[]})});
+        const text = await response.text(); if (!response.ok) throw new Error(text);
+        let message;
+        if (text.startsWith('event:')) {
+          const event = text.split('\\n').filter(line => line.startsWith('data:')).map(line => JSON.parse(line.slice(5))).find(event => event.item?.type === 'message');
+          message = JSON.parse(event.item.content[0].text).message;
+        } else message = JSON.parse(text).output_text;
+        fs.writeFileSync(args[args.indexOf('--output-last-message') + 1], JSON.stringify({message}));
+      } catch (error) { console.error('ERROR: '+error.message); process.exitCode=1; }
+    });
   } else process.exitCode = 1;
   `);
     fs.writeFileSync(path.join(root, 'codex-fixture'), `#!/bin/sh\nexec ${quote(process.execPath)} ${quote(cliScript)} "$@"\n`, { mode: 0o755 });

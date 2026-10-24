@@ -119,8 +119,8 @@ SecretStorage is VS Code’s local encrypted store; API keys are not synced acro
 > 💡 **クラウド API の BYOK**: OpenAI / Gemini / Claude はご自身の API キーを使います。Codex は専用ログイン、Local は API キー不要です。
 > (OpenAI, Gemini, and Claude use your own API keys. Codex uses its dedicated sign-in; Local requires no API key.)
 
-Codex を選ぶ場合、検証済みの Codex CLI **0.164.0** を使用し、Commit Maker の Codex 欄から「ログイン」を押してください。通常の CLI とは別の `CODEX_HOME` を使います。生成ではツールを無効化し、送信・応答の両方を検査します。他の CLI 版は安全性を再検証するまで生成を停止します。
-(For Codex, use verified Codex CLI **0.164.0** and sign in from Commit Maker. Authentication uses a dedicated `CODEX_HOME`. Generation disables tools and validates both requests and responses. Other CLI versions are rejected until their safety contracts have been verified.)
+Codex を選ぶ場合、最新版の Codex CLI をインストールし、Commit Maker の Codex 欄から「ログイン」を押してください。通常の CLI とは別の `CODEX_HOME` を使います。必要な安全機能に互換性のある新しい CLI も利用できます。生成前に課金を伴わないローカル互換性検査を行い、ツールを無効化して送信・応答を検査します。互換性を確認できない場合は生成を停止し、エラーを表示します。
+(For Codex, install the latest Codex CLI and sign in from Commit Maker. Authentication uses a dedicated `CODEX_HOME`. Newer CLI versions with compatible safety capabilities are supported. Before generation, a local compatibility check runs without paid API calls; tools are disabled and requests and responses are validated. Generation stops with an error if compatibility cannot be confirmed.)
 
 Local を選ぶ場合、API キーは不要です。上部のモデル欄で Qwen3.5 / Gemma 4 / LFM2.5 などの GGUF モデルを選び、「モデルをダウンロード」で llama.cpp runtime と選択モデルを取得し、以後は PC 内で生成します。
 (For Local, no API key is required. Choose a Qwen3.5, Gemma 4, or LFM2.5 model in GGUF format in the top model field, then use "Download model" to fetch the llama.cpp runtime and selected model. Generation runs on your machine.)
